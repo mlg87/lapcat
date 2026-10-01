@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+
+# Beads task graph (see docs/beads.md). The embedded Dolt DB under .beads/ is
+# machine-local state synced via the refs/dolt/data git ref, not through PRs;
+# no beads file rides in a PR.
+.beads/

@@ -1,0 +1,11 @@
+{
+  "name": "lapcat",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}
