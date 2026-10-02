@@ -11,6 +11,8 @@ commands:
   tap-probe <bundle-id>|--system <seconds> <out-dir> [--voice-processing]
                record mic + system audio, print per-second RMS and file formats
   llm-probe    claude-cli|anthropic-api|local "prompt": one LLM round-trip, raw and parsed
+  enhance-demo [--template ID] [--model M]: enhance a canned meeting via the Claude CLI
+  templates    list built-in templates and their resource bundle
   detect-watch [bundle-id…|*]  print debounced mic-input activity of meeting apps until Ctrl-C
 """
 
@@ -25,6 +27,10 @@ case "tap-probe":
     exit(await TapProbe.run(Array(args.dropFirst())))
 case "llm-probe":
     exit(await LLMProbe.run(Array(args.dropFirst())))
+case "enhance-demo":
+    exit(await EnhanceDemo.run(Array(args.dropFirst())))
+case "templates":
+    exit(TemplatesCommand.run())
 case "detect-watch":
     exit(await DetectWatch.run(Array(args.dropFirst())))
 default:

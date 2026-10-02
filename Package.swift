@@ -27,7 +27,7 @@ let package = Package(
         .target(
             name: "LapCatCore",
             dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
-            resources: [.copy("Resources/Recipes.json")]
+            resources: [.copy("Resources/Templates"), .copy("Resources/Recipes.json")]
         ),
         .target(
             name: "LapCatSpeech",
@@ -46,7 +46,7 @@ let package = Package(
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),
         .testTarget(name: "LapCatSpeechTests", dependencies: ["LapCatSpeech"]),
         .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"]),
-        .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM"]),
+        .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM", "LapCatCore"]),
     ],
     swiftLanguageModes: [.v6]
 )
