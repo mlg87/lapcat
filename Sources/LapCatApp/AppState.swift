@@ -45,6 +45,14 @@ final class AppState {
         }
     }
 
+    /// Settings is hosted like the other windows: a SwiftUI `Settings` scene opened from a
+    /// menu-bar-only app is created offscreen behind the active app.
+    func showSettings() {
+        windows.show(id: WindowID.settings, title: "LapCat Settings", size: NSSize(width: 680, height: 560), resizable: false) {
+            SettingsView().environment(self)
+        }
+    }
+
     func showPermissions() {
         windows.show(id: WindowID.permissions, title: "LapCat Permissions", size: NSSize(width: 620, height: 560), resizable: false) {
             PermissionsView().environment(self)
@@ -58,5 +66,6 @@ final class AppState {
 
 enum WindowID {
     static let main = "main"
+    static let settings = "settings"
     static let permissions = "permissions"
 }
