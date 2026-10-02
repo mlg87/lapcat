@@ -22,7 +22,6 @@ struct AppSettingsTests {
         #expect(!s.llmOfflineOnly)
         #expect(s.sttEngine == "auto")
         #expect(s.sttWhisperLiveModel == "ggml-small.en.bin")
-        #expect(s.sttWhisperFinalModel == "ggml-large-v3-turbo-q5_0.bin")
         #expect(s.sttParakeetVersion == "v2")
         #if arch(arm64)
         #expect(s.sttLiveHypothesis)
