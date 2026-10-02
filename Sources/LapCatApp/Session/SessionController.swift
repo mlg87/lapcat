@@ -76,12 +76,13 @@ final class SessionController {
     /// Starts a new recording. Returns the meeting id, or nil when one is already running.
     @discardableResult
     func startNewNote(
-        title: String? = nil, source: SessionSource? = nil, startedBy: MeetingStartedBy = .manual
+        title: String? = nil, source: SessionSource? = nil, startedBy: MeetingStartedBy = .manual,
+        calendarEvent: CalendarEventInfo? = nil
     ) async throws -> String? {
         guard state == .idle else { return nil }
         state = .starting
         do {
-            return try await start(title: title, source: source, startedBy: startedBy)
+            return try await start(title: title, source: source, startedBy: startedBy, calendarEvent: calendarEvent)
         } catch {
             for task in tasks { task.cancel() }
             tasks.removeAll()
@@ -99,13 +100,19 @@ final class SessionController {
 
     @ObservationIgnored private var startingMeetingID: String?
 
-    private func start(title: String?, source: SessionSource?, startedBy: MeetingStartedBy) async throws -> String {
+    private func start(
+        title: String?, source: SessionSource?, startedBy: MeetingStartedBy, calendarEvent: CalendarEventInfo?
+    ) async throws -> String {
         let now = Date()
         let meeting = try await store.createMeeting(
             title: title ?? MeetingTitle.default(for: now), startedBy: startedBy,
             sourceApp: source?.appName ?? "other", bundleID: source?.bundleID, pid: source?.pid, now: now)
         startingMeetingID = meeting.id
         try await store.upsertParticipant(meetingID: meeting.id, name: settings.userDisplayName, source: .manual, isMe: true)
+        // Title and attendees from the overlapping calendar event (nil without Calendar access).
+        if let event = calendarEvent ?? CalendarService().currentOrUpcomingEvent(now: now) {
+            try await store.applyCalendarEvent(event, toMeeting: meeting.id, now: now)
+        }
         let directory = Paths.standard.audio(meetingID: meeting.id)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
@@ -142,14 +149,31 @@ final class SessionController {
         warning = nil
         state = .recording(meetingID: meeting.id, startedAt: now, paused: false)
         startingMeetingID = nil
+        startSpeakerRecorder(meetingID: meeting.id, source: source)
         Self.logger.notice("recording \(meeting.id, privacy: .public)")
         return meeting.id
     }
 
+    private func startSpeakerRecorder(meetingID: String, source: SessionSource?) {
+        let elapsed: @Sendable () async -> Int = { [weak self] in
+            await MainActor.run { Int((self?.elapsed() ?? 0) * 1000) }
+        }
+        guard let (recorder, adapter, pid) = SpeakerEventRecorder.make(
+            store: store, meetingID: meetingID, bundleID: source?.bundleID, pid: source?.pid,
+            settings: settings, elapsedMs: elapsed)
+        else { return }
+        speakerRecorder = recorder
+        Task { await recorder.start(adapter: adapter, pid: pid) }
+    }
+
+    @ObservationIgnored private var speakerRecorder: SpeakerEventRecorder?
+
     private func tapScope(for source: SessionSource?) -> TapScope {
         guard settings.audioTapScope == "app", let source else { return .systemExcludingSelf }
-        if let pid = source.pid, let id = AudioProcessRegistry.objectID(forPID: pid) { return .process(id) }
+        // By bundle first: it prefers the instance producing output, whereas the detected pid is
+        // often an input-only helper (a browser's audio-capture process).
         if let bundleID = source.bundleID, let id = AudioProcessRegistry.objectID(forBundleID: bundleID) { return .process(id) }
+        if let pid = source.pid, let id = AudioProcessRegistry.objectID(forPID: pid) { return .process(id) }
         return .systemExcludingSelf
     }
 
@@ -219,6 +243,9 @@ final class SessionController {
     /// meeting to post-meeting processing.
     func end() async {
         guard case .recording(let meetingID, _, _) = state, let capture else { return }
+        // Close speaker events while the session clock is still running.
+        await speakerRecorder?.stop()
+        speakerRecorder = nil
         state = .ending(meetingID: meetingID)
         let summary = await capture.stop()
         // The final pass re-transcribes the recording, so queued live work is dropped.
