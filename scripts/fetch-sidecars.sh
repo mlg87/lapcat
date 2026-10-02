@@ -20,7 +20,7 @@ for arch in arm64 x64; do
   fi
 
   if ! (cd "$cache" && shasum -a 256 -c --status <(grep " $archive\$" ../../scripts/sidecars.sha256) 2>/dev/null); then
-    echo "Downloading $archive…"
+    echo "Downloading ${archive}…"
     curl -fSL --retry 3 -o "$cache/$archive" "$base/$archive"
     (cd "$cache" && grep " $archive\$" ../../scripts/sidecars.sha256 | shasum -a 256 -c -) || {
       echo "Checksum mismatch for $archive" >&2
