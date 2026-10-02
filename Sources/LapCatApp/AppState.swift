@@ -56,6 +56,23 @@ final class AppState {
         }
     }
 
+    /// Deletes audio past `audio_retained_until` now and every 6 hours while the app runs (plan §11.4).
+    func scheduleRetentionSweeps() {
+        let sweeper = RetentionSweeper(store: store)
+        let log = Logger(subsystem: "com.lapcat.app", category: "RetentionSweeper")
+        Task.detached(priority: .utility) {
+            while !Task.isCancelled {
+                do {
+                    let swept = try await sweeper.sweep()
+                    if !swept.isEmpty { log.notice("retention removed audio of \(swept.count) meeting(s)") }
+                } catch {
+                    log.error("retention sweep failed: \(String(describing: error), privacy: .public)")
+                }
+                try? await Task.sleep(for: .seconds(6 * 3600))
+            }
+        }
+    }
+
     /// Launch: meetings interrupted mid-recording or mid-processing resume processing.
     func resumeInterruptedMeetings() async {
         do {
