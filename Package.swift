@@ -27,7 +27,7 @@ let package = Package(
         .target(name: "LapCatCore", dependencies: [.product(name: "GRDB", package: "GRDB.swift")]),
         .target(
             name: "LapCatSpeech",
-            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore"]
+            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore", "LapCatAudio"]
         ),
         .target(name: "LapCatAudio"),
         .target(name: "LapCatLLM", dependencies: ["LapCatCore"]),
