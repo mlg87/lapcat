@@ -38,29 +38,18 @@ struct TranscriptViewer: View {
             controls(paragraphs: paragraphs, matches: matches)
             Divider()
             ScrollViewReader { proxy in
-                List(selection: $selection) {
-                    ForEach(paragraphs) { paragraph in
-                        row(paragraph, matches: matches)
-                            .tag(paragraph.id)
-                            .id(paragraph.id)
+                transcript(paragraphs: paragraphs, matches: matches)
+                    .onChange(of: currentMatch) { _, index in
+                        guard let index, index < matches.count else { return }
+                        scroll(to: matches[index].segmentID, in: paragraphs, proxy: proxy, highlight: false)
                     }
-                }
-                .overlay {
-                    if paragraphs.isEmpty {
-                        Text("No transcript yet.").foregroundStyle(.secondary)
+                    .onChange(of: navigation.segmentRequest, initial: true) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
+                    .onChange(of: paragraphs.isEmpty) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
+                    .onChange(of: jumpTarget) { _, target in
+                        guard let target else { return }
+                        scroll(to: target, in: paragraphs, proxy: proxy, highlight: true)
+                        jumpTarget = nil
                     }
-                }
-                .onChange(of: currentMatch) { _, index in
-                    guard let index, index < matches.count else { return }
-                    scroll(to: matches[index].segmentID, in: paragraphs, proxy: proxy, highlight: false)
-                }
-                .onChange(of: navigation.segmentRequest, initial: true) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
-                .onChange(of: paragraphs.isEmpty) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
-                .onChange(of: jumpTarget) { _, target in
-                    guard let target else { return }
-                    scroll(to: target, in: paragraphs, proxy: proxy, highlight: true)
-                    jumpTarget = nil
-                }
             }
         }
         .onChange(of: findText) { currentMatch = matches.isEmpty ? nil : 0 }
@@ -68,6 +57,22 @@ struct TranscriptViewer: View {
             player.load(files: (try? await appState.store.audioFiles(meetingID: meetingID)) ?? [])
         }
         .onDisappear { player.stop() }
+    }
+
+    /// Paragraph rows; ⌘-/⇧-click selects several for Copy selection.
+    private func transcript(paragraphs: [TranscriptParagraph], matches: [TranscriptFindMatch]) -> some View {
+        List(selection: $selection) {
+            ForEach(paragraphs) { paragraph in
+                row(paragraph, matches: matches)
+                    .tag(paragraph.id)
+                    .id(paragraph.id)
+            }
+        }
+        .overlay {
+            if paragraphs.isEmpty {
+                Text("No transcript yet.").foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: Controls
@@ -192,13 +197,10 @@ struct TranscriptViewer: View {
             .font(.callout.monospacedDigit())
             .disabled(!player.isAvailable)
             .help(player.isAvailable ? "Play from here" : "Audio not available")
-            Image(systemName: paragraph.channel == .mic ? "mic" : "speaker.wave.2")
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(paragraph.channel == .mic ? "Microphone" : "System audio")
             Button(speaker) { speakerPopover = paragraph.id }
-                .buttonStyle(.plain)
+                .buttonStyle(.link)
+                .foregroundStyle(.primary)
                 .fontWeight(.semibold)
-                .frame(minWidth: 70, alignment: .leading)
                 .help("Rename, merge or reassign this speaker")
                 .popover(isPresented: Binding(
                     get: { speakerPopover == paragraph.id },
@@ -208,6 +210,9 @@ struct TranscriptViewer: View {
                         meetingID: meetingID, paragraph: paragraph, speaker: speaker, participants: participants,
                         dismiss: { speakerPopover = nil })
                 }
+            Image(systemName: paragraph.channel == .mic ? "mic" : "speaker.wave.2")
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(paragraph.channel == .mic ? "Microphone" : "System audio")
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(paragraph.segments) { segment in
                     segmentView(segment, matches: matches)
