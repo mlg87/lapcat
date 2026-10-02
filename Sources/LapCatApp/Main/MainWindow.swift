@@ -9,6 +9,7 @@ struct MainWindow: View {
     @Environment(AppState.self) private var appState
     @State private var navigation = MeetingNavigation()
     @State private var searchText = ""
+    @State private var organizer = SidebarOrganizer()
 
     var body: some View {
         NavigationSplitView {
@@ -25,6 +26,8 @@ struct MainWindow: View {
             }
         }
         .environment(navigation)
+        .environment(organizer)
+        .task { await organizer.observeFolders(store: appState.store) }
         .frame(minWidth: 820, idealWidth: 1000, maxWidth: .infinity, minHeight: 520, idealHeight: 680, maxHeight: .infinity)
         .onChange(of: appState.session.meetingID, initial: true) { _, id in
             // A recording that starts shows itself.
@@ -33,14 +36,14 @@ struct MainWindow: View {
     }
 
     private var filter: MeetingFilter {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return MeetingFilter(search: query.count >= 2 ? query : nil)
+        organizer.listFilter.meetingFilter(search: searchText)
     }
 
     private var sidebarHeader: some View {
         HStack(spacing: 6) {
             TextField("Search", text: $searchText)
                 .textFieldStyle(.roundedBorder)
+            SidebarFilterButton()
             Button {
                 appState.startNewNote()
             } label: {
