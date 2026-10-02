@@ -135,6 +135,9 @@ actor PostMeetingPipeline {
             try await finalTranscription(meetingID: meetingID, channel: .mic, step: step, config: config)
         case .finalSTTSystem:
             try await finalTranscription(meetingID: meetingID, channel: .system, step: step, config: config)
+            // The final-pass model is only needed for these two steps; free it rather than keeping a
+            // second whisper context resident next to the live one.
+            await speech.unload(role: .final)
         case .diarize:
             try await diarize(meetingID: meetingID)
         case .nameMap:
@@ -220,8 +223,15 @@ actor PostMeetingPipeline {
         try? FileManager.default.removeItem(at: cache)
         let file = audioFile(meetingID, .system)
         guard FileManager.default.fileExists(atPath: file.path) else { return }
-        try await diarizer.load()
-        let turns = try await diarizer.diarize(fileURL: file)
+        // Diarization holds the decoded recording plus its models; free them once turns are cached.
+        let turns: [DiarizedTurn]
+        do {
+            turns = try await diarizer.diarize(fileURL: file)
+        } catch {
+            await diarizer.unload()
+            throw error
+        }
+        await diarizer.unload()
         let data = try JSONEncoder().encode(turns.map { CachedTurn(startMs: $0.startMs, endMs: $0.endMs, cluster: $0.cluster) })
         try data.write(to: cache, options: .atomic)
     }
