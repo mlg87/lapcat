@@ -6,8 +6,10 @@ struct SettingsView: View {
         TabView {
             GeneralSettingsView()
                 .tabItem { Label("General", systemImage: "gearshape") }
+            LLMSettingsView()
+                .tabItem { Label("AI", systemImage: "sparkles") }
         }
-        .frame(width: 520)
+        .frame(width: 640)
         .padding(20)
     }
 }
