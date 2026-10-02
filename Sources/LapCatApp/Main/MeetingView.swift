@@ -97,6 +97,9 @@ struct MeetingView: View {
                 TranscriptViewer(meetingID: meeting.id, segments: segments, participants: participants)
                     .tabItem { Text("Transcript") }
                     .tag(MeetingNavigation.Tab.transcript)
+                ChatView(scope: .meeting, scopeRef: meeting.id, placeholder: "Ask about this meeting — type / for recipes")
+                    .tabItem { Text("Chat") }
+                    .tag(MeetingNavigation.Tab.chat)
             }
             .padding(8)
         }
