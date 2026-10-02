@@ -24,10 +24,14 @@ let package = Package(
             url: "https://github.com/ggml-org/whisper.cpp/releases/download/b5130/whisper-b5130-xcframework.zip",
             checksum: "033a43b0174e8cf9b366f72e4a428cdcf126f93ad1c87d3fa119a96bed6f231a"
         ),
-        .target(name: "LapCatCore", dependencies: [.product(name: "GRDB", package: "GRDB.swift")]),
+        .target(
+            name: "LapCatCore",
+            dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
+            resources: [.copy("Resources/Templates"), .copy("Resources/Recipes.json")]
+        ),
         .target(
             name: "LapCatSpeech",
-            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore"]
+            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore", "LapCatAudio"]
         ),
         .target(name: "LapCatAudio"),
         .target(name: "LapCatLLM", dependencies: ["LapCatCore"]),
@@ -43,7 +47,7 @@ let package = Package(
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),
         .testTarget(name: "LapCatSpeechTests", dependencies: ["LapCatSpeech"]),
         .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"]),
-        .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM"]),
+        .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM", "LapCatCore"]),
         .testTarget(name: "LapCatSpeakersTests", dependencies: ["LapCatSpeakers"]),
     ],
     swiftLanguageModes: [.v6]

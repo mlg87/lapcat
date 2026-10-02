@@ -44,6 +44,12 @@ public actor LLMRouter {
         await providers(for: task).first
     }
 
+    /// A router restricted to the provider `providerID` (same offline-only rule), for "Re-enhance
+    /// with…" requests. Routing through it fails with `.unavailable` when that provider is not available.
+    public nonisolated func pinned(to providerID: String) -> LLMRouter {
+        LLMRouter(providers: allProviders.filter { $0.id == providerID }, offlineOnly: offlineOnly)
+    }
+
     /// Completes with the first provider that succeeds. Returns the response and the provider id.
     public func complete(_ request: LLMRequest) async throws -> (response: LLMResponse, providerID: String) {
         let candidates = try await candidates(for: request.task)
