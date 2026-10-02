@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             await state.seedLibraries()
             await state.resumeInterruptedMeetings()
+            state.scheduleRetentionSweeps()
         }
         state.warmUpLiveEngine()
         state.detection.start()
