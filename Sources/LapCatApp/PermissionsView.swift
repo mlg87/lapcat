@@ -1,3 +1,4 @@
+import LapCatAudio
 import LapCatCore
 import SwiftUI
 
@@ -50,7 +51,7 @@ private struct PermissionRow: View {
             HStack {
                 Button("Grant") {
                     Task {
-                        await Permissions.request(permission)
+                        await Permissions.request(permission) { _ = await ProcessTap.requestPermissionByProbe() }
                         await appState.refreshPermissions()
                     }
                 }
