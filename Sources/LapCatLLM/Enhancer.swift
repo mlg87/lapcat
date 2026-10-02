@@ -200,10 +200,3 @@ public actor Enhancer {
         return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
-
-/// File-private copy of LapCatCore's `MeetingTitle` (added on feat/session); dedupe at merge.
-private enum MeetingTitle {
-    static func isDefault(_ title: String) -> Bool {
-        title.wholeMatch(of: /Note \d{4}-\d{2}-\d{2} \d{2}:\d{2}/) != nil
-    }
-}
