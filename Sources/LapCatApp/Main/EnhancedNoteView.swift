@@ -86,7 +86,9 @@ struct EnhancedNoteView: View {
 
 /// Markdown rendered one line at a time: `Text` renders inline Markdown only, so headings and
 /// list markers are laid out here; `[[s:ID]]` citations become `lapcat://` links.
-private struct EnhancedMarkdown: View {
+/// No `.textSelection(.enabled)`: on macOS a selectable `Text` does not route link clicks through the
+/// `openURL` environment, so citations would stop navigating (observed in the bundled app).
+struct EnhancedMarkdown: View {
     let markdown: String
     let kinds: [LineKind]
 
@@ -97,7 +99,6 @@ private struct EnhancedMarkdown: View {
                 lineView(MarkdownLine.parse(line), kind: index < kinds.count ? kinds[index] : .ai)
             }
         }
-        .textSelection(.enabled)
     }
 
     @ViewBuilder
