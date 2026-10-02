@@ -12,11 +12,6 @@ struct LapCatApp: App {
         } label: {
             Image(systemName: "cat")
         }
-
-        Settings {
-            SettingsView()
-                .environment(appDelegate.appState)
-        }
     }
 }
 
@@ -26,7 +21,8 @@ struct MenuBarContent: View {
     var body: some View {
         Button("Open LapCat \(appState.hotKeys[.open].displayString)") { appState.showMainWindow() }
         Button("Permissions…") { appState.showPermissions() }
-        SettingsLink { Text("Settings…") }
+        Button("Settings…") { appState.showSettings() }
+            .keyboardShortcut(",")
         Divider()
         Button("Quit LapCat") { NSApp.terminate(nil) }
             .keyboardShortcut("q")

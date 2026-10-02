@@ -109,7 +109,12 @@ public enum Permissions {
     }
 
     /// Triggers the system prompt where one exists, otherwise opens System Settings.
-    public static func request(_ permission: Permission) async {
+    ///
+    /// `systemAudioProbe` runs a short real process tap (public API; starting tap IO also makes
+    /// macOS prompt). It is used only when the private TCC request is unavailable on this macOS.
+    public static func request(
+        _ permission: Permission, systemAudioProbe: (@Sendable () async -> Void)? = nil
+    ) async {
         switch permission {
         case .microphone:
             _ = await AVCaptureDevice.requestAccess(for: .audio)
@@ -126,7 +131,10 @@ public enum Permissions {
             switch await SystemAudioTCC.request() {
             case true?: markGranted(.systemAudio)
             // Denied earlier: macOS will not prompt again; the toggle is in System Settings.
-            case false?, nil: openSettings(permission)
+            case false?: openSettings(permission)
+            case nil:
+                if let systemAudioProbe { await systemAudioProbe() }
+                openSettings(permission)
             }
         case .automation:
             openSettings(permission)

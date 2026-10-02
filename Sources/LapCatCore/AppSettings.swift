@@ -65,7 +65,13 @@ public final class AppSettings {
         ]
         public static let sttEngine = "auto"
         public static let sttWhisperLiveModel = "ggml-small.en.bin"
+        #if arch(arm64)
         public static let sttWhisperFinalModel = "ggml-large-v3-turbo-q5_0.bin"
+        #else
+        /// Measured on Intel: large-v3-turbo-q5_0 runs at RTF 0.46 (~130 min per 60-min meeting);
+        /// small.en at RTF 2.24 (~27 min) fits the post-meeting budget.
+        public static let sttWhisperFinalModel = "ggml-small.en.bin"
+        #endif
         public static let sttParakeetVersion = "v2"
         #if arch(arm64)
         public static let sttLiveHypothesis = true
