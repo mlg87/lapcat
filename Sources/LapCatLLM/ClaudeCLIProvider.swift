@@ -6,7 +6,12 @@ public struct ClaudeCLIProvider: LLMProvider {
     public let displayName = "Claude via CLI"
     public let contextBudgetTokens = 150_000
 
-    public static let timeout: TimeInterval = 180
+    /// Interactive tasks (chat, classify) give up after 3 minutes. Enhance runs in the background
+    /// after a meeting, and one map or reduce call over a long meeting can take Sonnet longer than
+    /// that (a 2-hour soak meeting timed out at 180 s).
+    public static func timeout(for task: LLMTask) -> TimeInterval {
+        task == .enhance ? 600 : 180
+    }
     public static let defaultModels: [LLMTask: String] = [.enhance: "sonnet", .chat: "sonnet", .classify: "haiku"]
 
     private let models: [LLMTask: String]
@@ -63,7 +68,7 @@ public struct ClaudeCLIProvider: LLMProvider {
                 arguments: arguments,
                 environment: Self.environment(),
                 stdin: Data(Self.prompt(from: request.messages).utf8),
-                timeout: Self.timeout
+                timeout: Self.timeout(for: request.task)
             )
         } catch {
             throw LLMError.unavailable("could not launch claude: \(error.localizedDescription)")

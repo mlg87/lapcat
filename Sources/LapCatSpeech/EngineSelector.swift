@@ -119,6 +119,15 @@ public actor SpeechServices {
         return engine
     }
 
+    /// Unloads and forgets the engines of one role (e.g. the final-pass model after a meeting's
+    /// transcription, so it does not stay resident next to the live model).
+    public func unload(role: Role) async {
+        let prefix = "\(role.rawValue):"
+        let matching = engines.filter { $0.key.hasPrefix(prefix) }
+        for key in matching.keys { engines[key] = nil }
+        for engine in matching.values { await engine.unload() }
+    }
+
     /// Unloads and forgets every cached engine (e.g. after the settings changed the engine choice).
     public func unloadAll() async {
         let current = engines.values
