@@ -23,6 +23,9 @@ struct TranscriptViewer: View {
     @State private var jumpTarget: Int64?
     @State private var handledRequest: UUID?
     @State private var player = TranscriptPlayer()
+    @State private var confirmDeleteAudio = false
+    @State private var deletingAudio = false
+    @State private var exportError: String?
     @FocusState private var findFocused: Bool
     @FocusState private var editFocused: Bool
 
@@ -53,10 +56,39 @@ struct TranscriptViewer: View {
             }
         }
         .onChange(of: findText) { currentMatch = matches.isEmpty ? nil : 0 }
-        .task(id: meetingID) {
-            player.load(files: (try? await appState.store.audioFiles(meetingID: meetingID)) ?? [])
-        }
+        .task(id: meetingID) { await reloadAudio() }
         .onDisappear { player.stop() }
+        .exportErrorAlert($exportError)
+        .confirmationDialog("Delete this meeting's audio?", isPresented: $confirmDeleteAudio) {
+            Button("Delete Audio", role: .destructive) { deleteAudio() }
+        } message: {
+            Text("The recording is removed from disk now. The transcript and notes are kept, but playback is no longer possible.")
+        }
+    }
+
+    private func reloadAudio() async {
+        player.load(files: (try? await appState.store.audioFiles(meetingID: meetingID)) ?? [])
+    }
+
+    private func deleteAudio() {
+        let store = appState.store
+        let id = meetingID
+        deletingAudio = true
+        Task {
+            defer { deletingAudio = false }
+            do {
+                // The post-meeting pipeline still reads the files while processing.
+                if try await store.meeting(id: id)?.status == .processing {
+                    exportError = "Audio can be deleted once processing has finished."
+                    return
+                }
+                player.stop()
+                try await RetentionSweeper(store: store).deleteAudioNow(meetingID: id)
+            } catch {
+                exportError = "Could not delete audio: \(error.localizedDescription)"
+            }
+            await reloadAudio()
+        }
     }
 
     /// Paragraph rows; ⌘-/⇧-click selects several for Copy selection.
@@ -133,6 +165,16 @@ struct TranscriptViewer: View {
                     .disabled(selection.isEmpty)
             }
             .fixedSize()
+            Menu("Export") {
+                Button("Export Transcript…") {
+                    let store = appState.store
+                    Task { exportError = await MeetingExportActions.exportTranscript(meetingID: meetingID, store: store) }
+                }
+                Divider()
+                Button("Delete Audio Now…", role: .destructive) { confirmDeleteAudio = true }
+                    .disabled(!player.isAvailable || deletingAudio)
+            }
+            .fixedSize()
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -190,13 +232,18 @@ struct TranscriptViewer: View {
     private func row(_ paragraph: TranscriptParagraph, matches: [TranscriptFindMatch]) -> some View {
         let speaker = paragraph.segments.first.map { TranscriptFormatter.speakerName(for: $0, participants: participants) } ?? ""
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Button(TranscriptFormatter.timestamp(ms: paragraph.tStartMs)) {
-                player.play(fromMs: paragraph.tStartMs)
+            if player.isAvailable {
+                Button(TranscriptFormatter.timestamp(ms: paragraph.tStartMs)) {
+                    player.play(fromMs: paragraph.tStartMs)
+                }
+                .buttonStyle(.link)
+                .font(.callout.monospacedDigit())
+                .help("Play from here")
+            } else {
+                Text(TranscriptFormatter.timestamp(ms: paragraph.tStartMs))
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
-            .buttonStyle(.link)
-            .font(.callout.monospacedDigit())
-            .disabled(!player.isAvailable)
-            .help(player.isAvailable ? "Play from here" : "Audio not available")
             Button(speaker) { speakerPopover = paragraph.id }
                 .buttonStyle(.link)
                 .foregroundStyle(.primary)
