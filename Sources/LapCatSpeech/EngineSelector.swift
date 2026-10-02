@@ -59,7 +59,10 @@ public enum EngineSpec: Sendable, Hashable {
 }
 
 /// `auto` ⇒ Parakeet for both passes on arm64, whisper live/final models on x86_64.
-/// An explicit `whisper` / `parakeet` choice applies to both passes on either architecture.
+/// An explicit `whisper` choice applies to both passes on either architecture; an explicit `parakeet`
+/// choice applies on arm64 only. On x86_64 FluidAudio's Parakeet preprocessor kills the process with
+/// SIGFPE inside Core ML (Espresso `general_padding_kernel_cpu`, stt-bench spike lc-143), so x86_64
+/// always gets whisper.
 public struct EngineSelector: Sendable {
     public var config: SpeechConfig
     public var architecture: CPUArchitecture
@@ -74,8 +77,8 @@ public struct EngineSelector: Sendable {
 
     private func spec(whisperModel: String) -> EngineSpec {
         switch (config.engine, architecture) {
-        case (.parakeet, _), (.auto, .arm64): .parakeet(version: config.parakeetVersion)
-        case (.whisper, _), (.auto, .x86_64): .whisper(modelFile: whisperModel)
+        case (.parakeet, .arm64), (.auto, .arm64): .parakeet(version: config.parakeetVersion)
+        case (.whisper, _), (.auto, .x86_64), (.parakeet, .x86_64): .whisper(modelFile: whisperModel)
         }
     }
 }

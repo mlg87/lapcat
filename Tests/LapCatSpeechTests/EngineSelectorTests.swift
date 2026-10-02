@@ -26,25 +26,36 @@ import LapCatSpeech
     }
 
     @Test(arguments: [CPUArchitecture.arm64, .x86_64])
-    func explicitChoiceOverridesArchitectureForBothPasses(architecture: CPUArchitecture) {
+    func explicitWhisperAppliesToBothPassesOnEitherArchitecture(architecture: CPUArchitecture) {
         let whisper = EngineSelector(config: config(.whisper), architecture: architecture)
         #expect(whisper.liveEngine() == .whisper(modelFile: "ggml-small.en.bin"))
         #expect(whisper.finalEngine() == .whisper(modelFile: "ggml-large-v3-turbo-q5_0.bin"))
-        let parakeet = EngineSelector(config: config(.parakeet), architecture: architecture)
+    }
+
+    @Test func explicitParakeetAppliesToBothPassesOnArm64() {
+        let parakeet = EngineSelector(config: config(.parakeet), architecture: .arm64)
         #expect(parakeet.liveEngine() == .parakeet(version: "v2"))
         #expect(parakeet.finalEngine() == .parakeet(version: "v2"))
     }
 
-    @Test func servicesCacheOneEnginePerIDWithMatchingIDs() async {
+    @Test func explicitParakeetFallsBackToWhisperOnIntel() {
+        // FluidAudio Parakeet crashes the process with SIGFPE on x86_64 (lc-143 spike).
+        let parakeet = EngineSelector(config: config(.parakeet), architecture: .x86_64)
+        #expect(parakeet.liveEngine() == .whisper(modelFile: "ggml-small.en.bin"))
+        #expect(parakeet.finalEngine() == .whisper(modelFile: "ggml-large-v3-turbo-q5_0.bin"))
+    }
+
+    @Test func servicesReuseOneEnginePerSpecAndMatchSpecIDs() async {
         let services = SpeechServices()
-        let intel = config(.whisper)
-        let live = await services.liveEngine(config: intel)
-        let final = await services.finalEngine(config: intel)
+        let directory = URL(fileURLWithPath: "/tmp/models")
+        let live = await services.liveEngine(config: config(.whisper))
+        let liveAgain = await services.engine(for: .whisper(modelFile: "ggml-small.en.bin"), modelsDirectory: directory)
+        let final = await services.finalEngine(config: config(.whisper))
         #expect(live.id == "whisper:ggml-small.en.bin")
         #expect(final.id == "whisper:ggml-large-v3-turbo-q5_0.bin")
-        let parakeetLive = await services.liveEngine(config: config(.parakeet))
-        let parakeetFinal = await services.finalEngine(config: config(.parakeet))
-        #expect(parakeetLive.id == "parakeet:v2")
-        #expect(ObjectIdentifier(parakeetLive as AnyObject) == ObjectIdentifier(parakeetFinal as AnyObject))
+        #expect(ObjectIdentifier(live as AnyObject) == ObjectIdentifier(liveAgain as AnyObject))
+        #expect(ObjectIdentifier(live as AnyObject) != ObjectIdentifier(final as AnyObject))
+        let parakeet = await services.engine(for: .parakeet(version: "v2"), modelsDirectory: directory)
+        #expect(parakeet.id == EngineSpec.parakeet(version: "v2").id)
     }
 }
