@@ -40,6 +40,7 @@ let package = Package(
             ]
         ),
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),
+        .testTarget(name: "LapCatSpeechTests", dependencies: ["LapCatSpeech"]),
         .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"]),
         .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM"]),
     ],
