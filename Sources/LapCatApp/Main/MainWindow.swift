@@ -7,14 +7,18 @@ import SwiftUI
 /// search and actions live in the views themselves rather than in `.toolbar`/`.searchable`.
 struct MainWindow: View {
     @Environment(AppState.self) private var appState
-    @State private var navigation = MeetingNavigation()
     @State private var searchText = ""
 
     var body: some View {
+        @Bindable var navigation = appState.navigation
         NavigationSplitView {
             VStack(spacing: 0) {
                 sidebarHeader
-                MeetingListView(filter: filter, selection: $navigation.selectedMeetingID)
+                if let query = searchQuery {
+                    SearchResultsView(query: query)
+                } else {
+                    MeetingListView(filter: filter, selection: $navigation.selectedMeetingID)
+                }
             }
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
         } detail: {
@@ -30,6 +34,12 @@ struct MainWindow: View {
             // A recording that starts shows itself.
             if let id { navigation.selectedMeetingID = id }
         }
+    }
+
+    /// The sidebar shows search results instead of the meeting list from two characters on.
+    private var searchQuery: String? {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return query.count >= 2 ? query : nil
     }
 
     private var filter: MeetingFilter {

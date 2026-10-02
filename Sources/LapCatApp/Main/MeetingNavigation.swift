@@ -9,7 +9,7 @@ import Observation
 @Observable @MainActor
 final class MeetingNavigation {
     enum Tab: Hashable {
-        case notes, enhanced, transcript
+        case notes, enhanced, transcript, chat
     }
 
     /// A one-shot request to scroll the transcript to a segment; a new token re-triggers the same id.
@@ -41,6 +41,20 @@ final class MeetingNavigation {
         switch action {
         case .transcriptSegment(let id): reveal(segmentID: id)
         case .otherMeeting(let meetingID, let id): show(meetingID: meetingID, segmentID: id)
+        }
+    }
+
+    /// Opens a search hit's meeting on the tab the hit came from.
+    func open(_ hit: SearchHit) {
+        switch SearchHitTarget(hit) {
+        case .transcript(let segmentID): show(meetingID: hit.meetingID, segmentID: segmentID)
+        case .notes:
+            selectedMeetingID = hit.meetingID
+            tab = .notes
+        case .enhanced:
+            selectedMeetingID = hit.meetingID
+            tab = .enhanced
+        case .meeting: selectedMeetingID = hit.meetingID
         }
     }
 }

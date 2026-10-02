@@ -17,7 +17,10 @@ final class AppState {
     private(set) var permissionStatuses: [Permission: PermissionStatus] = [:]
     /// Last start/stop failure, shown in the menu.
     private(set) var sessionError: String?
-    @ObservationIgnored private let windows = WindowPresenter()
+    /// What the main window shows; shared so other windows (Ask across meetings) can open a meeting in it.
+    let navigation = MeetingNavigation()
+    /// Internal so feature extensions on `AppState` can host their own windows.
+    @ObservationIgnored let windows = WindowPresenter()
     private static let logger = Logger(subsystem: "com.lapcat.app", category: "AppState")
 
     init(settings: AppSettings, store: Store) {
