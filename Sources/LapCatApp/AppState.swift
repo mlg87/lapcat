@@ -1,5 +1,7 @@
 import LapCatCore
+import LapCatSpeech
 import Observation
+import os
 import SwiftUI
 
 /// App-wide state; one instance, injected with `.environment(appState)`.
@@ -8,14 +10,71 @@ final class AppState {
     let settings: AppSettings
     let store: Store
     let llm: LLMServices
+    let speech: SpeechServices
+    let session: SessionController
+    let pipeline: PostMeetingPipeline
     private(set) var permissionStatuses: [Permission: PermissionStatus] = [:]
+    /// Last start/stop failure, shown in the menu.
+    private(set) var sessionError: String?
     @ObservationIgnored private let windows = WindowPresenter()
+    private static let logger = Logger(subsystem: "com.lapcat.app", category: "AppState")
 
     init(settings: AppSettings, store: Store) {
         self.settings = settings
         self.store = store
         self.llm = LLMServices(settings: settings)
+        let speech = SpeechServices()
+        self.speech = speech
+        let session = SessionController(store: store, settings: settings, speech: speech)
+        self.session = session
+        let pipeline = PostMeetingPipeline(store: store, speech: speech) { @MainActor in
+            PipelineConfig(speech: session.speechConfig, offlineOnly: settings.llmOfflineOnly, retention: settings.audioRetention)
+        }
+        self.pipeline = pipeline
+        session.onEnded = { meetingID in Task { await pipeline.enqueue(meetingID) } }
+        SpeechServices.setOffline(settings.llmOfflineOnly)
     }
+
+    /// Launch: meetings interrupted mid-recording or mid-processing resume processing.
+    func resumeInterruptedMeetings() async {
+        do {
+            for id in try await store.recoverInterruptedMeetings() { await pipeline.enqueue(id) }
+        } catch {
+            Self.logger.error("crash recovery failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    /// Loads the live transcription model in the background (when it is already downloaded)
+    /// so the first utterance of the first recording does not wait for it.
+    func warmUpLiveEngine() {
+        let config = session.speechConfig
+        guard let file = EngineSelector(config: config).liveEngine().requiredModelFile,
+              FileManager.default.fileExists(atPath: config.modelsDirectory.appendingPathComponent(file).path)
+        else { return }
+        let speech = speech
+        Task.detached(priority: .utility) {
+            try? await speech.liveEngine(config: config).load()
+        }
+    }
+
+    func startNewNote() {
+        guard session.state == .idle else {
+            showMainWindow()
+            return
+        }
+        Task {
+            do {
+                sessionError = nil
+                try await session.startNewNote()
+            } catch {
+                sessionError = "Could not start recording: \(error)"
+                Self.logger.error("start failed: \(String(describing: error), privacy: .public)")
+            }
+        }
+    }
+
+    func togglePause() { Task { await session.togglePause() } }
+    func endSession() { Task { await session.end() } }
 
     var hotKeys: HotKeyBindings { settings.hotKeys }
 

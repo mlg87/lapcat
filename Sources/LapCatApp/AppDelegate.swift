@@ -21,9 +21,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        HotKeyCenter.shared.setHandler(for: .open) { [appState] in appState.showMainWindow() }
+        let state = appState
+        HotKeyCenter.shared.setHandler(for: .open) { state.showMainWindow() }
+        HotKeyCenter.shared.setHandler(for: .newNote) { state.startNewNote() }
+        HotKeyCenter.shared.setHandler(for: .end) { state.endSession() }
+        HotKeyCenter.shared.setHandler(for: .pauseResume) { state.togglePause() }
         HotKeyCenter.shared.register(appState.hotKeys)
         if !appState.onboardingCompleted { appState.showPermissions() }
+        Task { await state.resumeInterruptedMeetings() }
+        state.warmUpLiveEngine()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
