@@ -55,8 +55,9 @@ public enum PermissionStatus: String, Sendable {
 
 /// Queries and requests the TCC permissions LapCat needs.
 ///
-/// System Audio and Automation have no query API: they report `unknown` until a
-/// successful process tap / browser AppleScript probe calls `markGranted`.
+/// System Audio has no public API; it goes through `SystemAudioTCC` (private TCC calls).
+/// Automation has no query API: it reports `unknown` until a browser AppleScript probe
+/// calls `markGranted`.
 @MainActor
 public enum Permissions {
     private static let observedKey = "permissions.observedGranted"
@@ -99,7 +100,10 @@ public enum Permissions {
             }
         case .screenRecording:
             return CGPreflightScreenCaptureAccess() ? .granted : .notDetermined
-        case .systemAudio, .automation:
+        case .systemAudio:
+            if let status = SystemAudioTCC.preflight() { return status }
+            return observedGranted(permission) ? .granted : .unknown
+        case .automation:
             return observedGranted(permission) ? .granted : .unknown
         }
     }
@@ -118,7 +122,13 @@ public enum Permissions {
             _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
         case .screenRecording:
             _ = CGRequestScreenCaptureAccess()
-        case .systemAudio, .automation:
+        case .systemAudio:
+            switch await SystemAudioTCC.request() {
+            case true?: markGranted(.systemAudio)
+            // Denied earlier: macOS will not prompt again; the toggle is in System Settings.
+            case false?, nil: openSettings(permission)
+            }
+        case .automation:
             openSettings(permission)
         }
     }
