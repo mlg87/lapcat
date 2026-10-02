@@ -1,0 +1,32 @@
+[
+  {
+    "id": "follow-up-email",
+    "name": "Follow-up email",
+    "slash_command": "/follow-up",
+    "prompt": "Draft a follow-up email to the attendees summarizing decisions, action items with owners and dates, and open questions. Keep it under 200 words."
+  },
+  {
+    "id": "action-items",
+    "name": "Action items",
+    "slash_command": "/actions",
+    "prompt": "List every action item as `- [ ] owner — task (due)` grouped by owner; cite segments."
+  },
+  {
+    "id": "decisions",
+    "name": "Decisions",
+    "slash_command": "/decisions",
+    "prompt": "List the decisions made, each with who decided and the rationale; cite segments."
+  },
+  {
+    "id": "open-questions",
+    "name": "Open questions",
+    "slash_command": "/questions",
+    "prompt": "List unresolved questions and who should answer them; cite segments."
+  },
+  {
+    "id": "my-commitments",
+    "name": "My commitments",
+    "slash_command": "/mine",
+    "prompt": "List everything I (Me) committed to do, with any dates mentioned; cite segments."
+  }
+]
