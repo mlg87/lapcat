@@ -20,6 +20,29 @@ private actor FakeEngine: TranscriptionEngine {
     func unload() async {}
 }
 
+/// Engine whose `load()` blocks until `release()`, like whisper waiting on a shader compile.
+private actor GatedEngine: TranscriptionEngine {
+    nonisolated let id = "gated"
+    private var released = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private(set) var transcribedOffsets: [Int] = []
+
+    func release() {
+        released = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+    func load() async throws {
+        if !released { await withCheckedContinuation { waiters.append($0) } }
+    }
+    func transcribe(_ samples16k: [Float], offsetMs: Int) async throws -> [TranscribedSegment] {
+        transcribedOffsets.append(offsetMs)
+        return [TranscribedSegment(tStartMs: offsetMs, tEndMs: offsetMs + samples16k.count / 16, text: "u\(offsetMs)")]
+    }
+    func transcribeFile(_ url: URL, progress: @Sendable (Double) -> Void) async throws -> [TranscribedSegment] { [] }
+    func unload() async {}
+}
+
 struct LiveTranscriberTests {
     private func makeStore() throws -> (Store, String) {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -38,6 +61,25 @@ struct LiveTranscriberTests {
         }
         out += (0..<Int(silence * 16_000)).map { _ in noise() }
         return out
+    }
+
+    @Test func stalledEngineKeepsOnlyTheNewestQueuedSpeechWithinTheCap() async throws {
+        let (store, _) = try makeStore()
+        let meeting = try await store.createMeeting(title: "t", startedBy: .manual)
+        let engine = GatedEngine()
+        let transcriber = LiveTranscriber(
+            meetingID: meeting.id, channel: .system, store: store, hypothesisInterval: nil,
+            maxQueuedSeconds: 2.5, makeEngine: { engine })
+        // Six ~1 s utterances arrive in one call, before the worker has started, while the engine
+        // is still "loading": only the newest ones fitting in 2.5 s of queued speech survive.
+        await transcriber.append(bursts(6), tStartMs: 0)
+        await engine.release()
+        await transcriber.finish()
+
+        let starts = await engine.transcribedOffsets.map { Double($0) / 1000 }
+        try #require(starts.count == 2)
+        #expect(abs(starts[0] - 11.5) < 0.1) // fifth burst
+        #expect(abs(starts[1] - 14.0) < 0.1) // sixth burst
     }
 
     @Test func closedUtterancesBecomeOrderedNonOverlappingLiveSegments() async throws {

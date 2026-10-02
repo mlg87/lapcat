@@ -83,8 +83,14 @@ public struct EngineSelector: Sendable {
     }
 }
 
-/// Owns engine instances: one per engine id, created on first use and shared by live and final passes.
+/// Owns engine instances, created on first use: one per (role, engine id).
+///
+/// Live and final passes never share an instance even when they use the same model: an engine
+/// runs one call at a time, and a final pass over a long recording (tens of minutes on Intel)
+/// would otherwise hold up live transcription of the next meeting.
 public actor SpeechServices {
+    public enum Role: String, Sendable { case live, final }
+
     private var engines: [String: any TranscriptionEngine] = [:]
 
     public init() {}
@@ -95,20 +101,21 @@ public actor SpeechServices {
     }
 
     public func liveEngine(config: SpeechConfig) -> any TranscriptionEngine {
-        engine(for: EngineSelector(config: config).liveEngine(), modelsDirectory: config.modelsDirectory)
+        engine(for: EngineSelector(config: config).liveEngine(), role: .live, modelsDirectory: config.modelsDirectory)
     }
 
     public func finalEngine(config: SpeechConfig) -> any TranscriptionEngine {
-        engine(for: EngineSelector(config: config).finalEngine(), modelsDirectory: config.modelsDirectory)
+        engine(for: EngineSelector(config: config).finalEngine(), role: .final, modelsDirectory: config.modelsDirectory)
     }
 
-    public func engine(for spec: EngineSpec, modelsDirectory: URL) -> any TranscriptionEngine {
-        if let cached = engines[spec.id] { return cached }
+    public func engine(for spec: EngineSpec, role: Role, modelsDirectory: URL) -> any TranscriptionEngine {
+        let key = "\(role.rawValue):\(spec.id)"
+        if let cached = engines[key] { return cached }
         let engine: any TranscriptionEngine = switch spec {
         case .whisper(let file): WhisperCppEngine(modelURL: modelsDirectory.appending(path: file, directoryHint: .notDirectory))
         case .parakeet(let version): ParakeetEngine(version: version)
         }
-        engines[spec.id] = engine
+        engines[key] = engine
         return engine
     }
 
