@@ -65,6 +65,7 @@ struct MenuBarContent: View {
             Button("End \(keys[.end].displayString)") { appState.endSession() }
         }
         Button("Open LapCat \(keys[.open].displayString)") { appState.showMainWindow() }
+        Button("Ask across meetings…") { appState.showAskWindow() }
         Divider()
         Button("Permissions…") { appState.showPermissions() }
         Button("Settings…") { appState.showSettings() }
