@@ -5,7 +5,7 @@ let rpath: [LinkerSetting] = [
     .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"]),
 ]
 
-let libraries: [Target.Dependency] = ["LapCatCore", "LapCatSpeech", "LapCatLLM", "LapCatAudio"]
+let libraries: [Target.Dependency] = ["LapCatCore", "LapCatSpeech", "LapCatLLM", "LapCatAudio", "LapCatSpeakers"]
 
 let package = Package(
     name: "LapCat",
@@ -35,6 +35,7 @@ let package = Package(
         ),
         .target(name: "LapCatAudio"),
         .target(name: "LapCatLLM", dependencies: ["LapCatCore"]),
+        .target(name: "LapCatSpeakers", dependencies: ["LapCatCore"]),
         .executableTarget(name: "LapCatApp", dependencies: libraries, linkerSettings: rpath),
         .executableTarget(
             name: "lapcat-dev",
@@ -47,6 +48,7 @@ let package = Package(
         .testTarget(name: "LapCatSpeechTests", dependencies: ["LapCatSpeech"]),
         .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"]),
         .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM", "LapCatCore"]),
+        .testTarget(name: "LapCatSpeakersTests", dependencies: ["LapCatSpeakers"]),
     ],
     swiftLanguageModes: [.v6]
 )
