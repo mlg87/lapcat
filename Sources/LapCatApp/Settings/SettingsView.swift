@@ -1,16 +1,59 @@
 import LapCatCore
 import SwiftUI
 
+/// Settings tabs as a sidebar: nine toolbar tabs do not fit the 680 pt window (they collapse
+/// into the toolbar overflow menu).
 struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gearshape") }
-            LLMSettingsView()
-                .tabItem { Label("AI", systemImage: "sparkles") }
+    enum Tab: String, CaseIterable, Identifiable {
+        case general = "General", audio = "Audio", transcription = "Transcription", ai = "AI", speakers = "Speakers"
+        case detection = "Detection", templates = "Templates", recipes = "Recipes", export = "Export"
+
+        var id: Self { self }
+
+        var symbol: String {
+            switch self {
+            case .general: "gearshape"
+            case .audio: "waveform"
+            case .transcription: "text.bubble"
+            case .ai: "sparkles"
+            case .speakers: "person.2"
+            case .detection: "bell.badge"
+            case .templates: "doc.text"
+            case .recipes: "list.bullet.rectangle"
+            case .export: "square.and.arrow.up"
+            }
         }
-        .frame(width: 640)
-        .padding(20)
+    }
+
+    @State private var selection: Tab = .general
+
+    var body: some View {
+        HStack(spacing: 0) {
+            List(Tab.allCases, selection: $selection) { tab in
+                Label(tab.rawValue, systemImage: tab.symbol).tag(tab)
+            }
+            .listStyle(.sidebar)
+            .frame(width: 170)
+            Divider()
+            detail
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(width: 680, height: 560)
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        switch selection {
+        case .general: GeneralSettingsView()
+        case .audio: AudioSettingsView()
+        case .transcription: TranscriptionSettingsView()
+        case .ai: LLMSettingsView()
+        case .speakers: SpeakersSettingsView()
+        case .detection: DetectionSettingsView()
+        case .templates: TemplatesSettingsView()
+        case .recipes: RecipesSettingsView()
+        case .export: ExportSettingsView()
+        }
     }
 }
 
@@ -18,11 +61,30 @@ struct GeneralSettingsView: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
+        @Bindable var settings = appState.settings
         Form {
+            Section("You") {
+                TextField("Display name", text: $settings.userDisplayName)
+                Text("Used for your own (“Me”) lines in transcripts and notes.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Global shortcuts") {
                 ForEach(HotKeyAction.allCases) { action in
                     KeyRecorderView(action: action)
                 }
+            }
+            Section("Consent") {
+                Toggle("Remind me to tell participants when a recording starts", isOn: $settings.consentReminderEnabled)
+                VStack(alignment: .leading) {
+                    Text("Disclosure message (copied from the reminder banner)")
+                    TextEditor(text: $settings.consentCannedMessage)
+                        .font(.body)
+                        .frame(height: 60)
+                }
+                Button("Restore default message") {
+                    settings.consentCannedMessage = AppSettings.Default.consentCannedMessage
+                }
+                .disabled(settings.consentCannedMessage == AppSettings.Default.consentCannedMessage)
             }
             Section("Permissions") {
                 Button("Show permissions checklist…") { appState.showPermissions() }
