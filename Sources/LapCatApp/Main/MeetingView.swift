@@ -118,7 +118,8 @@ struct MeetingView: View {
     }
 }
 
-/// Title field, status and provider badges, Pause/End while recording, Enhance menu.
+/// Star, title field, status and provider badges, Pause/End while recording, Enhance and Export
+/// menus; tags below.
 private struct MeetingHeader: View {
     let meeting: Meeting
     let enhancing: Bool
@@ -129,7 +130,17 @@ private struct MeetingHeader: View {
     @FocusState private var titleFocused: Bool
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            controls
+            TagEditor(meetingID: meeting.id)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+
+    private var controls: some View {
         HStack(spacing: 10) {
+            StarButton(meeting: meeting)
             TextField("Title", text: $title)
                 .textFieldStyle(.plain)
                 .font(.title2.weight(.semibold))
@@ -153,6 +164,7 @@ private struct MeetingHeader: View {
             } else {
                 EnhanceMenu(title: "Enhance", enhance: enhance)
             }
+            ExportMenu(meetingID: meeting.id)
             if meeting.status == .recording {
                 Toggle(isOn: $showLiveTranscript) {
                     Label("Live transcript", systemImage: "text.bubble")
@@ -161,8 +173,6 @@ private struct MeetingHeader: View {
                 .help("Show or hide the live transcript")
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
     }
 
     private var isActiveRecording: Bool { appState.session.meetingID == meeting.id && meeting.status == .recording }
