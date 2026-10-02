@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.lapcat.app</string>
+	<key>CFBundleName</key>
+	<string>LapCat</string>
+	<key>CFBundleDisplayName</key>
+	<string>LapCat</string>
+	<key>CFBundleExecutable</key>
+	<string>LapCat</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.2</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>LapCat records your microphone as the “Me” channel of a meeting you start.</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>LapCat records the meeting app’s audio as the “Them” channel of a meeting you start.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>LapCat reads your calendar to title meetings and list attendees.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>LapCat asks your browser for the current tab to detect Google Meet calls.</string>
+</dict>
+</plist>
