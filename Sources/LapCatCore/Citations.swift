@@ -57,6 +57,27 @@ public enum Citations {
         }
     }
 
+    private static let barePattern = try! NSRegularExpression(pattern: #"\[\[(\d+)\]\]"#)
+
+    /// Rewrites bare `[[ID]]` markers to `[[s:ID]]` when `ID` is one of `validSegmentIDs`.
+    ///
+    /// Small local models keep the transcript's `[ID]` line prefix and drop the `s:`; without this
+    /// their notes would carry no usable citations. Unknown bare numbers are left untouched.
+    public static func normalizingBareSegmentIDs(_ markdown: String, validSegmentIDs: Set<Int64>) -> String {
+        let text = markdown as NSString
+        var result = ""
+        var cursor = 0
+        for match in barePattern.matches(in: markdown, range: NSRange(location: 0, length: text.length)) {
+            let idRange = match.range(at: 1)
+            guard let id = Int64(text.substring(with: idRange)), validSegmentIDs.contains(id) else { continue }
+            result += text.substring(with: NSRange(location: cursor, length: match.range.location - cursor))
+            result += "[[s:\(id)]]"
+            cursor = match.range.location + match.range.length
+        }
+        result += text.substring(from: cursor)
+        return result
+    }
+
     /// Every well-formed marker in `text`, in order of appearance. Ids that overflow `Int64` are skipped.
     public static func references(in text: String) -> [CitationRef] {
         matches(in: text).compactMap(\.ref)

@@ -9,14 +9,28 @@ cd "$(dirname "$0")/.."
 config="${1:-debug}"
 identity="${LAPCAT_CODESIGN_IDENTITY:-LapCat Dev}"
 
+app="build/LapCat.app"
+contents="$app/Contents"
+
 case "$config" in
-  debug) build_args=(-c debug) ;;
-  release) build_args=(-c release --arch arm64 --arch x86_64) ;;
+  debug)
+    swift build -c debug --product LapCat
+    bin_dir="$(swift build -c debug --show-bin-path)"
+    executables=("$bin_dir/LapCat")
+    ;;
+  release)
+    # `swift build --arch a --arch b` needs Xcode's xcbuild; the Command Line Tools can only build
+    # one triple at a time, so each architecture is built separately and joined with lipo.
+    executables=()
+    for triple in arm64-apple-macosx14.2 x86_64-apple-macosx14.2; do
+      swift build -c release --triple "$triple" --product LapCat
+      bin_dir="$(swift build -c release --triple "$triple" --show-bin-path)"
+      executables+=("$bin_dir/LapCat")
+    done
+    # Resource bundles are architecture-independent; $bin_dir (the last triple) supplies them.
+    ;;
   *) echo "usage: $0 [debug|release]" >&2; exit 64 ;;
 esac
-
-swift build "${build_args[@]}" --product LapCat
-bin_dir="$(swift build "${build_args[@]}" --show-bin-path)"
 
 framework="$(find .build/artifacts -type d -name whisper.framework -path '*macos-arm64_x86_64*' | head -1)"
 if [[ -z "$framework" ]]; then
@@ -24,12 +38,14 @@ if [[ -z "$framework" ]]; then
   exit 1
 fi
 
-app="build/LapCat.app"
-contents="$app/Contents"
 rm -rf "$app"
 mkdir -p "$contents/MacOS" "$contents/Resources" "$contents/Frameworks" "$contents/Helpers"
 
-cp "$bin_dir/LapCat" "$contents/MacOS/LapCat"
+if [[ ${#executables[@]} -gt 1 ]]; then
+  lipo -create "${executables[@]}" -output "$contents/MacOS/LapCat"
+else
+  cp "${executables[0]}" "$contents/MacOS/LapCat"
+fi
 cp Resources/Info.plist "$contents/Info.plist"
 for bundle in "$bin_dir"/*.bundle; do
   [[ -e "$bundle" ]] && cp -R "$bundle" "$contents/Resources/"
