@@ -12,6 +12,9 @@ commands:
                record mic + system audio, print per-second RMS and file formats
   llm-probe    claude-cli|anthropic-api|local "prompt": one LLM round-trip, raw and parsed
   diarize-bench <audio-file>: speaker diarization wall time + turns
+  axdump <bundle-id> [--depth 12] [--interval 0.5] [--count N] [--observe [selectors.json]]
+               print the app's accessibility tree, re-dumping every interval with change markers;
+               --observe prints the Zoom/Meet adapter's speaker observations instead
 """
 
 let args = Array(CommandLine.arguments.dropFirst())
@@ -27,6 +30,8 @@ case "llm-probe":
     exit(await LLMProbe.run(Array(args.dropFirst())))
 case "diarize-bench":
     exit(await DiarizeBench.run(Array(args.dropFirst())))
+case "axdump":
+    exit(await AXDump.run(Array(args.dropFirst())))
 default:
     FileHandle.standardError.write(Data(usage.utf8))
     exit(args.isEmpty ? 0 : 64)
