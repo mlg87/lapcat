@@ -39,6 +39,7 @@ let package = Package(
             ]
         ),
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),
+        .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM"]),
     ],
     swiftLanguageModes: [.v6]
 )
