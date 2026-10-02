@@ -1,5 +1,6 @@
 import LapCatCore
 import LapCatLLM
+import LapCatSpeech
 import SwiftUI
 
 /// Settings → AI: provider order, per-task models, API key, `claude` path, offline mode, tests.
@@ -77,14 +78,25 @@ struct LLMSettingsView: View {
             }
 
             Section("Local model") {
-                LabeledContent("File", value: appState.llm.localModelURL.path)
-                if !FileManager.default.fileExists(atPath: appState.llm.localModelURL.path) {
+                let file = appState.llm.localModelURL
+                if let entry = ModelCatalog.entry(id: file.lastPathComponent) {
+                    ModelDownloadRow(entry: entry)
+                    if settings.llmOfflineOnly { OfflineDownloadNote() }
+                } else {
+                    LabeledContent("File", value: file.path)
+                    if ModelDownloads.shared.state(of: file.lastPathComponent) != .available {
+                        Text("Not in LapCat’s catalog — place the file at this path yourself.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                if ModelDownloads.shared.state(of: file.lastPathComponent) != .available {
                     Text("Not downloaded yet — the Local provider is unavailable until it is.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
+        .onAppear { ModelDownloads.shared.refresh() }
     }
 
     @ViewBuilder
