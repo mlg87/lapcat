@@ -50,6 +50,11 @@ struct MenuBarContent: View {
         if let warning = session.warning { Text("⚠︎ \(warning)") }
         if let error = appState.sessionError { Text("⚠︎ \(error)") }
         Divider()
+        if session.state == .idle, let prompt = appState.detection.pending {
+            Button("Record “\(prompt.title)”?") { appState.detection.accept() }
+            Button("Not now") { appState.detection.dismiss() }
+            Divider()
+        }
         switch session.state {
         case .idle:
             Button("New Note \(keys[.newNote].displayString)") { appState.startNewNote() }

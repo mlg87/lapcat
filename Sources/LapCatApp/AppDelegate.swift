@@ -28,8 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HotKeyCenter.shared.setHandler(for: .pauseResume) { state.togglePause() }
         HotKeyCenter.shared.register(appState.hotKeys)
         if !appState.onboardingCompleted { appState.showPermissions() }
-        Task { await state.resumeInterruptedMeetings() }
+        Task {
+            await state.seedLibraries()
+            await state.resumeInterruptedMeetings()
+        }
         state.warmUpLiveEngine()
+        state.detection.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
