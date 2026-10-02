@@ -24,10 +24,10 @@ public actor WhisperCppEngine: TranscriptionEngine {
         guard FileManager.default.fileExists(atPath: modelURL.path) else {
             throw SpeechError.modelMissing(modelURL)
         }
+        WhisperRuntime.configure()
         whisper_log_set({ _, _, _ in }, nil)
         var params = whisper_context_default_params()
-        // Metal on Apple Silicon. Intel Macs run CPU-only: ggml compiles its Metal library from
-        // source on Intel/AMD GPUs, which stalled model load for minutes in the stt-bench spike.
+        // Metal on Apple Silicon; Intel Macs run CPU-only (see WhisperRuntime.configure).
         #if arch(arm64)
         params.use_gpu = true
         #else

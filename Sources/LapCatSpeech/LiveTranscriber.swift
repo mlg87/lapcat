@@ -8,8 +8,10 @@ import os
 /// Audio goes through `UtteranceChunker`; each closed utterance is transcribed and appended,
 /// and (when hypotheses are on) the channel's single volatile row is replaced with a fresh guess.
 /// Work runs one item at a time per channel. When more than `maxBacklog` closed utterances are
-/// waiting, hypotheses are skipped and `laggingBehind` is reported — audio is never dropped,
-/// since it is already on disk and the final pass re-transcribes it.
+/// waiting, hypotheses are skipped and `laggingBehind` is reported. If queued speech exceeds
+/// `maxQueuedSeconds` (the engine is stalled, e.g. still loading), the oldest utterances are
+/// dropped from the live transcript so memory stays bounded — the audio is on disk and the
+/// final pass re-transcribes all of it.
 public actor LiveTranscriber {
     public enum Event: Sendable, Equatable {
         /// Queued speech the engine has not reached yet.
@@ -34,6 +36,7 @@ public actor LiveTranscriber {
     private let makeEngine: @Sendable () async throws -> any TranscriptionEngine
     private let hypothesisInterval: TimeInterval?
     private let maxBacklog: Int
+    private let maxQueuedSeconds: Double
 
     private var chunker: UtteranceChunker?
     private var queue: [Work] = []
@@ -47,7 +50,7 @@ public actor LiveTranscriber {
     /// `makeEngine` is called once, on the first utterance (it may download and load a model).
     public init(
         meetingID: String, channel: Channel, store: Store,
-        hypothesisInterval: TimeInterval?, maxBacklog: Int = 3,
+        hypothesisInterval: TimeInterval?, maxBacklog: Int = 3, maxQueuedSeconds: Double = 120,
         makeEngine: @escaping @Sendable () async throws -> any TranscriptionEngine
     ) {
         self.meetingID = meetingID
@@ -55,6 +58,7 @@ public actor LiveTranscriber {
         self.store = store
         self.hypothesisInterval = hypothesisInterval
         self.maxBacklog = maxBacklog
+        self.maxQueuedSeconds = maxQueuedSeconds
         self.makeEngine = makeEngine
         (events, continuation) = AsyncStream.makeStream(of: Event.self, bufferingPolicy: .bufferingNewest(16))
     }
@@ -101,6 +105,7 @@ public actor LiveTranscriber {
             case .closed(let samples, let tStartMs, let tEndMs):
                 queue.removeAll { if case .hypothesis = $0 { true } else { false } }
                 queue.append(.utterance(samples: samples, tStartMs: tStartMs, tEndMs: tEndMs))
+                dropOldestBeyondCap()
             }
         }
         reportLag()
@@ -111,13 +116,28 @@ public actor LiveTranscriber {
         queue.reduce(0) { count, work in if case .utterance = work { count + 1 } else { count } }
     }
 
+    private var queuedSeconds: Double {
+        queue.reduce(0.0) { total, work in
+            if case .utterance(_, let start, let end) = work { total + Double(end - start) / 1000 } else { total }
+        }
+    }
+
+    private func dropOldestBeyondCap() {
+        var dropped = 0
+        while queuedSeconds > maxQueuedSeconds,
+              let index = queue.firstIndex(where: { if case .utterance = $0 { true } else { false } }) {
+            queue.remove(at: index)
+            dropped += 1
+        }
+        if dropped > 0 {
+            Self.logger.warning("live \(self.channel.rawValue, privacy: .public): dropped \(dropped) queued utterance(s); final pass will cover them")
+        }
+    }
+
     private func reportLag() {
         if backlog > maxBacklog {
-            let seconds = queue.reduce(0.0) { total, work in
-                if case .utterance(_, let start, let end) = work { total + Double(end - start) / 1000 } else { total }
-            }
             lagging = true
-            continuation.yield(.laggingBehind(channel, seconds: seconds))
+            continuation.yield(.laggingBehind(channel, seconds: queuedSeconds))
         } else if lagging, backlog == 0 {
             lagging = false
             continuation.yield(.caughtUp(channel))
