@@ -31,7 +31,7 @@ let package = Package(
         ),
         .target(
             name: "LapCatSpeech",
-            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore"]
+            dependencies: ["whisper", .product(name: "FluidAudio", package: "FluidAudio"), "LapCatCore", "LapCatAudio"]
         ),
         .target(name: "LapCatAudio"),
         .target(name: "LapCatLLM", dependencies: ["LapCatCore"]),
