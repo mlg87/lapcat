@@ -12,6 +12,7 @@ struct SpeakerEditor: View {
     @Environment(AppState.self) private var appState
     @State private var name = ""
     @State private var error: String?
+    @FocusState private var nameFocused: Bool
 
     private var participant: Participant? {
         paragraph.participantID.flatMap { id in participants.first { $0.id == id } }
@@ -29,6 +30,7 @@ struct SpeakerEditor: View {
                 TextField("Name", text: $name)
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 180)
+                    .focused($nameFocused)
                     .onSubmit(rename)
                 Button("Rename", action: rename)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -68,7 +70,10 @@ struct SpeakerEditor: View {
         }
         .padding(14)
         .frame(width: 320)
-        .onAppear { name = speaker }
+        .onAppear {
+            name = speaker
+            nameFocused = true
+        }
     }
 
     private func rename() {
