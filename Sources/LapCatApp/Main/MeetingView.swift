@@ -202,7 +202,6 @@ struct EnhanceMenu: View {
         }
         .fixedSize()
         .task {
-            if (try? await appState.store.templates())?.isEmpty ?? true { try? await appState.syncTemplates() }
             templates = (try? await appState.store.templates()) ?? []
         }
     }
@@ -232,28 +231,12 @@ struct MeetingStatusBadge: View {
                 Badge(text: "Recording", systemImage: "record.circle", tint: .red)
             }
         case .processing:
-            Badge(text: "Processing: \(Self.stepName(meeting.processingStep))", systemImage: "gearshape.2", tint: .blue)
+            let step = meeting.processingStep.map { PostMeetingPipeline.Step(rawValue: $0)?.displayName ?? $0 } ?? "Queued"
+            Badge(text: "Processing: \(step)", systemImage: "gearshape.2", tint: .blue)
         case .ready:
             Badge(text: "Ready", systemImage: "checkmark.circle", tint: .green)
         case .error:
             Badge(text: "Error", systemImage: "exclamationmark.triangle", tint: .orange)
-        }
-    }
-
-    static func stepName(_ step: String?) -> String {
-        switch step {
-        case nil: "queued"
-        case "quick_enhance", "enhance": "enhancing"
-        case "final_stt_mic": "transcribing Me"
-        case "final_stt_system": "transcribing Them"
-        case "diarize": "separating speakers"
-        case "name_map": "naming speakers"
-        case "echo_dedup": "removing echo"
-        case "merge_live": "merging edits"
-        case "reindex": "indexing"
-        case "auto_export": "exporting"
-        case "retention": "cleaning up"
-        case let other?: other.replacingOccurrences(of: "_", with: " ")
         }
     }
 }

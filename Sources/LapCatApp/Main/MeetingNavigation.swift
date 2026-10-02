@@ -18,7 +18,10 @@ final class MeetingNavigation {
         var token = UUID()
     }
 
-    var selectedMeetingID: String?
+    /// Changing meetings opens the Transcript tab.
+    var selectedMeetingID: String? {
+        didSet { if selectedMeetingID != oldValue { tab = .transcript } }
+    }
     var tab: Tab = .transcript
     var segmentRequest: SegmentRequest?
 
@@ -47,15 +50,9 @@ extension AppState {
     /// `providerID` pins the request to one provider instead of the configured order.
     @discardableResult
     func enhance(meetingID: String, templateID: String, providerID: String?) async throws -> EnhancedNote {
-        if try await store.templates().isEmpty { try await syncTemplates() }
         let note = try await Enhancer(store: store, router: llm.router)
             .enhance(meetingID: meetingID, templateID: templateID, providerOverride: providerID)
         try await store.reindexFTS(meetingID: meetingID)
         return note
-    }
-
-    /// Built-in and custom templates into the `template` table.
-    func syncTemplates() async throws {
-        try await TemplateLibrary.sync(store: store, customDirectory: Paths.standard.templates)
     }
 }
