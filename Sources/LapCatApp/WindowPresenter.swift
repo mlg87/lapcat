@@ -28,6 +28,9 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.identifier = NSUserInterfaceItemIdentifier(id)
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: content())
+        // Assigning the hosting controller shrinks the window to SwiftUI's initial (near-zero) fitting
+        // size; restore the requested size before centering, or the window grows offscreen.
+        window.setContentSize(size)
         window.setFrameAutosaveName("LapCat.\(id)")
         if !window.setFrameUsingName("LapCat.\(id)") { window.center() }
         window.delegate = self
