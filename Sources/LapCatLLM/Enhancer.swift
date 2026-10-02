@@ -82,8 +82,9 @@ public actor Enhancer {
                     meeting: context, templateName: template.name, templateBody: template.bodyMarkdown, rawNotes: rawNotes, transcript: transcript))]))
         }
 
-        let markdown = Self.unfenced(result.response.text)
-        let citations = Citations.parse(markdown, validSegmentIDs: Set(segments.compactMap(\.id)))
+        let segmentIDs = Set(segments.compactMap(\.id))
+        let markdown = Citations.normalizingBareSegmentIDs(Self.unfenced(result.response.text), validSegmentIDs: segmentIDs)
+        let citations = Citations.parse(markdown, validSegmentIDs: segmentIDs)
         let note = try await store.insertEnhancedNote(EnhancedNote(
             meetingID: meetingID, templateID: template.id, provider: result.providerID, model: result.response.model,
             markdown: markdown, citationsJSON: Citations.json(citations),

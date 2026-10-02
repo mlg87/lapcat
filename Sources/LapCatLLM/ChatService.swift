@@ -59,6 +59,11 @@ public final class ChatService: Sendable {
                         }
                     }
                     try Task.checkCancellation()
+                    // A meeting-scoped answer may cite bare `[[ID]]` (small local models); store `[[s:ID]]`.
+                    if scope == .meeting, let scopeRef {
+                        let ids = Set(try await store.segments(meetingID: scopeRef).compactMap(\.id))
+                        answer = Citations.normalizingBareSegmentIDs(answer, validSegmentIDs: ids)
+                    }
                     let citations = try await citationsJSON(answer, scope: scope, scopeRef: scopeRef)
                     try await store.appendChatMessage(ChatMessage(
                         threadID: thread.id, role: .assistant, content: answer, citationsJSON: citations,

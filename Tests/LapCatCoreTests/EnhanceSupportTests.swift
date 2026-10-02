@@ -120,6 +120,13 @@ struct TranscriptFormatterTests {
 }
 
 struct CitationsTests {
+    @Test func bareIDsOfKnownSegmentsBecomeSegmentCitationsOthersAreLeftAlone() {
+        let markdown = "- Ships Friday [[117]][[118]] and [[s:119]]\n- Footnote [[9999]] stays; [117] is not a marker"
+        let normalized = Citations.normalizingBareSegmentIDs(markdown, validSegmentIDs: [117, 118, 119])
+        #expect(normalized == "- Ships Friday [[s:117]][[s:118]] and [[s:119]]\n- Footnote [[9999]] stays; [117] is not a marker")
+        #expect(Citations.parse(normalized, validSegmentIDs: [117, 118, 119]).first?.segmentIDs == [117, 118, 119])
+    }
+
     @Test func parsesPerLineAndDropsUnknownIds() {
         let markdown = """
             ## Decisions
