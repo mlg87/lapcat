@@ -1,31 +1,35 @@
 import LapCatCore
 import SwiftUI
 
-/// Meetings matching `filter`, newest first, in Today / Yesterday / This week / Earlier sections.
+/// Folders, then the meetings matching `filter`, newest first, in Today / Yesterday / This week /
+/// Earlier sections. Meeting rows star in place, drag onto a folder, or move via their context menu.
 struct MeetingListView: View {
     let filter: MeetingFilter
     @Binding var selection: String?
     @Environment(AppState.self) private var appState
+    @Environment(SidebarOrganizer.self) private var organizer
     @State private var meetings: [Meeting] = []
     @State private var loaded = false
 
     var body: some View {
         List(selection: $selection) {
+            FolderSection()
             ForEach(MeetingListSection.group(meetings), id: \.0) { section, items in
                 Section(section.rawValue) {
                     ForEach(items) { meeting in
-                        MeetingRow(meeting: meeting).tag(meeting.id)
+                        MeetingRow(meeting: meeting)
+                            .tag(meeting.id)
+                            .draggable(meeting.id)
+                            .contextMenu { moveMenu(meeting) }
                     }
                 }
             }
-        }
-        .listStyle(.sidebar)
-        .overlay {
             if loaded, meetings.isEmpty {
-                Text(filter.search == nil ? "No meetings yet" : "No matching meetings")
+                Text(isFiltered ? "No matching meetings" : "No meetings yet")
                     .foregroundStyle(.secondary)
             }
         }
+        .listStyle(.sidebar)
         .task(id: filter) {
             for await meetings in appState.store.observeMeetings(filter: filter) {
                 self.meetings = meetings
@@ -33,25 +37,45 @@ struct MeetingListView: View {
             }
         }
     }
+
+    private var isFiltered: Bool { filter != MeetingFilter() }
+
+    @ViewBuilder
+    private func moveMenu(_ meeting: Meeting) -> some View {
+        Menu("Move to Folder") {
+            Button("None") { organizer.move(meetingIDs: [meeting.id], toFolder: nil, store: appState.store) }
+                .disabled(meeting.folderID == nil)
+            Divider()
+            ForEach(organizer.folders) { folder in
+                Button(folder.name) { organizer.move(meetingIDs: [meeting.id], toFolder: folder.id, store: appState.store) }
+                    .disabled(meeting.folderID == folder.id)
+            }
+        }
+    }
 }
 
 private struct MeetingRow: View {
     let meeting: Meeting
+    @Environment(SidebarOrganizer.self) private var organizer
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(meeting.title).lineLimit(1)
-            HStack(spacing: 6) {
-                Text(meeting.startedAt, format: .dateTime.month(.abbreviated).day().hour().minute())
-                if meeting.status != .ready {
-                    MeetingStatusText(meeting: meeting)
+        HStack(alignment: .top, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(meeting.title).lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(meeting.startedAt, format: .dateTime.month(.abbreviated).day().hour().minute())
+                    if meeting.status != .ready {
+                        MeetingStatusText(meeting: meeting)
+                    }
+                    if organizer.listFilter.folderID == nil, let folder = organizer.folderName(id: meeting.folderID) {
+                        Label(folder, systemImage: "folder").lineLimit(1)
+                    }
                 }
-                if meeting.starred {
-                    Image(systemName: "star.fill").foregroundStyle(.yellow).accessibilityLabel("Starred")
-                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            StarButton(meeting: meeting)
         }
         .padding(.vertical, 2)
     }
