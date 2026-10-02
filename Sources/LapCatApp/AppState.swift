@@ -13,6 +13,7 @@ final class AppState {
     let speech: SpeechServices
     let session: SessionController
     let pipeline: PostMeetingPipeline
+    let detection: DetectionCoordinator
     private(set) var permissionStatuses: [Permission: PermissionStatus] = [:]
     /// Last start/stop failure, shown in the menu.
     private(set) var sessionError: String?
@@ -22,17 +23,37 @@ final class AppState {
     init(settings: AppSettings, store: Store) {
         self.settings = settings
         self.store = store
-        self.llm = LLMServices(settings: settings)
+        let llm = LLMServices(settings: settings)
+        self.llm = llm
         let speech = SpeechServices()
         self.speech = speech
         let session = SessionController(store: store, settings: settings, speech: speech)
         self.session = session
         let pipeline = PostMeetingPipeline(store: store, speech: speech) { @MainActor in
-            PipelineConfig(speech: session.speechConfig, offlineOnly: settings.llmOfflineOnly, retention: settings.audioRetention)
+            PipelineConfig(
+                speech: session.speechConfig, offlineOnly: settings.llmOfflineOnly, retention: settings.audioRetention,
+                meName: settings.userDisplayName, defaultTemplateID: settings.templateDefaultID,
+                autoExportFolder: settings.exportAutoExportFolder.map { URL(fileURLWithPath: $0, isDirectory: true) },
+                router: llm.router)
         }
         self.pipeline = pipeline
-        session.onEnded = { meetingID in Task { await pipeline.enqueue(meetingID) } }
+        let detection = DetectionCoordinator(session: session, settings: settings)
+        self.detection = detection
+        session.onEnded = { meetingID in
+            detection.sessionEnded()
+            Task { await pipeline.enqueue(meetingID) }
+        }
         SpeechServices.setOffline(settings.llmOfflineOnly)
+    }
+
+    /// Launch: built-in templates and recipes are (re)seeded, custom templates rescanned.
+    func seedLibraries() async {
+        do {
+            try await TemplateLibrary.sync(store: store, customDirectory: Paths.standard.templates)
+            try await RecipeLibrary.seed(store: store)
+        } catch {
+            Self.logger.error("seeding templates/recipes failed: \(String(describing: error), privacy: .public)")
+        }
     }
 
     /// Launch: meetings interrupted mid-recording or mid-processing resume processing.
