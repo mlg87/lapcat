@@ -9,7 +9,7 @@
  *                 to GitHub. Native `bd github sync` is deliberately unused: it
  *                 imports every closed issue and does not dedupe against our
  *                 `external_ref gh-N` refs (verified against bd 1.2.2).
- *   2. Sweep    — commits merged to origin/main whose subject carries `(lc-xxx)`
+ *   2. Sweep    — commits merged to origin/main whose PR body (squash body) carries `(lc-xxx)`
  *                 close the named bead. Merge is detected where the graph lives,
  *                 which is why this is not a GitHub Action (CI has no .beads/).
  *   3. Gates    — `bd gate check --type=gh` resolves PR-merge gates.
@@ -660,9 +660,9 @@ function readWatermark(): string {
  * bead id -> short sha of the newest commit naming it.
  *
  * Scans the whole commit message, not just the subject: this repo squash-merges
- * with `squash_merge_commit_message = COMMIT_MESSAGES`, so a multi-commit PR's
- * squash subject is the PR title and the branch commits' `(lc-xxx)` suffixes
- * survive only in the body.
+ * with `squash_merge_commit_message = PR_BODY`, so the squash subject is the PR
+ * title (which never carries a bead id) and the `(lc-xxx)` ids live in the PR
+ * body's `Beads:` line.
  */
 export function beadIdsInMessages(log: string): Map<string, string> {
   const named = new Map<string, string>();
