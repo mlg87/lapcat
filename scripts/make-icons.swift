@@ -1,5 +1,5 @@
 // Generates LapCat's app icon and menu-bar glyph from the designed artwork.
-//   swift scripts/make-icons.swift [source.png] [glyph-stroke-dilation-px, default 5]
+//   swift scripts/make-icons.swift [source.png] [outlineReach] [gapWiden] [thicken]
 // Writes Resources/AppIcon.icns and Resources/MenuBarIcon.png / MenuBarIcon@2x.png.
 import AppKit
 import CoreGraphics
@@ -75,41 +75,82 @@ try! iconutil.run()
 iconutil.waitUntilExit()
 guard iconutil.terminationStatus == 0 else { fail("iconutil failed") }
 
-// MARK: Menu-bar glyph — the line art as a black template image, strokes thickened to stay
-// legible at 18 pt.
+// MARK: Menu-bar glyph — a solid silhouette, like the filled system icons beside it.
+//
+// The artwork is outline drawing; at 18 pt its strokes are ~1 px and read as faint. Instead:
+// every enclosed region (head, body, tail, laptop) becomes solid, the outer outline merges into
+// it, the artwork's inner lines become cut-out gaps between the parts, the face features become
+// holes, and open strokes (the sound-wave) stay as heavy strokes.
 
 let work = 1200
 let workCtx = context(work, work)
 workCtx.draw(artwork, in: CGRect(x: 0, y: 0, width: work, height: work))
 let pixels = workCtx.data!.bindMemory(to: UInt8.self, capacity: work * work * 4)
 
-// Ink mask: dark pixels of the artwork (the cream background is light).
-var mask = [UInt8](repeating: 0, count: work * work)
+// Tuning, in work pixels (artwork strokes are ~29 px at this size). Optional overrides:
+//   swift scripts/make-icons.swift [source.png] [outlineReach] [gapWiden] [thicken]
+func arg(_ index: Int, _ fallback: Int) -> Int {
+    CommandLine.arguments.count > index ? Int(CommandLine.arguments[index]) ?? fallback : fallback
+}
+/// Ink this close to the outside counts as outline (solid); deeper ink is an inner line (gap).
+let outlineReach = arg(2, 36)
+/// How much wider the cut-out gaps and face holes are than the artwork's lines. 12 (with
+/// thicken 4) is the variant approved for the menu bar: the parts separate clearly at 18 pt.
+let gapWiden = arg(3, 12)
+/// Final growth of the whole shape, which mainly thickens the sound-wave strokes.
+let thicken = arg(4, 4)
+
+// Ink: dark pixels of the artwork (the cream background is light).
+var ink = [Bool](repeating: false, count: work * work)
 for i in 0..<(work * work) {
     let r = Double(pixels[i * 4]), g = Double(pixels[i * 4 + 1]), b = Double(pixels[i * 4 + 2])
     let a = Double(pixels[i * 4 + 3])
     let luma = a > 0 ? (0.299 * r + 0.587 * g + 0.114 * b) / a : 1
-    mask[i] = luma < 0.5 ? 255 : 0
+    ink[i] = luma < 0.5
 }
 
-// Dilate (square max filter, separable) so strokes survive downscaling. Larger values merge the
-// sound-wave arcs and the face at 18 pt; 5 was chosen by eye from previews.
-let radius = CommandLine.arguments.count > 2 ? Int(CommandLine.arguments[2]) ?? 5 : 5
-func dilate(_ input: [UInt8], horizontal: Bool) -> [UInt8] {
-    var output = input
-    for y in 0..<work {
-        for x in 0..<work where input[y * work + x] == 0 {
-            var hit = false
-            for d in -radius...radius {
-                let (xx, yy) = horizontal ? (x + d, y) : (x, y + d)
-                if xx >= 0, xx < work, yy >= 0, yy < work, input[yy * work + xx] != 0 { hit = true; break }
+/// Square dilation (separable sliding window), O(pixels) regardless of radius.
+func dilate(_ input: [Bool], _ radius: Int) -> [Bool] {
+    guard radius > 0 else { return input }
+    func pass(_ src: [Bool], horizontal: Bool) -> [Bool] {
+        var out = [Bool](repeating: false, count: src.count)
+        for line in 0..<work {
+            var count = 0
+            func at(_ i: Int) -> Bool { horizontal ? src[line * work + i] : src[i * work + line] }
+            for i in 0..<min(radius, work) where at(i) { count += 1 }
+            for i in 0..<work {
+                if i + radius < work, at(i + radius) { count += 1 }
+                if i - radius - 1 >= 0, at(i - radius - 1) { count -= 1 }
+                out[horizontal ? line * work + i : i * work + line] = count > 0
             }
-            if hit { output[y * work + x] = 255 }
         }
+        return out
     }
-    return output
+    return pass(pass(input, horizontal: true), horizontal: false)
 }
-mask = dilate(dilate(mask, horizontal: true), horizontal: false)
+
+// Outside: background reachable from the image border without crossing ink.
+var outside = [Bool](repeating: false, count: work * work)
+var stack: [Int] = []
+for i in 0..<work {
+    for p in [i, (work - 1) * work + i, i * work, i * work + work - 1] where !ink[p] && !outside[p] {
+        outside[p] = true
+        stack.append(p)
+    }
+}
+while let p = stack.popLast() {
+    let x = p % work, y = p / work
+    for (nx, ny) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] where nx >= 0 && nx < work && ny >= 0 && ny < work {
+        let n = ny * work + nx
+        if !ink[n] && !outside[n] { outside[n] = true; stack.append(n) }
+    }
+}
+
+let nearOutside = dilate(outside, outlineReach)
+let innerLines = dilate((0..<(work * work)).map { ink[$0] && !nearOutside[$0] }, gapWiden)
+var mask = [UInt8](repeating: 0, count: work * work)
+let solid = dilate((0..<(work * work)).map { !outside[$0] && !innerLines[$0] }, thicken)
+for i in 0..<(work * work) where solid[i] && !innerLines[i] { mask[i] = 255 }
 
 // Crop to the ink's bounding box.
 var (minX, minY, maxX, maxY) = (work, work, -1, -1)
