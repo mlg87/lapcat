@@ -116,6 +116,8 @@ The menu-bar menu has these items:
 - **Ask across meetings…**.
 - **Permissions…**.
 - **Settings…** (<kbd>⌘</kbd><kbd>,</kbd>).
+- **LapCat vX.Y.Z**: the version that you use. Click it to open its release notes on GitHub.
+- **Update available: vX.Y.Z…** when GitHub has a newer release. Click it to open the release notes of the new version.
 - **Quit LapCat** (<kbd>⌘</kbd><kbd>Q</kbd>).
 
 During a recording, the menu-bar icon changes to a record symbol and shows the elapsed time.
@@ -595,12 +597,13 @@ The first release is v0.1.0.
 ## Privacy
 
 > [!TIP]
-> To keep all text on your Mac, select the Local provider. To stop all model downloads, turn on **Offline only**.
+> To keep all text on your Mac, select the Local provider. To stop all model downloads and the update check, turn on **Offline only**.
 
 - LapCat records only after you start a note or click a prompt.
 - Audio stays on your Mac. LapCat transcribes it on your Mac.
 - LapCat sends transcript text and notes to the LLM provider that you select. With the Local provider, the text stays on your Mac.
 - LapCat downloads models from the internet. **Offline only** stops these downloads.
+- LapCat asks GitHub for the latest release when it starts and every 6 hours. The request sends no meeting data. **Offline only** stops this request.
 
 ## License
 

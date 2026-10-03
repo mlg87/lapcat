@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         state.warmUpLiveEngine()
         state.detection.start()
+        state.updates.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
