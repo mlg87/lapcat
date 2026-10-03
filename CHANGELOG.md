@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.3](https://github.com/mlg87/lapcat/compare/v0.1.2...v0.1.3) (2026-10-03)
+
+
+### Features
+
+* **app:** show the version and available updates in the menu-bar menu ([#56](https://github.com/mlg87/lapcat/issues/56)) ([68000a3](https://github.com/mlg87/lapcat/commit/68000a36cd4c9de4e72d9f949ce1f0323cf2f1d2)), closes [#53](https://github.com/mlg87/lapcat/issues/53)
+
+
+### Bug fixes
+
+* **audio:** record browser calls started from the detection prompt ([#50](https://github.com/mlg87/lapcat/issues/50)) ([914a566](https://github.com/mlg87/lapcat/commit/914a566be7ce492b9542ff1410c692016f097529)), closes [#49](https://github.com/mlg87/lapcat/issues/49)
+
+
+### Documentation
+
+* use GitHub rich Markdown features in the README ([#55](https://github.com/mlg87/lapcat/issues/55)) ([6dddafe](https://github.com/mlg87/lapcat/commit/6dddafe4cf5b8a721e3bddad5e984c42f384ea38)), closes [#54](https://github.com/mlg87/lapcat/issues/54)
+
 ## [0.1.2](https://github.com/mlg87/lapcat/compare/v0.1.1...v0.1.2) (2026-10-03)
 
 
