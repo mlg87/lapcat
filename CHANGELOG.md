@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/mlg87/lapcat/compare/v0.1.1...v0.1.2) (2026-10-03)
+
+
+### Features
+
+* delete a meeting from the meeting list or header ([#47](https://github.com/mlg87/lapcat/issues/47)) ([a4fd279](https://github.com/mlg87/lapcat/commit/a4fd27907ce8ec743baa21863ea9738c510d0f17)), closes [#46](https://github.com/mlg87/lapcat/issues/46)
+
 ## [0.1.1](https://github.com/mlg87/lapcat/compare/v0.1.0...v0.1.1) (2026-10-03)
 
 
