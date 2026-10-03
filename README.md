@@ -2,17 +2,45 @@
   <img src="docs/design/readme-header.png" alt="LapCat — a macOS menu-bar meeting notetaker" width="100%">
 </p>
 
-# LapCat
+<h1 align="center">LapCat</h1>
 
-[![ci](https://github.com/mlg87/lapcat/actions/workflows/ci.yml/badge.svg)](https://github.com/mlg87/lapcat/actions/workflows/ci.yml)
-[![release](https://img.shields.io/github/v/release/mlg87/lapcat)](https://github.com/mlg87/lapcat/releases/latest)
+<p align="center">
+  <a href="https://github.com/mlg87/lapcat/actions/workflows/ci.yml"><img src="https://github.com/mlg87/lapcat/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/mlg87/lapcat/releases/latest"><img src="https://img.shields.io/github/v/release/mlg87/lapcat" alt="release"></a>
+</p>
+
+<p align="center">
+  <a href="#install-a-release-build">Install</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#settings-reference">Settings</a> ·
+  <a href="#build-from-source">Build from source</a>
+</p>
 
 LapCat is a meeting notetaker for the macOS menu bar. It records your microphone ("Me") and the audio of the meeting app ("Them") as two channels. No bot joins the meeting. LapCat transcribes the audio on your Mac. Then it uses a large language model (LLM) to make enhanced notes from your notes and the transcript.
 
 The product requirements are in [docs/product-requirements/lapcat-mvp-prd.md](docs/product-requirements/lapcat-mvp-prd.md).
 
+## At a glance
+
+| Area | What LapCat does |
+| --- | --- |
+| [Meeting detection](#meeting-detection) | Asks "Record …?" when Zoom or a browser uses the microphone, or when a calendar meeting starts. |
+| [While you record](#while-you-record) | Shows a Markdown editor for your notes next to the live transcript. |
+| [After the meeting](#after-the-meeting) | Makes the final transcript, names the speakers and writes enhanced notes. |
+| [Enhanced notes](#enhanced-notes) | Uses templates and cites the transcript in each AI bullet. |
+| [Transcript](#transcript) | Lets you edit lines, rename speakers and play the kept audio from a timestamp. |
+| [Chat and recipes](#chat-and-recipes) | Answers questions about one meeting or many meetings. |
+| [Organize and search](#organize-and-search) | Gives you full-text search, folders, tags, stars and filters. |
+| [Export](#export) | Copies or exports notes and transcripts. Writes each meeting to an export folder if you set one. |
+| [LLM providers](#llm-providers) | Uses the Claude CLI, the Claude API or a local model. |
+| [Transcription](#transcription) | Transcribes on your Mac with Whisper or Parakeet. |
+| [Audio](#audio) | Records the microphone and the meeting audio, with echo cancellation and retention rules. |
+| [Speakers](#speakers) | Reads speaker names from Zoom and Google Meet. |
+
 ## Contents
 
+- [At a glance](#at-a-glance)
 - [Requirements](#requirements)
 - [Install a release build](#install-a-release-build)
 - [Permissions](#permissions)
@@ -47,7 +75,8 @@ The product requirements are in [docs/product-requirements/lapcat-mvp-prd.md](do
 7. In the dialog, select **Open** again.
 8. Grant the permissions that LapCat asks for.
 
-The app has a signature from a self-signed development certificate ("LapCat Dev"). Apple did not notarize the app. Thus macOS blocks a double-click when you open the app the first time. Steps 5 to 7 are necessary one time only.
+> [!IMPORTANT]
+> The app has a signature from a self-signed development certificate ("LapCat Dev"). Apple did not notarize the app. Thus macOS blocks a double-click when you open the app the first time. Steps 5 to 7 are necessary one time only.
 
 ## Permissions
 
@@ -63,16 +92,20 @@ When LapCat starts the first time, it shows the permissions checklist. To show t
 | Accessibility | No | Reads Zoom and Google Meet participant names to label speakers. You must enable LapCat in System Settings → Privacy & Security → Accessibility. |
 | Screen Recording | No | LapCat uses it only as a fallback when the system audio tap fails. |
 
+
+> [!WARNING]
+> You must grant the Accessibility permission manually. Enable LapCat in System Settings → Privacy & Security → Accessibility. LapCat uses this permission to read Zoom and Google Meet participant names.
+
 ## Quick start
 
 These global shortcuts work in all apps. You can change each shortcut in **Settings → General**.
 
 | Shortcut | Action |
 | --- | --- |
-| ⌃⌥N | Start a new note and start the recording. |
-| ⌃⌥P | Pause or resume the recording. |
-| ⌃⌥E | End the recording. |
-| ⌃⌥L | Open the LapCat window. |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd> | Start a new note and start the recording. |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>P</kbd> | Pause or resume the recording. |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>E</kbd> | End the recording. |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>L</kbd> | Open the LapCat window. |
 
 The menu-bar menu has these items:
 
@@ -82,17 +115,17 @@ The menu-bar menu has these items:
 - **Open LapCat**.
 - **Ask across meetings…**.
 - **Permissions…**.
-- **Settings…** (⌘,).
-- **Quit LapCat** (⌘Q).
+- **Settings…** (<kbd>⌘</kbd><kbd>,</kbd>).
+- **Quit LapCat** (<kbd>⌘</kbd><kbd>Q</kbd>).
 
 During a recording, the menu-bar icon changes to a record symbol and shows the elapsed time.
 
 To record a meeting:
 
-1. Press ⌃⌥N.
+1. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd>.
 2. Type your notes in Markdown on the left side of the window.
 3. Read the live transcript on the right side.
-4. Press ⌃⌥E when the meeting ends.
+4. Press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>E</kbd> when the meeting ends.
 5. Read the enhanced notes in the **Enhanced** tab.
 
 ## Features
@@ -120,6 +153,31 @@ To record a meeting:
 
 When you end a recording, LapCat processes the meeting in these steps:
 
+```mermaid
+flowchart TD
+    Stop(["You end the recording"]) --> S1["1. Quick notes from the live transcript (optional)"]
+    S1 --> S2["2. Final transcription of your audio"]
+    S2 --> S3["3. Final transcription of the meeting audio"]
+    S3 --> S4["4. Speaker separation, diarization (optional)"]
+    S4 --> S5["5. Speaker names"]
+    S5 --> S6["6. Name suggestions from the LLM (optional)"]
+    S6 --> S7["7. Echo detection"]
+    S7 --> S8["8. Merge of your live-transcript edits"]
+    S8 --> S9["9. Search index"]
+    S9 --> S10["10. Final enhanced notes"]
+    S10 --> S11["11. Auto-export (optional)"]
+    S11 --> S12["12. Audio clean-up"]
+    S12 --> Done(["Meeting ready"])
+
+    classDef optional stroke-dasharray: 5 5
+    class S1,S4,S6,S11 optional
+```
+
+Dashed boxes are optional steps.
+
+<details>
+<summary>The steps in detail</summary>
+
 1. Quick notes: a first version of the enhanced notes from the live transcript.
 2. Final transcription of your audio, with the high-quality model.
 3. Final transcription of the meeting audio.
@@ -132,6 +190,8 @@ When you end a recording, LapCat processes the meeting in these steps:
 10. The final enhanced notes.
 11. Auto-export, if you set an export folder.
 12. Audio clean-up, if **Keep recordings** is **Never**.
+
+</details>
 
 The status badge in the meeting header shows the current step. If a necessary step fails, a banner shows the error and a **Retry processing** button. Steps 1, 4, 6 and 11 are optional. If one of them fails, processing continues. After a crash, LapCat resumes processing at the step that stopped.
 
@@ -158,7 +218,7 @@ The status badge in the meeting header shows the current step. If a necessary st
 - If LapCat kept the audio, click a timestamp to play the audio from that point.
 - Click a speaker name to rename the speaker, merge two speakers, or assign a paragraph to a different speaker.
 - Double-click a line to edit it. A pencil icon shows the original text.
-- **Find** (⌘F) searches the transcript. ⌘G and ⇧⌘G go to the next and previous match.
+- **Find** (<kbd>⌘</kbd><kbd>F</kbd>) searches the transcript. <kbd>⌘</kbd><kbd>G</kbd> and <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> go to the next and previous match.
 - **Jump to time** accepts `hh:mm:ss`, `mm:ss` or seconds.
 - **Show echo duplicates** shows the lines that echo detection marked.
 - **Copy** copies all paragraphs or the selected paragraphs, with speaker labels.
@@ -188,7 +248,7 @@ You can add custom recipes in **Settings → Recipes**.
 - Add tags as a comma-separated list in the meeting header.
 - Use the star button to mark a meeting.
 - The filter button filters the list by folder, star, date and participant name. The date options are Any time, Today, Last 7 days, Last 30 days and Custom range.
-- To delete a meeting, right-click it in the list and select **Delete Meeting…**. You can also press Delete, or use the **More** (⋯) menu in the meeting header.
+- To delete a meeting, right-click it in the list and select **Delete Meeting…**. You can also press <kbd>Delete</kbd>, or use the **More** (⋯) menu in the meeting header.
 - LapCat deletes the notes, the enhanced notes, the transcript, the chat and the audio of the meeting. You cannot undo the deletion. Files in your export folder stay.
 - You cannot delete a meeting while LapCat records or processes it.
 
@@ -243,22 +303,33 @@ LapCat tries the providers in this order. If a provider is not available, LapCat
 - Without names, LapCat labels speakers "Speaker 1", "Speaker 2" and so on. You can rename them.
 - **Settings → Speakers** has editable selector JSON for Zoom and Meet, with **Save**, **Revert** and **Restore built-in**.
 
+
 ## Settings reference
 
-Open the settings with **Settings…** in the menu-bar menu or with ⌘,.
+Open the settings with **Settings…** in the menu-bar menu or with <kbd>⌘</kbd><kbd>,</kbd>.
+
+Each tab has a table. Click a summary line to show the table.
 
 ### General
+
+<details>
+<summary><b>General</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
 | `Display name` | Your macOS full name | The name for your own ("Me") lines in transcripts and notes. |
-| Global shortcuts | ⌃⌥N, ⌃⌥P, ⌃⌥E, ⌃⌥L | Click a shortcut. Then type a new key combination with one modifier or more. Esc cancels. |
+| Global shortcuts | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>P</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>E</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>L</kbd> | Click a shortcut. Then type a new key combination with one modifier or more. <kbd>Esc</kbd> cancels. |
 | Remind me to tell participants when a recording starts | On | Shows the consent banner during a recording. |
 | Disclosure message | "Heads up: I'm taking AI notes for this meeting with a local app on my Mac. Tell me if you'd rather I didn't." | The text that **Copy disclosure** copies. |
 | Restore default message | — | Sets the default disclosure message again. |
 | Show permissions checklist… | — | Opens the permissions window. |
 
+</details>
+
 ### Audio
+
+<details>
+<summary><b>Audio</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -267,7 +338,12 @@ Open the settings with **Settings…** in the menu-bar menu or with ⌘,.
 | Capture | Meeting app only | The source of the "Them" channel. The other option is "All system audio except LapCat". |
 | Keep recordings | 30 days | Never, 7 days, 30 days or Forever. The setting applies to future meetings. "Never" deletes audio after the final transcript. |
 
+</details>
+
 ### Transcription
+
+<details>
+<summary><b>Transcription</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -277,7 +353,12 @@ Open the settings with **Settings…** in the menu-bar menu or with ⌘,.
 | Final transcript (after the meeting) | `ggml-large-v3-turbo-q5_0.bin` (Apple Silicon), `ggml-small.en.bin` (Intel) | The Whisper model for the final transcript. |
 | Downloads | — | Downloads each Whisper model and shows its status. |
 
+</details>
+
 ### AI
+
+<details>
+<summary><b>AI</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -288,7 +369,12 @@ Open the settings with **Settings…** in the menu-bar menu or with ⌘,.
 | Claude CLI path | Empty | The path to `claude`. When empty, LapCat looks in `~/.local/bin`, `/usr/local/bin` and `/opt/homebrew/bin`. |
 | Local model | Qwen3 4B (Q4_K_M) | Downloads the model file for the Local provider (approximately 2.5 GB). |
 
+</details>
+
 Default models:
+
+<details>
+<summary><b>AI</b> default models</summary>
 
 | Provider | Enhance | Chat | Classify |
 | --- | --- | --- | --- |
@@ -296,7 +382,12 @@ Default models:
 | Claude API | `claude-haiku-4-5` | `claude-sonnet-5-5` | `claude-haiku-4-5` |
 | Local | `Qwen3-4B-Q4_K_M.gguf` | `Qwen3-4B-Q4_K_M.gguf` | `Qwen3-4B-Q4_K_M.gguf` |
 
+</details>
+
 ### Speakers
+
+<details>
+<summary><b>Speakers</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -304,7 +395,12 @@ Default models:
 | Advanced: Zoom selectors (JSON) | Built-in selectors | **Save** accepts only valid JSON. **Revert** discards your edits. **Restore built-in** deletes your custom selectors. |
 | Advanced: Google Meet selectors (JSON) | Built-in selectors | The same controls as the Zoom selectors. |
 
+</details>
+
 ### Detection
+
+<details>
+<summary><b>Detection</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -314,7 +410,12 @@ Default models:
 | Prompt when the browser's current tab is a Google Meet call | Off | Needs the Automation permission for your browser. |
 | Calendar | — | Shows the access status, with **Grant calendar access** and **Open System Settings**. |
 
+</details>
+
 ### Templates
+
+<details>
+<summary><b>Templates</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -323,14 +424,24 @@ Default models:
 | Open templates folder | — | Opens `~/Library/Application Support/LapCat/templates/`. |
 | Rescan | — | Reads the templates folder again. |
 
+</details>
+
 ### Recipes
+
+<details>
+<summary><b>Recipes</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
 | Built-in | 5 recipes | You can read the built-in recipes. You cannot edit them. |
 | Custom | None | **Add recipe…**, **Edit** and **Delete**. Each recipe has a name, a slash command and a prompt. |
 
+</details>
+
 ### Export
+
+<details>
+<summary><b>Export</b> settings</summary>
 
 | Control | Default | Effect |
 | --- | --- | --- |
@@ -338,6 +449,8 @@ Default models:
 | Choose folder… | — | Selects the folder. |
 | Show in Finder | — | Opens the folder. |
 | Turn off | — | Stops the automatic export. |
+
+</details>
 
 If the folder does not exist, LapCat skips the export.
 
@@ -360,9 +473,12 @@ Audio retention:
 - With **Never**, LapCat deletes the audio after the final transcript.
 - **Delete Audio Now…** in the **Transcript** tab deletes the audio of one meeting.
 
+
 ## Platform notes
 
-- Intel Macs transcribe with whisper.cpp. The live and final model is `small.en`. Parakeet (FluidAudio, Core ML) crashes on x86_64. Thus LapCat never selects Parakeet on Intel.
+> [!NOTE]
+> Intel Macs transcribe with whisper.cpp. The live and final model is `small.en`. Parakeet (FluidAudio, Core ML) crashes on x86_64. Thus LapCat never selects Parakeet on Intel.
+
 - Apple Silicon Macs use Parakeet by default.
 - Speaker names come from the accessibility trees of Zoom and Meet. To see what an app shows, run `swift run lapcat-dev axdump us.zoom.xos`.
 
@@ -395,6 +511,9 @@ The Command Line Tools keep `Testing.framework` out of the default search path. 
 
 ### Package layout
 
+<details>
+<summary>Seven modules</summary>
+
 | Module | Content |
 | --- | --- |
 | `LapCatCore` | GRDB store, settings, permissions, export, citations, templates and recipes. |
@@ -405,9 +524,14 @@ The Command Line Tools keep `Testing.framework` out of the default search path. 
 | `LapCatApp` | The SwiftUI menu-bar app. |
 | `lapcat-dev` | The developer CLI. |
 
+</details>
+
 ### Developer CLI
 
 Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the command list.
+
+<details>
+<summary>Commands and arguments</summary>
 
 | Command | Arguments | Result |
 | --- | --- | --- |
@@ -419,7 +543,9 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 | `axdump` | `<bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--observe [selectors.json]]` | Prints the accessibility tree of an app. `--observe` prints the speaker observations of the Zoom or Meet adapter. |
 | `enhance-demo` | `[--template ID] [--model M]` | Enhances a sample meeting through the Claude CLI. |
 | `templates` | — | Lists the built-in templates and their resource bundle. |
-| `detect-watch` | `[bundle-id…\|*]` | Prints microphone activity of meeting apps until you press Ctrl-C. Without arguments, it watches the default app list. `*` watches all processes. |
+| `detect-watch` | `[bundle-id…\|*]` | Prints microphone activity of meeting apps until you press <kbd>Ctrl</kbd><kbd>C</kbd>. Without arguments, it watches the default app list. `*` watches all processes. |
+
+</details>
 
 `llm-probe anthropic-api` reads the key from the `ANTHROPIC_API_KEY` environment variable.
 
@@ -460,9 +586,16 @@ swift format format -i --recursive Sources Tests Package.swift scripts/make-icon
 3. release-please tags `vX.Y.Z` and publishes a GitHub Release with the changelog section.
 4. The `release-assets` workflow attaches `LapCat-vX.Y.Z-universal.zip` to the release.
 
-Do not edit `CHANGELOG.md` manually. The first release is v0.1.0.
+
+> [!CAUTION]
+> Do not edit `CHANGELOG.md` manually. release-please writes it.
+
+The first release is v0.1.0.
 
 ## Privacy
+
+> [!TIP]
+> To keep all text on your Mac, select the Local provider. To stop all model downloads, turn on **Offline only**.
 
 - LapCat records only after you start a note or click a prompt.
 - Audio stays on your Mac. LapCat transcribes it on your Mac.
