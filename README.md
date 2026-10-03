@@ -188,6 +188,9 @@ You can add custom recipes in **Settings → Recipes**.
 - Add tags as a comma-separated list in the meeting header.
 - Use the star button to mark a meeting.
 - The filter button filters the list by folder, star, date and participant name. The date options are Any time, Today, Last 7 days, Last 30 days and Custom range.
+- To delete a meeting, right-click it in the list and select **Delete Meeting…**. You can also press Delete, or use the **More** (⋯) menu in the meeting header.
+- LapCat deletes the notes, the enhanced notes, the transcript, the chat and the audio of the meeting. You cannot undo the deletion. Files in your export folder stay.
+- You cannot delete a meeting while LapCat records or processes it.
 
 ### Export
 

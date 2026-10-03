@@ -2,7 +2,8 @@ import LapCatCore
 import SwiftUI
 
 /// Folders, then the meetings matching `filter`, newest first, in Today / Yesterday / This week /
-/// Earlier sections. Meeting rows star in place, drag onto a folder, or move via their context menu.
+/// Earlier sections. Meeting rows star in place, drag onto a folder, or move and delete via their
+/// context menu. The Delete key asks to delete the selected meeting.
 struct MeetingListView: View {
     let filter: MeetingFilter
     @Binding var selection: String?
@@ -10,6 +11,7 @@ struct MeetingListView: View {
     @Environment(SidebarOrganizer.self) private var organizer
     @State private var meetings: [Meeting] = []
     @State private var loaded = false
+    @State private var pendingDelete: Meeting?
 
     var body: some View {
         List(selection: $selection) {
@@ -20,7 +22,12 @@ struct MeetingListView: View {
                         MeetingRow(meeting: meeting)
                             .tag(meeting.id)
                             .draggable(meeting.id)
-                            .contextMenu { moveMenu(meeting) }
+                            .contextMenu {
+                                moveMenu(meeting)
+                                Divider()
+                                Button("Delete Meeting…", role: .destructive) { pendingDelete = meeting }
+                                    .disabled(!meeting.isDeletable)
+                            }
                     }
                 }
             }
@@ -30,6 +37,12 @@ struct MeetingListView: View {
             }
         }
         .listStyle(.sidebar)
+        .onDeleteCommand {
+            if let meeting = meetings.first(where: { $0.id == selection }), meeting.isDeletable {
+                pendingDelete = meeting
+            }
+        }
+        .deleteMeetingConfirmation($pendingDelete)
         .task(id: filter) {
             for await meetings in appState.store.observeMeetings(filter: filter) {
                 self.meetings = meetings

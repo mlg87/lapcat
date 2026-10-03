@@ -1,3 +1,4 @@
+import Foundation
 import LapCatCore
 import Observation
 import os
@@ -49,15 +50,33 @@ final class SidebarOrganizer {
         }
     }
 
+    /// Deletes the meeting's rows and its audio folder, then stops showing it if it is selected.
+    func deleteMeeting(_ meeting: Meeting, store: Store, navigation: MeetingNavigation) {
+        let id = meeting.id
+        perform("delete meeting") {
+            try await store.deleteMeeting(id: id)
+            let audio = Paths.standard.audio(meetingID: id)
+            if FileManager.default.fileExists(atPath: audio.path) {
+                try FileManager.default.removeItem(at: audio)
+            }
+        } then: {
+            if navigation.selectedMeetingID == id { navigation.selectedMeetingID = nil }
+        }
+    }
+
     private static func validName(_ name: String) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    private func perform(_ action: String, _ body: @escaping @Sendable () async throws -> Void) {
+    private func perform(
+        _ action: String, _ body: @escaping @Sendable () async throws -> Void,
+        then: @escaping @MainActor () -> Void = {}
+    ) {
         Task {
             do {
                 try await body()
+                then()
             } catch {
                 Self.logger.error("\(action, privacy: .public) failed: \(String(describing: error), privacy: .public)")
                 lastError = "Could not \(action): \(error.localizedDescription)"

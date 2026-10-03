@@ -125,8 +125,8 @@ struct MeetingView: View {
     }
 }
 
-/// Star, title field, status and provider badges, Pause/End while recording, Enhance and Export
-/// menus; tags below.
+/// Star, title field, status and provider badges, Pause/End while recording, Enhance, Export and
+/// More (Delete Meeting…) menus; tags below.
 private struct MeetingHeader: View {
     let meeting: Meeting
     let enhancing: Bool
@@ -135,6 +135,7 @@ private struct MeetingHeader: View {
     @Environment(AppState.self) private var appState
     @State private var title = ""
     @FocusState private var titleFocused: Bool
+    @State private var pendingDelete: Meeting?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -143,6 +144,7 @@ private struct MeetingHeader: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .deleteMeetingConfirmation($pendingDelete)
     }
 
     private var controls: some View {
@@ -179,6 +181,16 @@ private struct MeetingHeader: View {
                 .toggleStyle(.button)
                 .help("Show or hide the live transcript")
             }
+            Menu {
+                Button("Delete Meeting…", role: .destructive) { pendingDelete = meeting }
+                    .disabled(!meeting.isDeletable || enhancing)
+            } label: {
+                Label("More", systemImage: "ellipsis.circle")
+            }
+            .labelStyle(.iconOnly)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("More")
         }
     }
 
