@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 import LapCatSpeech
+import Testing
 
 @Suite struct EngineSelectorTests {
     private func config(_ engine: SpeechConfig.EngineChoice) -> SpeechConfig {

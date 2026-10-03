@@ -1,6 +1,7 @@
 import Foundation
 import LapCatCore
 import Testing
+
 @testable import LapCatLLM
 
 /// Streams fixed deltas and records the requests it received.

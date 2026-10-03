@@ -5,8 +5,15 @@ import SwiftUI
 /// into the toolbar overflow menu).
 struct SettingsView: View {
     enum Tab: String, CaseIterable, Identifiable {
-        case general = "General", audio = "Audio", transcription = "Transcription", ai = "AI", speakers = "Speakers"
-        case detection = "Detection", templates = "Templates", recipes = "Recipes", export = "Export"
+        case general = "General"
+        case audio = "Audio"
+        case transcription = "Transcription"
+        case ai = "AI"
+        case speakers = "Speakers"
+        case detection = "Detection"
+        case templates = "Templates"
+        case recipes = "Recipes"
+        case export = "Export"
 
         var id: Self { self }
 

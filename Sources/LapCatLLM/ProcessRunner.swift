@@ -33,7 +33,9 @@ enum ProcessRunner {
         process.executableURL = executable
         process.arguments = arguments
         process.environment = environment
-        let input = Pipe(), output = Pipe(), errors = Pipe()
+        let input = Pipe()
+        let output = Pipe()
+        let errors = Pipe()
         process.standardInput = input
         process.standardOutput = output
         process.standardError = errors

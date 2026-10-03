@@ -3,8 +3,8 @@ import Foundation
 import LapCatAudio
 import LapCatCore
 import Observation
-import os
 import UserNotifications
+import os
 
 /// Notices meetings and asks whether to record them (plan §9.3); never records without a click.
 ///

@@ -40,7 +40,10 @@ enum LLMProbe {
             let cli = ClaudeCLIProvider(
                 models: Dictionary(uniqueKeysWithValues: LLMTask.allCases.map { ($0, model ?? "haiku") }),
                 claudePath: nil)
-            guard !streaming else { provider = cli; break }
+            guard !streaming else {
+                provider = cli
+                break
+            }
             print("binary: \(cli.binaryURL?.path ?? "not found")")
             do {
                 let (envelope, response) = try await cli.completeWithEnvelope(request)

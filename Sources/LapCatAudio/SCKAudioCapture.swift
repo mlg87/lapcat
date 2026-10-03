@@ -1,8 +1,8 @@
 import AVFoundation
 import CoreMedia
 import Foundation
-import os
 import ScreenCaptureKit
+import os
 
 /// Fallback system-channel source (PRD FR-2.4): ScreenCaptureKit audio of one app (or every app
 /// but LapCat). Needs the Screen Recording permission. Sample buffers are copied into owned PCM

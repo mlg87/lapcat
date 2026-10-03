@@ -1,6 +1,7 @@
 import Foundation
-import Testing
 import LapCatCore
+import Testing
+
 @testable import LapCatSpeech
 
 /// Engine double: returns one segment per call covering the given samples, or throws on load.
@@ -32,7 +33,7 @@ private actor GatedEngine: TranscriptionEngine {
 
     func release() {
         released = true
-        waiters.forEach { $0.resume() }
+        for waiter in waiters { waiter.resume() }
         waiters.removeAll()
     }
     func load() async throws {
@@ -58,7 +59,8 @@ struct LiveTranscriberTests {
         var out: [Float] = []
         var seed: UInt32 = 1
         func noise() -> Float {
-            seed = seed &* 1_664_525 &+ 1_013_904_223; return (Float(seed % 1000) / 1000 - 0.5) * 0.002
+            seed = seed &* 1_664_525 &+ 1_013_904_223
+            return (Float(seed % 1000) / 1000 - 0.5) * 0.002
         }
         for _ in 0..<count {
             out += (0..<Int(silence * 16_000)).map { _ in noise() }

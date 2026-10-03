@@ -1,8 +1,8 @@
 import LapCatCore
 import LapCatSpeech
 import Observation
-import os
 import SwiftUI
+import os
 
 /// App-wide state; one instance, injected with `.environment(appState)`.
 @Observable @MainActor

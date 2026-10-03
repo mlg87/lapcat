@@ -194,8 +194,14 @@ extension Store {
                 .fetchOne(db)
             {
                 var changed = false
-                if existing.email == nil, let email { existing.email = email; changed = true }
-                if isMe, !existing.isMe { existing.isMe = true; changed = true }
+                if existing.email == nil, let email {
+                    existing.email = email
+                    changed = true
+                }
+                if isMe, !existing.isMe {
+                    existing.isMe = true
+                    changed = true
+                }
                 if changed { try existing.update(db) }
                 return existing
             }

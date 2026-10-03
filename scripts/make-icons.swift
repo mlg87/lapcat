@@ -106,7 +106,9 @@ let thicken = arg(4, 4)
 // Ink: dark pixels of the artwork (the cream background is light).
 var ink = [Bool](repeating: false, count: work * work)
 for i in 0..<(work * work) {
-    let r = Double(pixels[i * 4]), g = Double(pixels[i * 4 + 1]), b = Double(pixels[i * 4 + 2])
+    let r = Double(pixels[i * 4])
+    let g = Double(pixels[i * 4 + 1])
+    let b = Double(pixels[i * 4 + 2])
     let a = Double(pixels[i * 4 + 3])
     let luma = a > 0 ? (0.299 * r + 0.587 * g + 0.114 * b) / a : 1
     ink[i] = luma < 0.5
@@ -142,11 +144,15 @@ for i in 0..<work {
     }
 }
 while let p = stack.popLast() {
-    let x = p % work, y = p / work
+    let x = p % work
+    let y = p / work
     for (nx, ny) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] where nx >= 0 && nx < work && ny >= 0 && ny < work
     {
         let n = ny * work + nx
-        if !ink[n] && !outside[n] { outside[n] = true; stack.append(n) }
+        if !ink[n] && !outside[n] {
+            outside[n] = true
+            stack.append(n)
+        }
     }
 }
 
@@ -160,11 +166,15 @@ for i in 0..<(work * work) where solid[i] && !innerLines[i] { mask[i] = 255 }
 var (minX, minY, maxX, maxY) = (work, work, -1, -1)
 for y in 0..<work {
     for x in 0..<work where mask[y * work + x] != 0 {
-        minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+        minX = min(minX, x)
+        maxX = max(maxX, x)
+        minY = min(minY, y)
+        maxY = max(maxY, y)
     }
 }
 guard maxX >= minX else { fail("no ink found in artwork") }
-let cropW = maxX - minX + 1, cropH = maxY - minY + 1
+let cropW = maxX - minX + 1
+let cropH = maxY - minY + 1
 
 let glyphCtx = context(cropW, cropH)
 let glyphPixels = glyphCtx.data!.bindMemory(to: UInt8.self, capacity: cropW * cropH * 4)
@@ -174,7 +184,10 @@ for y in 0..<cropH {
         // The mask is in context memory order (row 0 = top), as is glyphCtx's buffer.
         let value = mask[(minY + y) * work + (minX + x)]
         let o = y * rowBytes + x * 4
-        glyphPixels[o] = 0; glyphPixels[o + 1] = 0; glyphPixels[o + 2] = 0; glyphPixels[o + 3] = value
+        glyphPixels[o] = 0
+        glyphPixels[o + 1] = 0
+        glyphPixels[o + 2] = 0
+        glyphPixels[o + 3] = value
     }
 }
 let glyph = glyphCtx.makeImage()!

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import LapCatAudio
 
 private let rate = 16_000

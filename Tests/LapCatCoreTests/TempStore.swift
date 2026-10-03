@@ -1,4 +1,5 @@
 import Foundation
+
 @testable import LapCatCore
 
 /// A store on a fresh temp database, and that database's directory.

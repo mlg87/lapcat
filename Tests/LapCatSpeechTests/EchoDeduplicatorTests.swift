@@ -1,6 +1,7 @@
 import Foundation
 import LapCatCore
 import Testing
+
 @testable import LapCatSpeech
 
 @Suite struct EchoDeduplicatorTests {
