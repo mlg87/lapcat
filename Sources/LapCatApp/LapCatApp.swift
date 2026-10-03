@@ -81,6 +81,12 @@ struct MenuBarContent: View {
         Button("Settings…") { appState.showSettings() }
             .keyboardShortcut(",")
         Divider()
+        if let version = appState.updates.runningVersion, let notes = appState.updates.runningNotesURL {
+            Button("LapCat v\(version)") { NSWorkspace.shared.open(notes) }
+        }
+        if let update = appState.updates.update {
+            Button("Update available: \(update.tag)…") { NSWorkspace.shared.open(update.notesURL) }
+        }
         Button("Quit LapCat") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }

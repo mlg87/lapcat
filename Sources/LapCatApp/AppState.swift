@@ -14,6 +14,8 @@ final class AppState {
     let session: SessionController
     let pipeline: PostMeetingPipeline
     let detection: DetectionCoordinator
+    /// The running version and any newer GitHub release, for the menu-bar menu.
+    let updates: UpdateChecker
     private(set) var permissionStatuses: [Permission: PermissionStatus] = [:]
     /// Last start/stop failure, shown in the menu.
     private(set) var sessionError: String?
@@ -42,6 +44,7 @@ final class AppState {
         self.pipeline = pipeline
         let detection = DetectionCoordinator(session: session, settings: settings)
         self.detection = detection
+        updates = UpdateChecker(settings: settings)
         session.onEnded = { meetingID in
             detection.sessionEnded()
             Task { await pipeline.enqueue(meetingID) }
