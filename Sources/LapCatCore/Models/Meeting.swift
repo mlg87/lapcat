@@ -32,6 +32,9 @@ public struct Meeting: LapCatRecord, PersistableRecord, Identifiable, Hashable {
     public var createdAt: Date
     public var updatedAt: Date
 
+    /// False while recording or processing: the session or the pipeline still writes to the meeting.
+    public var isDeletable: Bool { status == .ready || status == .error }
+
     public init(
         id: String = UUID().uuidString,
         title: String,

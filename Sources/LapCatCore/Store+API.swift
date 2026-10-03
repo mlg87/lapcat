@@ -4,6 +4,8 @@ import GRDB
 public enum StoreError: Error, Equatable {
     case notFound(String)
     case participantsInDifferentMeetings
+    /// The meeting is recording or processing; its session or pipeline still writes to it.
+    case meetingBusy(String)
 }
 
 public struct MeetingFilter: Sendable, Equatable {
@@ -56,6 +58,25 @@ extension Store {
 
     public func meeting(id: String) async throws -> Meeting? {
         try await pool.read { db in try Meeting.fetchOne(db, key: id) }
+    }
+
+    /// Deletes the meeting with its notes, transcript, participants, tags, audio rows and calendar snapshot
+    /// (foreign-key cascade), its meeting-scoped chat threads, and its search-index rows. Audio files on disk
+    /// are the caller's job. Refuses a meeting that is not `isDeletable`.
+    public func deleteMeeting(id: String) async throws {
+        try await pool.write { db in
+            guard let meeting = try Meeting.fetchOne(db, key: id) else {
+                throw StoreError.notFound("meeting \(id)")
+            }
+            guard meeting.isDeletable else {
+                throw StoreError.meetingBusy(id)
+            }
+            try db.execute(sql: "DELETE FROM fts_content WHERE meeting_id = ?", arguments: [id])
+            try db.execute(
+                sql: "DELETE FROM chat_thread WHERE scope = ? AND scope_ref = ?",
+                arguments: [ChatScope.meeting.rawValue, id])
+            _ = try meeting.delete(db)
+        }
     }
 
     /// Newest first.
