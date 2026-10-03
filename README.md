@@ -1,4 +1,6 @@
-# lapcat
+<p align="center">
+  <img src="docs/design/readme-header.png" alt="LapCat — a macOS menu-bar meeting notetaker" width="100%">
+</p>
 
 LapCat is a macOS menu-bar meeting notetaker: it records your mic and the meeting app's
 audio as two channels (no bot), transcribes on-device, and enhances your notes with an LLM.
