@@ -1,0 +1,24 @@
+name: release-assets
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  universal-app:
+    name: universal-app
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - run: swift --version
+      - run: scripts/fetch-sidecars.sh
+      - run: scripts/make-dev-cert.sh
+      - run: scripts/bundle-app.sh release
+      - name: Zip
+        run: ditto -c -k --sequesterRsrc --keepParent build/LapCat.app "LapCat-${{ github.event.release.tag_name }}-universal.zip"
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "LapCat-${{ github.event.release.tag_name }}-universal.zip" --clobber
