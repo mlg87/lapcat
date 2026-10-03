@@ -69,7 +69,7 @@ bd close <id> --reason "…"     # close as soon as the work lands
 ```
 
 - `bd update <id> --claim` is the concurrency primitive. Two agents racing for the same bead: one wins, the other gets an error and picks the next `bd ready` entry. Never skip the claim — an unclaimed bead is an invitation for duplicate work.
-- **Closing is automated for merged work.** The reconcile sweep closes any open bead whose id appears as `(lc-xxx)` anywhere in a commit message that reached `origin/main` — subject or body, so squash merges work — watermarked in `bd kv reconcile.main-sha`. Close by hand when work lands without that suffix, or when a bead is abandoned. `bd stale` surfaces beads that were claimed and then forgotten.
+- **Closing is automated for merged work.** The reconcile sweep closes any open bead whose id appears as `(lc-xxx)` anywhere in a commit message that reached `origin/main` — in practice the `Beads:` line of the PR body, which is the squash body — watermarked in `bd kv reconcile.main-sha`. Close by hand when work lands without that line, or when a bead is abandoned. `bd stale` surfaces beads that were claimed and then forgotten.
 - Epic beads are **not** closed from child completion: they close from GitHub state, so "GitHub owns deliverables" stays true. **The GitHub issue is still closed by PR merge** (`Closes #N` in the PR body) — closing a bead never closes a GH issue.
 - The priming injection also shows `bd list --status in_progress` (crash recovery: a fresh session sees what is already claimed) and, when any open epic has zero children, an `Epics with no child beads — decompose with bd create --graph before claiming` list.
 
@@ -141,7 +141,7 @@ fix(core): reject stale input (lc-a1b2)
 
 The suffix is free-form subject text, so any conventional-commit tooling added later is unaffected, and it makes `git log` reviewable against the graph — `git log --oneline --grep lc-a1b2` shows every commit for a bead, which is how you audit whether a closed bead actually shipped, or whether committed work has an open bead nobody closed.
 
-**This is what closes the bead.** The reconcile sweep scans every commit message that reached `origin/main` — subject *and* body — for `(lc-xxx)`. Child ids contain a dot (`lc-8il.4`) and the sweep matches the whole id, including the dotted suffix — include the whole id, not just the epic prefix. `main` has no branch protection and allows merge, squash and rebase; `squash_merge_commit_message` is `COMMIT_MESSAGES`, so on a squash merge the branch commits' subjects land in the squash body and the suffixes survive there. Scanning the body is the common path, not a contingency. A branch whose commits all carry the suffix is therefore safe regardless of how the PR is titled.
+**This is what closes the bead.** The reconcile sweep scans every commit message that reached `origin/main` — subject *and* body — for `(lc-xxx)`. Child ids contain a dot (`lc-8il.4`) and the sweep matches the whole id, including the dotted suffix — include the whole id, not just the epic prefix. `main` is ruleset-protected and squash-only, with `squash_merge_commit_title = PR_TITLE` and `squash_merge_commit_message = PR_BODY`. Branch commit subjects therefore never reach `main`: the sweep reads the `Beads: (lc-…)` line of the PR body (see `.github/pull_request_template.md`). The PR title must not carry a bead id — the `pr-title` check rejects it, because the title becomes a release-note line. The branch commit suffix stays useful for `git log --grep` on the branch and in the PR's commit list.
 
 `bd doctor` is **not available in embedded-Dolt mode** (the mode this repo uses), so do not rely on it for that correlation; grep the log instead. `bd preflight` and `bd doctor` are also beads-project-internal / unsupported here — use `bd lint`, `bd stale`, `bd orphans` for hygiene instead.
 
@@ -161,7 +161,7 @@ bd update <id> --status open        # explicit status change
 
 - **`.beads/` lives only in the primary checkout** (`/Users/masongoetz/workspace/lapcat` on the maintainer machine) and is fully gitignored. Running `bd` from any linked worktree (`../lapcat-<task>`) resolves to that shared workspace automatically, which is exactly what lets concurrent agents in separate worktrees share one work graph.
 - **Never run `bd init` inside a worktree.** That would create a second, divergent graph.
-- **Backup/sync is Dolt, not git branches.** `bd dolt push` writes the graph to the `refs/dolt/data` ref on `origin` — a custom ref namespace, so main's branch protection does not apply and no PR is involved. **The omp extension owns this push** (15-minute debounce plus session stop, whenever the graph is dirty), which is what satisfies the "push when authorized" step in `bd prime`'s own session-close protocol. Run it by hand only outside omp, or to flush immediately:
+- **Backup/sync is Dolt, not git branches.** `bd dolt push` writes the graph to the `refs/dolt/data` ref on `origin` — a custom ref namespace, so the `main` rulesets do not apply and no PR is involved. **The omp extension owns this push** (15-minute debounce plus session stop, whenever the graph is dirty), which is what satisfies the "push when authorized" step in `bd prime`'s own session-close protocol. Run it by hand only outside omp, or to flush immediately:
 
   ```bash
   bd dolt push
