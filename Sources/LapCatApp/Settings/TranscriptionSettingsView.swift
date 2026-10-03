@@ -18,11 +18,11 @@ struct TranscriptionSettingsView: View {
                     Text("Parakeet").tag(SpeechConfig.EngineChoice.parakeet.rawValue)
                 }
                 #if arch(x86_64)
-                Text("Parakeet is unavailable on Intel Macs; this Mac always transcribes with Whisper.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    Text("Parakeet is unavailable on Intel Macs; this Mac always transcribes with Whisper.")
+                        .font(.caption).foregroundStyle(.secondary)
                 #else
-                Text("Automatic uses Parakeet (downloaded by LapCat on first use).")
-                    .font(.caption).foregroundStyle(.secondary)
+                    Text("Automatic uses Parakeet (downloaded by LapCat on first use).")
+                        .font(.caption).foregroundStyle(.secondary)
                 #endif
                 Toggle("Show in-progress text while someone is speaking", isOn: $settings.sttLiveHypothesis)
                 Text("Re-transcribes the current utterance every 2 s. Costs CPU; off by default on Intel.")
@@ -52,8 +52,11 @@ struct TranscriptionSettingsView: View {
     private func modelPicker(_ title: String, selection: Binding<String>) -> some View {
         Picker(title, selection: selection) {
             ForEach(Self.whisperModels) { entry in
-                Text(entry.displayName + (ModelDownloads.shared.state(of: entry.id) == .available ? "" : " — not downloaded"))
-                    .tag(entry.id)
+                Text(
+                    entry.displayName
+                        + (ModelDownloads.shared.state(of: entry.id) == .available ? "" : " — not downloaded")
+                )
+                .tag(entry.id)
             }
             if !Self.whisperModels.contains(where: { $0.id == selection.wrappedValue }) {
                 Text(selection.wrappedValue).tag(selection.wrappedValue)

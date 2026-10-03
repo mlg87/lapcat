@@ -60,18 +60,21 @@ public enum NameMapper {
                 micIDs.insert(id)
                 pending.append(Pending(id: id))
             case .system:
-                pending.append(Pending(
-                    id: id,
-                    cluster: dominantCluster(segment, turns: turns),
-                    directName: directName(segment, events: events)
-                ))
+                pending.append(
+                    Pending(
+                        id: id,
+                        cluster: dominantCluster(segment, turns: turns),
+                        directName: directName(segment, events: events)
+                    ))
             }
         }
 
         // Cluster-level vote over the directly named segments of each cluster.
         var votes: [String: [String: Int]] = [:]
         for item in pending {
-            if let cluster = item.cluster, let name = item.directName { votes[cluster, default: [:]][name, default: 0] += 1 }
+            if let cluster = item.cluster, let name = item.directName {
+                votes[cluster, default: [:]][name, default: 0] += 1
+            }
         }
         let clusterNames = votes.compactMapValues { tally in
             tally.max { ($0.value, $1.key) < ($1.value, $0.key) }?.key
@@ -82,13 +85,15 @@ public enum NameMapper {
                 return SegmentAssignment(segmentID: item.id, participantName: meName, cluster: nil, basis: .me)
             }
             if let name = item.directName {
-                return SegmentAssignment(segmentID: item.id, participantName: name, cluster: item.cluster, basis: .speakerEvents)
+                return SegmentAssignment(
+                    segmentID: item.id, participantName: name, cluster: item.cluster, basis: .speakerEvents)
             }
             guard let cluster = item.cluster else {
                 return SegmentAssignment(segmentID: item.id, participantName: nil, cluster: nil, basis: .unassigned)
             }
             if let name = clusterNames[cluster] {
-                return SegmentAssignment(segmentID: item.id, participantName: name, cluster: cluster, basis: .clusterVote)
+                return SegmentAssignment(
+                    segmentID: item.id, participantName: name, cluster: cluster, basis: .clusterVote)
             }
             return SegmentAssignment(segmentID: item.id, participantName: cluster, cluster: cluster, basis: .cluster)
         }

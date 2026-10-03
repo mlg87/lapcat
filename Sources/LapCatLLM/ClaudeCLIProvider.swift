@@ -118,9 +118,10 @@ public struct ClaudeCLIProvider: LLMProvider {
 
         // The model that produced the answer is the one with the most output tokens.
         let usage = json["modelUsage"] as? [String: [String: Any]] ?? [:]
-        let model = usage.max { lhs, rhs in
-            (lhs.value["outputTokens"] as? Int ?? 0, rhs.key) < (rhs.value["outputTokens"] as? Int ?? 0, lhs.key)
-        }?.key ?? requestedModel
+        let model =
+            usage.max { lhs, rhs in
+                (lhs.value["outputTokens"] as? Int ?? 0, rhs.key) < (rhs.value["outputTokens"] as? Int ?? 0, lhs.key)
+            }?.key ?? requestedModel
 
         let tokens = json["usage"] as? [String: Any]
         let inputTokens = tokens.map { tokens in

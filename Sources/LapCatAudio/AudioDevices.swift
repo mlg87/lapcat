@@ -18,7 +18,7 @@ public enum AudioDevices {
     public static func inputDevices() -> [AudioInputDevice] {
         CoreAudioProperty.objectList(CoreAudioProperty.system, kAudioHardwarePropertyDevices).compactMap { device in
             guard inputChannelCount(device) > 0,
-                  let uid = CoreAudioProperty.string(device, kAudioDevicePropertyDeviceUID)
+                let uid = CoreAudioProperty.string(device, kAudioDevicePropertyDeviceUID)
             else { return nil }
             let name = CoreAudioProperty.string(device, kAudioObjectPropertyName) ?? uid
             return AudioInputDevice(uid: uid, name: name)
@@ -26,10 +26,12 @@ public enum AudioDevices {
     }
 
     private static func inputChannelCount(_ device: AudioDeviceID) -> Int {
-        var address = CoreAudioProperty.address(kAudioDevicePropertyStreamConfiguration, scope: kAudioObjectPropertyScopeInput)
+        var address = CoreAudioProperty.address(
+            kAudioDevicePropertyStreamConfiguration, scope: kAudioObjectPropertyScopeInput)
         var size: UInt32 = 0
         guard AudioObjectGetPropertyDataSize(device, &address, 0, nil, &size) == noErr, size > 0 else { return 0 }
-        let raw = UnsafeMutableRawPointer.allocate(byteCount: Int(size), alignment: MemoryLayout<AudioBufferList>.alignment)
+        let raw = UnsafeMutableRawPointer.allocate(
+            byteCount: Int(size), alignment: MemoryLayout<AudioBufferList>.alignment)
         defer { raw.deallocate() }
         guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, raw) == noErr else { return 0 }
         let list = UnsafeMutableAudioBufferListPointer(raw.assumingMemoryBound(to: AudioBufferList.self))

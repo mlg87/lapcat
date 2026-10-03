@@ -11,7 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try Paths.standard.ensureDirectories()
             return AppState(settings: AppSettings(), store: try Store(databaseURL: Paths.standard.database))
         } catch {
-            Logger(subsystem: "com.lapcat.app", category: "AppDelegate").fault("Cannot open the LapCat database: \(error)")
+            Logger(subsystem: "com.lapcat.app", category: "AppDelegate").fault(
+                "Cannot open the LapCat database: \(error)")
             let alert = NSAlert()
             alert.messageText = "LapCat can’t open its database"
             alert.informativeText = "\(Paths.standard.database.path)\n\n\(error.localizedDescription)"

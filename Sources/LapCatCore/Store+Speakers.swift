@@ -37,14 +37,16 @@ extension Store {
             var ids: [String: Int64] = [:]
             func participantID(name: String, source: ParticipantSource, cluster: String?) throws -> Int64 {
                 if let id = ids[name] { return id }
-                if let existing = try Participant
+                if let existing =
+                    try Participant
                     .filter(Column("meeting_id") == meetingID && Column("display_name") == name)
                     .fetchOne(db), let id = existing.id
                 {
                     ids[name] = id
                     return id
                 }
-                var participant = Participant(meetingID: meetingID, displayName: name, source: source, clusterLabel: cluster)
+                var participant = Participant(
+                    meetingID: meetingID, displayName: name, source: source, clusterLabel: cluster)
                 try participant.insert(db)
                 ids[name] = participant.id!
                 return participant.id!
@@ -87,7 +89,8 @@ extension Store {
     /// the user confirms by merging the cluster participant into it.
     public func recordSpeakerSuggestion(meetingID: String, cluster: String, name: String) async throws {
         try await pool.write { db in
-            if var existing = try Participant
+            if var existing =
+                try Participant
                 .filter(Column("meeting_id") == meetingID && Column("display_name") == name)
                 .fetchOne(db)
             {
@@ -95,7 +98,8 @@ extension Store {
                 existing.clusterLabel = cluster
                 try existing.update(db)
             } else {
-                var participant = Participant(meetingID: meetingID, displayName: name, source: .llmSuggested, clusterLabel: cluster)
+                var participant = Participant(
+                    meetingID: meetingID, displayName: name, source: .llmSuggested, clusterLabel: cluster)
                 try participant.insert(db)
             }
         }

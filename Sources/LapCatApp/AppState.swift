@@ -90,7 +90,7 @@ final class AppState {
     func warmUpLiveEngine() {
         let config = session.speechConfig
         guard let file = EngineSelector(config: config).liveEngine().requiredModelFile,
-              FileManager.default.fileExists(atPath: config.modelsDirectory.appendingPathComponent(file).path)
+            FileManager.default.fileExists(atPath: config.modelsDirectory.appendingPathComponent(file).path)
         else { return }
         let speech = speech
         Task.detached(priority: .utility) {
@@ -148,13 +148,18 @@ final class AppState {
     /// Settings is hosted like the other windows: a SwiftUI `Settings` scene opened from a
     /// menu-bar-only app is created offscreen behind the active app.
     func showSettings() {
-        windows.show(id: WindowID.settings, title: "LapCat Settings", size: NSSize(width: 680, height: 560), resizable: false) {
+        windows.show(
+            id: WindowID.settings, title: "LapCat Settings", size: NSSize(width: 680, height: 560), resizable: false
+        ) {
             SettingsView().environment(self)
         }
     }
 
     func showPermissions() {
-        windows.show(id: WindowID.permissions, title: "LapCat Permissions", size: NSSize(width: 620, height: 560), resizable: false) {
+        windows.show(
+            id: WindowID.permissions, title: "LapCat Permissions", size: NSSize(width: 620, height: 560),
+            resizable: false
+        ) {
             PermissionsView().environment(self)
         }
     }

@@ -25,10 +25,10 @@ struct MeetingPresentationTests {
         let now = Date(timeIntervalSince1970: 1_790_856_000)  // Thu 2026-10-01 12:00 UTC
         let day: TimeInterval = 86_400
         let meetings = [
-            meeting(now.addingTimeInterval(-3_600)),          // today
-            meeting(now.addingTimeInterval(-day)),            // yesterday (Wed)
-            meeting(now.addingTimeInterval(-2 * day)),        // Tue, same week
-            meeting(now.addingTimeInterval(-4 * day)),        // Sun, previous week
+            meeting(now.addingTimeInterval(-3_600)),  // today
+            meeting(now.addingTimeInterval(-day)),  // yesterday (Wed)
+            meeting(now.addingTimeInterval(-2 * day)),  // Tue, same week
+            meeting(now.addingTimeInterval(-4 * day)),  // Sun, previous week
         ]
         let sections = MeetingListSection.group(meetings, now: now, calendar: calendar)
         #expect(sections.map(\.0) == [.today, .yesterday, .thisWeek, .earlier])
@@ -38,13 +38,14 @@ struct MeetingPresentationTests {
     // MARK: Paragraphs
 
     @Test func consecutiveSameSpeakerSegmentsWithinGapShareAParagraph() {
-        let paragraphs = TranscriptGrouping.paragraphs([
-            seg(1, .system, 0, 1_000, "a"),
-            seg(2, .system, 9_000, 10_000, "b"),       // gap 8 s → same paragraph
-            seg(3, .system, 18_001, 19_000, "c"),      // gap 8.001 s → new
-            seg(4, .mic, 19_500, 20_000, "d"),         // other channel → new
-            seg(5, .mic, 20_500, 21_000, "e", participant: 7),  // other participant → new
-        ], showEcho: false)
+        let paragraphs = TranscriptGrouping.paragraphs(
+            [
+                seg(1, .system, 0, 1_000, "a"),
+                seg(2, .system, 9_000, 10_000, "b"),  // gap 8 s → same paragraph
+                seg(3, .system, 18_001, 19_000, "c"),  // gap 8.001 s → new
+                seg(4, .mic, 19_500, 20_000, "d"),  // other channel → new
+                seg(5, .mic, 20_500, 21_000, "e", participant: 7),  // other participant → new
+            ], showEcho: false)
         #expect(paragraphs.map { $0.segments.compactMap(\.id) } == [[1, 2], [3], [4], [5]])
         #expect(paragraphs[0].text == "a b")
     }
@@ -59,30 +60,38 @@ struct MeetingPresentationTests {
         let liveParagraphs = TranscriptGrouping.paragraphs(live, showEcho: false)
         #expect(liveParagraphs.map { $0.segments.compactMap(\.id) } == [[1, 3], [2]])
         #expect(liveParagraphs.last?.isVolatile == true)
-        #expect(TranscriptGrouping.paragraphs(live, showEcho: true).flatMap { $0.segments.compactMap(\.id) }.contains(4))
+        #expect(
+            TranscriptGrouping.paragraphs(live, showEcho: true).flatMap { $0.segments.compactMap(\.id) }.contains(4))
 
         let withFinal = live + [seg(9, .system, 0, 1_000, pass: .final)]
-        #expect(TranscriptGrouping.paragraphs(withFinal, showEcho: false).flatMap { $0.segments.compactMap(\.id) } == [9])
+        #expect(
+            TranscriptGrouping.paragraphs(withFinal, showEcho: false).flatMap { $0.segments.compactMap(\.id) } == [9])
     }
 
     @Test func plainTextIsSpeakerLabelled() {
         let me = Participant(id: 7, meetingID: "m", displayName: "Mason", source: .manual, isMe: true)
-        let paragraphs = TranscriptGrouping.paragraphs([
-            seg(1, .system, 61_000, 62_000, "hello"),
-            seg(2, .mic, 63_000, 64_000, "hi", participant: 7),
-        ], showEcho: false)
-        #expect(TranscriptGrouping.plainText(paragraphs, participants: [me]) == "Them (00:01:01): hello\n\nMason (00:01:03): hi")
+        let paragraphs = TranscriptGrouping.paragraphs(
+            [
+                seg(1, .system, 61_000, 62_000, "hello"),
+                seg(2, .mic, 63_000, 64_000, "hi", participant: 7),
+            ], showEcho: false)
+        #expect(
+            TranscriptGrouping.plainText(paragraphs, participants: [me])
+                == "Them (00:01:01): hello\n\nMason (00:01:03): hi")
     }
 
     // MARK: Find
 
     @Test func findIsCaseInsensitiveAndCyclesWithWrap() {
-        let matches = TranscriptFind.matches("price", in: [seg(1, .system, 0, 1, "Price and PRICE"), seg(2, .mic, 2, 3, "no"), seg(3, .mic, 4, 5, "prices")])
-        #expect(matches == [
-            TranscriptFindMatch(segmentID: 1, range: 0..<5),
-            TranscriptFindMatch(segmentID: 1, range: 10..<15),
-            TranscriptFindMatch(segmentID: 3, range: 0..<5),
-        ])
+        let matches = TranscriptFind.matches(
+            "price",
+            in: [seg(1, .system, 0, 1, "Price and PRICE"), seg(2, .mic, 2, 3, "no"), seg(3, .mic, 4, 5, "prices")])
+        #expect(
+            matches == [
+                TranscriptFindMatch(segmentID: 1, range: 0..<5),
+                TranscriptFindMatch(segmentID: 1, range: 10..<15),
+                TranscriptFindMatch(segmentID: 3, range: 0..<5),
+            ])
         #expect(TranscriptFind.matches("  ", in: [seg(1, .mic, 0, 1, "  ")]).isEmpty)
         #expect(TranscriptFind.step(from: nil, count: 3) == 0)
         #expect(TranscriptFind.step(from: 2, count: 3) == 0)
@@ -130,9 +139,12 @@ struct MeetingPresentationTests {
 
     @Test func markdownLinesAreClassified() {
         #expect(MarkdownLine.parse("## Decisions") == MarkdownLine(kind: .heading(level: 2), content: "Decisions"))
-        #expect(MarkdownLine.parse("  - [x] ship [[s:4]]") == MarkdownLine(kind: .bullet(depth: 1, checked: true), content: "ship [[s:4]]"))
+        #expect(
+            MarkdownLine.parse("  - [x] ship [[s:4]]")
+                == MarkdownLine(kind: .bullet(depth: 1, checked: true), content: "ship [[s:4]]"))
         #expect(MarkdownLine.parse("* point") == MarkdownLine(kind: .bullet(depth: 0, checked: nil), content: "point"))
-        #expect(MarkdownLine.parse("2. second") == MarkdownLine(kind: .numbered(depth: 0, marker: "2."), content: "second"))
+        #expect(
+            MarkdownLine.parse("2. second") == MarkdownLine(kind: .numbered(depth: 0, marker: "2."), content: "second"))
         #expect(MarkdownLine.parse("   ") == MarkdownLine(kind: .blank, content: ""))
         #expect(MarkdownLine.parse("#hashtag") == MarkdownLine(kind: .text, content: "#hashtag"))
     }
@@ -143,7 +155,9 @@ struct MeetingPresentationTests {
         let note = EnhancedNote(
             meetingID: "m", version: 3, templateID: "one-on-one", provider: "claude-cli", model: "sonnet",
             markdown: "", basedOnPass: .final, createdAt: Date(timeIntervalSince1970: 1_790_856_240))  // 12:04 UTC
-        #expect(EnhancedNoteLabel.label(for: note, templateName: "One-on-one", timeZone: utc) == "v3 · One-on-one · Claude via CLI · 12:04")
+        #expect(
+            EnhancedNoteLabel.label(for: note, templateName: "One-on-one", timeZone: utc)
+                == "v3 · One-on-one · Claude via CLI · 12:04")
         #expect(ProviderLabel.displayName("anthropic-api:claude-haiku-4-5") == "Claude API")
         #expect(ProviderLabel.displayName("local") == "Local")
         #expect(ProviderLabel.displayName("ollama:x") == "ollama:x")
@@ -164,10 +178,13 @@ struct MeetingPresentationTests {
         let participants = [
             Participant(id: 1, meetingID: "m", displayName: "Speaker 1", source: .cluster, clusterLabel: "Speaker 1"),
             Participant(id: 2, meetingID: "m", displayName: "Priya", source: .llmSuggested, clusterLabel: "Speaker 1"),
-            Participant(id: 3, meetingID: "m", displayName: "Raj", source: .calendar, clusterLabel: "Speaker 2"),  // no cluster row
-            Participant(id: 4, meetingID: "m", displayName: "Ann", source: .zoomAX, clusterLabel: "Speaker 1"),     // has segments
+            // no cluster row
+            Participant(id: 3, meetingID: "m", displayName: "Raj", source: .calendar, clusterLabel: "Speaker 2"),
+            // has segments
+            Participant(id: 4, meetingID: "m", displayName: "Ann", source: .zoomAX, clusterLabel: "Speaker 1"),
         ]
-        let pending = SpeakerSuggestion.pending(participants: participants, segments: [seg(10, .system, 0, 1, participant: 4)])
+        let pending = SpeakerSuggestion.pending(
+            participants: participants, segments: [seg(10, .system, 0, 1, participant: 4)])
         #expect(pending.map(\.suggested.id) == [2])
         #expect(pending.first?.cluster.id == 1)
         #expect(pending.first?.clusterLabel == "Speaker 1")
@@ -187,7 +204,9 @@ struct MeetingPresentationTests {
         let suggested = try await insert("Priya", .llmSuggested, "Speaker 1")
         let calendar = try await insert("Raj", .calendar, "Speaker 2")
         let rows = try await store.appendSegments([
-            Segment(meetingID: m.id, channel: .system, tStartMs: 0, tEndMs: 1, text: "a", participantID: cluster.id, pass: .final),
+            Segment(
+                meetingID: m.id, channel: .system, tStartMs: 0, tEndMs: 1, text: "a", participantID: cluster.id,
+                pass: .final)
         ])
 
         let kept = try await store.confirmSpeakerSuggestion(suggestedID: suggested.id!, clusterID: cluster.id!)

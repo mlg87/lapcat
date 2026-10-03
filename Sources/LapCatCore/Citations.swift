@@ -109,7 +109,9 @@ public enum Citations {
         case .segment(let id):
             return URL(string: "lapcat://segment/\(id)")!
         case .meetingSegment(let ref):
-            let meeting = ref.meetingID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["/"])) ?? ref.meetingID
+            let meeting =
+                ref.meetingID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["/"]))
+                ?? ref.meetingID
             return URL(string: "lapcat://meeting/\(meeting)/segment/\(ref.segmentID)")!
         }
     }

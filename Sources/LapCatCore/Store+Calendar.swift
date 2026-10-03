@@ -7,9 +7,13 @@ extension Store {
     /// organizer as `participant(source: calendar)` (existing names are kept as they are),
     /// sets `meeting.calendar_event_id` and, when the event has a non-empty title, the meeting title.
     @discardableResult
-    public func applyCalendarEvent(_ event: CalendarEventInfo, toMeeting meetingID: String, now: Date = Date()) async throws -> Meeting {
+    public func applyCalendarEvent(_ event: CalendarEventInfo, toMeeting meetingID: String, now: Date = Date())
+        async throws -> Meeting
+    {
         try await pool.write { db in
-            guard var meeting = try Meeting.fetchOne(db, key: meetingID) else { throw StoreError.notFound("meeting \(meetingID)") }
+            guard var meeting = try Meeting.fetchOne(db, key: meetingID) else {
+                throw StoreError.notFound("meeting \(meetingID)")
+            }
             let snapshot = CalendarSnapshot(
                 meetingID: meetingID,
                 eventTitle: event.title,

@@ -54,15 +54,16 @@ public struct AnthropicAPIProvider: LLMProvider {
         } catch {
             return AsyncThrowingStream { $0.finish(throwing: error) }
         }
-        return .sse({
-            let (bytes, response) = try await session.bytes(for: urlRequest)
-            if (response as? HTTPURLResponse).map({ !(200..<300).contains($0.statusCode) }) ?? true {
-                var body = Data()
-                for try await byte in bytes { body.append(byte) }
-                try Self.check(response, body: body)
-            }
-            return bytes
-        }, step: AnthropicSSE.step)
+        return .sse(
+            {
+                let (bytes, response) = try await session.bytes(for: urlRequest)
+                if (response as? HTTPURLResponse).map({ !(200..<300).contains($0.statusCode) }) ?? true {
+                    var body = Data()
+                    for try await byte in bytes { body.append(byte) }
+                    try Self.check(response, body: body)
+                }
+                return bytes
+            }, step: AnthropicSSE.step)
     }
 
     private func makeRequest(_ request: LLMRequest, model: String, stream: Bool) throws -> URLRequest {
@@ -97,13 +98,15 @@ public struct AnthropicAPIProvider: LLMProvider {
 
     private static func errorMessage(_ body: Data) -> String {
         let json = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
-        return (json?["error"] as? [String: Any])?["message"] as? String ?? String(decoding: body.prefix(300), as: UTF8.self)
+        return (json?["error"] as? [String: Any])?["message"] as? String
+            ?? String(decoding: body.prefix(300), as: UTF8.self)
     }
 
     /// Parses a non-streaming Messages API response.
     static func parseMessage(_ data: Data, fallbackModel: String) throws -> LLMResponse {
         guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              let content = json["content"] as? [[String: Any]] else {
+            let content = json["content"] as? [[String: Any]]
+        else {
             throw LLMError.invalidResponse("Anthropic response has no content")
         }
         let text = content.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }.joined()

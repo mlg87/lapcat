@@ -71,12 +71,13 @@ enum ProcessRunner {
                     state.terminate(timeout: true)
                 }
                 group.notify(queue: .global()) {
-                    continuation.resume(returning: Output(
-                        status: process.terminationStatus,
-                        stdout: stdoutData.withLock { $0 },
-                        stderr: stderrData.withLock { $0 },
-                        timedOut: state.timedOut.withLock { $0 }
-                    ))
+                    continuation.resume(
+                        returning: Output(
+                            status: process.terminationStatus,
+                            stdout: stdoutData.withLock { $0 },
+                            stderr: stderrData.withLock { $0 },
+                            timedOut: state.timedOut.withLock { $0 }
+                        ))
                 }
             }
         } onCancel: {

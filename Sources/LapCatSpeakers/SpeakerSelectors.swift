@@ -22,17 +22,19 @@ public struct AXNameRule: Codable, Sendable, Hashable {
     /// The name this rule (compiled as `regex`) reads from `node`, or nil.
     func name(in node: AXNodeSnapshot, regex: NSRegularExpression) -> String? {
         if let role, node.role != role { return nil }
-        let candidates: [String?] = switch attribute {
-        case .title: [node.title]
-        case .description: [node.description]
-        case .value: [node.value]
-        case .identifier: [node.identifier]
-        case .any: [node.title, node.description, node.value]
-        }
+        let candidates: [String?] =
+            switch attribute {
+            case .title: [node.title]
+            case .description: [node.description]
+            case .value: [node.value]
+            case .identifier: [node.identifier]
+            case .any: [node.title, node.description, node.value]
+            }
         for case let text? in candidates {
             let range = NSRange(text.startIndex..., in: text)
             guard let match = regex.firstMatch(in: text, range: range) else { continue }
-            let captured = match.numberOfRanges > 1 && match.range(at: 1).location != NSNotFound
+            let captured =
+                match.numberOfRanges > 1 && match.range(at: 1).location != NSNotFound
                 ? match.range(at: 1) : match.range
             guard let swiftRange = Range(captured, in: text) else { continue }
             let name = text[swiftRange].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -76,7 +78,7 @@ public struct SpeakerSelectors: Codable, Sendable, Hashable {
     /// `json` decoded as selectors, or `fallback` when it is nil, empty or invalid.
     public static func decode(json: String?, fallback: SpeakerSelectors) -> SpeakerSelectors {
         guard let data = json?.data(using: .utf8), !data.isEmpty,
-              let decoded = try? JSONDecoder().decode(SpeakerSelectors.self, from: data)
+            let decoded = try? JSONDecoder().decode(SpeakerSelectors.self, from: data)
         else { return fallback }
         return decoded
     }
@@ -116,14 +118,15 @@ extension SpeakerSelectors {
     public static let zoomDefault = SpeakerSelectors(
         windowTitlePattern: nil,
         participants: [
-            AXNameRule(attribute: .any, pattern: #"^(.+?)(?:,\s*\((?:[^)]*)\))?,\s*(?:Computer audio|Telephone|Audio)\b"#),
+            AXNameRule(
+                attribute: .any, pattern: #"^(.+?)(?:,\s*\((?:[^)]*)\))?,\s*(?:Computer audio|Telephone|Audio)\b"#)
         ],
         activeSpeaker: [
             AXNameRule(attribute: .any, pattern: #"^(.+?)(?:\s*\((?:[^)]*)\))?\s+is\s+(?:talking|speaking)\b"#),
             AXNameRule(attribute: .any, pattern: #"^Active speaker[:,]?\s*(.+)$"#),
         ],
         selfName: [
-            AXNameRule(attribute: .any, pattern: #"^(.+?),?\s*\((?:[^)]*\b)?me\)"#),
+            AXNameRule(attribute: .any, pattern: #"^(.+?),?\s*\((?:[^)]*\b)?me\)"#)
         ],
         maxDepth: 20
     )
@@ -135,13 +138,14 @@ extension SpeakerSelectors {
         webAreaURLPattern: #"^https://meet\.google\.com/"#,
         participants: [
             AXNameRule(attribute: .any, pattern: #"^(?:Show )?[Mm]ore options for (.+)$"#),
-            AXNameRule(attribute: .any, pattern: #"^(?:Pin|Unpin) (.+?)(?:'s| to your main screen| from your main screen)"#),
+            AXNameRule(
+                attribute: .any, pattern: #"^(?:Pin|Unpin) (.+?)(?:'s| to your main screen| from your main screen)"#),
         ],
         activeSpeaker: [
-            AXNameRule(attribute: .any, pattern: #"^(.+?)\s+is\s+(?:speaking|talking)\b"#),
+            AXNameRule(attribute: .any, pattern: #"^(.+?)\s+is\s+(?:speaking|talking)\b"#)
         ],
         selfName: [
-            AXNameRule(attribute: .any, pattern: #"^(.+?)\s*\((?:You|you)\)$"#),
+            AXNameRule(attribute: .any, pattern: #"^(.+?)\s*\((?:You|you)\)$"#)
         ],
         maxDepth: 40
     )

@@ -29,12 +29,13 @@ public actor WhisperCppEngine: TranscriptionEngine {
         var params = whisper_context_default_params()
         // Metal on Apple Silicon; Intel Macs run CPU-only (see WhisperRuntime.configure).
         #if arch(arm64)
-        params.use_gpu = true
+            params.use_gpu = true
         #else
-        params.use_gpu = false
+            params.use_gpu = false
         #endif
         guard let ctx = whisper_init_from_file_with_params(modelURL.path, params) else {
-            throw SpeechError.modelLoadFailed("whisper_init_from_file_with_params returned NULL for \(modelURL.lastPathComponent)")
+            throw SpeechError.modelLoadFailed(
+                "whisper_init_from_file_with_params returned NULL for \(modelURL.lastPathComponent)")
         }
         native.context = ctx
         logger.info("loaded \(self.modelURL.lastPathComponent, privacy: .public)")

@@ -6,7 +6,8 @@ struct CalendarSelectionTests {
     let now = Date(timeIntervalSince1970: 1_800_000_000)
     let window = CalendarService.defaultWindow
 
-    func event(_ id: String, start: TimeInterval, minutes: TimeInterval = 30, allDay: Bool = false) -> CalendarEventInfo {
+    func event(_ id: String, start: TimeInterval, minutes: TimeInterval = 30, allDay: Bool = false) -> CalendarEventInfo
+    {
         CalendarEventInfo(
             id: id, title: id, start: now.addingTimeInterval(start),
             end: now.addingTimeInterval(start + minutes * 60), isAllDay: allDay)
@@ -40,7 +41,8 @@ struct CalendarSelectionTests {
         let allDay = event("holiday", start: -3_600, minutes: 24 * 60, allDay: true)
         #expect(CalendarService.select(from: [ended, allDay], now: now, window: window)?.id == "overran")
         #expect(CalendarService.select(from: [allDay], now: now, window: window) == nil)
-        #expect(CalendarService.select(from: [ended, event("soon", start: 600)], now: now, window: window)?.id == "soon")
+        #expect(
+            CalendarService.select(from: [ended, event("soon", start: 600)], now: now, window: window)?.id == "soon")
     }
 
     @Test func startingWithinTheNextMinuteWindow() {
@@ -66,7 +68,8 @@ struct MeetingURLMatcherTests {
             Meeting ID: 876 5432 1098
             """
         let fromNotes = MeetingURLMatcher.conferenceURL(
-            url: URL(string: "https://example.com/agenda"), notes: notes, location: "https://meet.google.com/xyz-abcd-efg")
+            url: URL(string: "https://example.com/agenda"), notes: notes,
+            location: "https://meet.google.com/xyz-abcd-efg")
         #expect(fromNotes?.absoluteString == "https://us02web.zoom.us/j/87654321098?pwd=AbC123.1")
 
         let fromLocation = MeetingURLMatcher.conferenceURL(
@@ -82,7 +85,8 @@ struct MeetingURLMatcherTests {
     @Test func nonJoinLinksDoNotMatch() {
         for text in [
             "https://zoom.us/meeting/schedule", "https://zoom.us/j/", "https://meet.google.com/landing",
-            "https://meet.google.com/abc-defg-hijk", "http://meet.google.com/abc-defg-hij", "https://notzoom.us.evil.com/j/1",
+            "https://meet.google.com/abc-defg-hijk", "http://meet.google.com/abc-defg-hij",
+            "https://notzoom.us.evil.com/j/1",
         ] {
             #expect(MeetingURLMatcher.firstMeetingURL(in: text) == nil, "\(text)")
         }
@@ -96,8 +100,11 @@ struct MeetingURLMatcherTests {
     }
 
     @Test func meetTabRegexAcceptsCallTabsOnly() {
-        #expect(MeetingURLMatcher.meetCode(inTab: URL(string: "https://meet.google.com/abc-defg-hij")!) == "abc-defg-hij")
-        #expect(MeetingURLMatcher.meetCode(inTab: URL(string: "https://meet.google.com/abc-defg-hij?authuser=1")!) == "abc-defg-hij")
+        #expect(
+            MeetingURLMatcher.meetCode(inTab: URL(string: "https://meet.google.com/abc-defg-hij")!) == "abc-defg-hij")
+        #expect(
+            MeetingURLMatcher.meetCode(inTab: URL(string: "https://meet.google.com/abc-defg-hij?authuser=1")!)
+                == "abc-defg-hij")
         #expect(MeetingURLMatcher.isMeetCallTab(URL(string: "https://meet.google.com/abc-defg-hij/")!))
         for tab in [
             "https://meet.google.com/", "https://meet.google.com/landing", "https://meet.google.com/new",
@@ -109,7 +116,8 @@ struct MeetingURLMatcherTests {
     }
 
     @Test func browserScriptsCoverChromiumAndSafariButNotFirefox() {
-        #expect(BrowserTabProbe.script(for: "company.thebrowser.Browser")?.contains("active tab of front window") == true)
+        #expect(
+            BrowserTabProbe.script(for: "company.thebrowser.Browser")?.contains("active tab of front window") == true)
         #expect(BrowserTabProbe.script(for: "com.apple.Safari")?.contains("current tab of front window") == true)
         #expect(BrowserTabProbe.script(for: "org.mozilla.firefox") == nil)
     }

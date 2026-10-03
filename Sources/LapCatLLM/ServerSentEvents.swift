@@ -25,7 +25,8 @@ enum AnthropicSSE {
         switch json["type"] as? String {
         case "content_block_delta":
             guard let delta = json["delta"] as? [String: Any], delta["type"] as? String == "text_delta",
-                  let text = delta["text"] as? String else { return .ignore }
+                let text = delta["text"] as? String
+            else { return .ignore }
             return .text(text)
         case "message_stop":
             return .done
@@ -50,8 +51,9 @@ enum OpenAISSE {
             return .failure(.unavailable(error["message"] as? String ?? "server error"))
         }
         guard let choice = (json["choices"] as? [[String: Any]])?.first,
-              let delta = choice["delta"] as? [String: Any],
-              let text = delta["content"] as? String, !text.isEmpty else { return .ignore }
+            let delta = choice["delta"] as? [String: Any],
+            let text = delta["content"] as? String, !text.isEmpty
+        else { return .ignore }
         return .text(text)
     }
 }

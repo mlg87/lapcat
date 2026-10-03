@@ -4,7 +4,9 @@ import Testing
 
 struct SearchSnippetTests {
     private func boldRuns(_ text: AttributedString) -> [String] {
-        text.runs.filter { $0.inlinePresentationIntent == .stronglyEmphasized }.map { String(text[$0.range].characters) }
+        text.runs.filter { $0.inlinePresentationIntent == .stronglyEmphasized }.map {
+            String(text[$0.range].characters)
+        }
     }
 
     @Test func boldTagsBecomeEmphasisAndAreRemoved() {
@@ -43,13 +45,18 @@ struct SearchHitTargetTests {
 
 struct RecipeFilterTests {
     private let recipes = [
-        Recipe(id: "follow-up-email", name: "Follow-up email", slashCommand: "/follow-up", prompt: "Draft", isBuiltin: true),
+        Recipe(
+            id: "follow-up-email", name: "Follow-up email", slashCommand: "/follow-up", prompt: "Draft", isBuiltin: true
+        ),
         Recipe(id: "action-items", name: "Action items", slashCommand: "/actions", prompt: "List", isBuiltin: true),
         Recipe(id: "custom:fun", name: "Fun", slashCommand: "/fun", prompt: "Joke", isBuiltin: false),
     ]
 
     @Test func slashAloneListsEveryRecipe() {
-        #expect(RecipeFilter.suggestions(for: "/", in: recipes)?.map(\.id) == ["follow-up-email", "action-items", "custom:fun"])
+        #expect(
+            RecipeFilter.suggestions(for: "/", in: recipes)?.map(\.id) == [
+                "follow-up-email", "action-items", "custom:fun",
+            ])
     }
 
     @Test func prefixFiltersCaseInsensitively() {

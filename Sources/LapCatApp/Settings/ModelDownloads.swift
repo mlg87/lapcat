@@ -86,8 +86,10 @@ struct ModelDownloadRow: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text(entry.displayName)
-                    Text("\(entry.fileName) · \(ByteCountFormatter.string(fromByteCount: entry.sizeBytes, countStyle: .file))")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(
+                        "\(entry.fileName) · \(ByteCountFormatter.string(fromByteCount: entry.sizeBytes, countStyle: .file))"
+                    )
+                    .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 switch downloads.state(of: entry.id) {

@@ -29,7 +29,7 @@ public enum MeetingURLMatcher {
         let range = NSRange(text.startIndex..., in: text)
         let matches = [zoom, meet].compactMap { $0.firstMatch(in: text, range: range) }
         guard let first = matches.min(by: { $0.range.location < $1.range.location }),
-              let swiftRange = Range(first.range, in: text)
+            let swiftRange = Range(first.range, in: text)
         else { return nil }
         return URL(string: String(text[swiftRange]))
     }
@@ -47,7 +47,7 @@ public enum MeetingURLMatcher {
         let text = url.absoluteString
         let range = NSRange(text.startIndex..., in: text)
         guard let match = meetTab.firstMatch(in: text, range: range),
-              let code = Range(match.range(at: 1), in: text)
+            let code = Range(match.range(at: 1), in: text)
         else { return nil }
         return String(text[code])
     }

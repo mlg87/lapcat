@@ -9,11 +9,18 @@ struct StoreTests {
         return try Store(databaseURL: dir.appendingPathComponent("lapcat.sqlite"))
     }
 
-    private func segment(_ meetingID: String, _ channel: Channel, _ start: Int, _ text: String, participant: Int64? = nil, pass: SegmentPass = .final) -> Segment {
-        Segment(meetingID: meetingID, channel: channel, tStartMs: start, tEndMs: start + 1_000, text: text, participantID: participant, pass: pass)
+    private func segment(
+        _ meetingID: String, _ channel: Channel, _ start: Int, _ text: String, participant: Int64? = nil,
+        pass: SegmentPass = .final
+    ) -> Segment {
+        Segment(
+            meetingID: meetingID, channel: channel, tStartMs: start, tEndMs: start + 1_000, text: text,
+            participantID: participant, pass: pass)
     }
 
-    private func segment(_ meetingID: String, _ start: Int, _ text: String, participant: Int64? = nil, pass: SegmentPass = .final) -> Segment {
+    private func segment(
+        _ meetingID: String, _ start: Int, _ text: String, participant: Int64? = nil, pass: SegmentPass = .final
+    ) -> Segment {
         segment(meetingID, .system, start, text, participant: participant, pass: pass)
     }
 
@@ -35,7 +42,8 @@ struct StoreTests {
         let m = try await store.createMeeting(title: "A", startedBy: .manual, now: Date(timeIntervalSince1970: 1_000))
         try await store.saveRawNote(meetingID: m.id, markdown: "x", now: Date(timeIntervalSince1970: 2_000))
         let stored: [Double] = try await store.reader.read { db in
-            try Double.fetchAll(db, sql: "SELECT m.started_at FROM meeting m UNION ALL SELECT r.updated_at FROM raw_note r")
+            try Double.fetchAll(
+                db, sql: "SELECT m.started_at FROM meeting m UNION ALL SELECT r.updated_at FROM raw_note r")
         }
         #expect(stored == [1_000, 2_000])
         #expect(try await store.meeting(id: m.id)?.startedAt == Date(timeIntervalSince1970: 1_000))
@@ -81,7 +89,8 @@ struct StoreTests {
         let store = try makeStore()
         let meeting = try await store.createMeeting(title: "Sync", startedBy: .manual)
         try await store.appendSegments([segment(meeting.id, 0, "liveword", pass: .live)])
-        try await store.replaceVolatileSegment(meetingID: meeting.id, channel: .mic, with: segment(meeting.id, .mic, 5_000, "volatileword", pass: .live))
+        try await store.replaceVolatileSegment(
+            meetingID: meeting.id, channel: .mic, with: segment(meeting.id, .mic, 5_000, "volatileword", pass: .live))
         try await store.reindexFTS(meetingID: meeting.id)
         #expect(try await store.search(query: "liveword").count == 1)
         #expect(try await store.search(query: "volatileword").isEmpty)
@@ -101,7 +110,9 @@ struct StoreTests {
         let b = try await store.createMeeting(title: "B", startedBy: .manual)
         let pa = try await store.upsertParticipant(meetingID: a.id, name: "Speaker 1", source: .cluster)
         let pb = try await store.upsertParticipant(meetingID: b.id, name: "Speaker 1", source: .cluster)
-        try await store.appendSegments([segment(a.id, 0, "hi", participant: pa.id), segment(a.id, 2_000, "yo", participant: pa.id)])
+        try await store.appendSegments([
+            segment(a.id, 0, "hi", participant: pa.id), segment(a.id, 2_000, "yo", participant: pa.id),
+        ])
         try await store.appendSegments([segment(b.id, 0, "hey", participant: pb.id)])
 
         try await store.renameParticipant(id: try #require(pa.id), to: "Priya Shah")
@@ -160,7 +171,9 @@ struct StoreTests {
         let m = try await store.createMeeting(title: "A", startedBy: .manual)
         let other = try await store.createMeeting(title: "B", startedBy: .manual)
         func note(_ meetingID: String, _ i: Int) -> EnhancedNote {
-            EnhancedNote(meetingID: meetingID, templateID: "general", provider: "claude-cli", model: "sonnet", markdown: "v\(i)", basedOnPass: .live, createdAt: Date())
+            EnhancedNote(
+                meetingID: meetingID, templateID: "general", provider: "claude-cli", model: "sonnet", markdown: "v\(i)",
+                basedOnPass: .live, createdAt: Date())
         }
         try await store.insertEnhancedNote(note(other.id, 0))
         for i in 1...7 { try await store.insertEnhancedNote(note(m.id, i)) }
@@ -175,9 +188,12 @@ struct StoreTests {
         let store = try makeStore()
         let m = try await store.createMeeting(title: "A", startedBy: .manual)
         try await store.appendSegments([segment(m.id, .mic, 0, "done", pass: .live)])
-        try await store.replaceVolatileSegment(meetingID: m.id, channel: .mic, with: segment(m.id, .mic, 1_000, "hel", pass: .live))
-        try await store.replaceVolatileSegment(meetingID: m.id, channel: .mic, with: segment(m.id, .mic, 1_000, "hello", pass: .live))
-        try await store.replaceVolatileSegment(meetingID: m.id, channel: .system, with: segment(m.id, .system, 1_000, "them", pass: .live))
+        try await store.replaceVolatileSegment(
+            meetingID: m.id, channel: .mic, with: segment(m.id, .mic, 1_000, "hel", pass: .live))
+        try await store.replaceVolatileSegment(
+            meetingID: m.id, channel: .mic, with: segment(m.id, .mic, 1_000, "hello", pass: .live))
+        try await store.replaceVolatileSegment(
+            meetingID: m.id, channel: .system, with: segment(m.id, .system, 1_000, "them", pass: .live))
 
         var volatile = try await store.segments(meetingID: m.id).filter(\.isVolatile)
         #expect(volatile.map(\.text).sorted() == ["hello", "them"])
@@ -205,7 +221,8 @@ struct StoreTests {
         let start = Date(timeIntervalSince1970: 1_000)
         let crashed = try await store.createMeeting(title: "Crashed", startedBy: .manual, now: start)
         let empty = try await store.createMeeting(title: "Empty", startedBy: .manual, now: start.addingTimeInterval(10))
-        var midway = try await store.createMeeting(title: "Midway", startedBy: .manual, now: start.addingTimeInterval(20))
+        var midway = try await store.createMeeting(
+            title: "Midway", startedBy: .manual, now: start.addingTimeInterval(20))
         midway.status = .processing
         midway.processingStep = "final_stt_system"
         try await store.updateMeeting(midway)
@@ -238,7 +255,8 @@ struct StoreTests {
         try await store.setStarred(meetingID: a.id, starred: true)
         try await store.upsertParticipant(meetingID: b.id, name: "Priya Shah", source: .calendar)
 
-        #expect(try await store.meetings(filter: MeetingFilter(folderID: folder.id, starredOnly: true)).map(\.id) == [a.id])
+        #expect(
+            try await store.meetings(filter: MeetingFilter(folderID: folder.id, starredOnly: true)).map(\.id) == [a.id])
         #expect(try await store.meetings(filter: MeetingFilter(personName: "priya")).map(\.id) == [b.id])
         #expect(try await store.meetings(filter: MeetingFilter(search: "acme")).map(\.id) == [a.id])
 
@@ -280,7 +298,8 @@ struct StoreTests {
         #expect(try await store.thread(for: .global).id == global.id)
 
         try await store.appendChatMessage(ChatMessage(threadID: t1.id, role: .user, content: "q", createdAt: Date()))
-        try await store.appendChatMessage(ChatMessage(threadID: t1.id, role: .assistant, content: "a", createdAt: Date()))
+        try await store.appendChatMessage(
+            ChatMessage(threadID: t1.id, role: .assistant, content: "a", createdAt: Date()))
         #expect(try await store.messages(threadID: t1.id).map(\.role) == [.user, .assistant])
     }
 }

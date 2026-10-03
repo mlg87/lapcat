@@ -45,8 +45,12 @@ public actor Enhancer {
     /// - Parameters:
     ///   - templateID: a template row id, or `TemplateLibrary.autoID` to let the LLM pick (falls back to `general`).
     ///   - providerOverride: a provider id to use exclusively instead of the configured order.
-    public func enhance(meetingID: String, templateID: String, providerOverride: String? = nil) async throws -> EnhancedNote {
-        guard let meeting = try await store.meeting(id: meetingID) else { throw EnhancerError.meetingNotFound(meetingID) }
+    public func enhance(meetingID: String, templateID: String, providerOverride: String? = nil) async throws
+        -> EnhancedNote
+    {
+        guard let meeting = try await store.meeting(id: meetingID) else {
+            throw EnhancerError.meetingNotFound(meetingID)
+        }
         let router = providerOverride.map { self.router.pinned(to: $0) } ?? self.router
 
         let allSegments = try await store.segments(meetingID: meetingID)
@@ -59,38 +63,59 @@ public actor Enhancer {
         }
 
         let context = Prompts.MeetingContext(
-            title: meeting.title, date: meeting.startedAt, attendees: Self.attendees(snapshot: snapshot, participants: participants))
-        let opening = TranscriptFormatter.forLLM(segments: segments.filter { $0.tStartMs < Self.openingMs }, participants: participants)
+            title: meeting.title, date: meeting.startedAt,
+            attendees: Self.attendees(snapshot: snapshot, participants: participants))
+        let opening = TranscriptFormatter.forLLM(
+            segments: segments.filter { $0.tStartMs < Self.openingMs }, participants: participants)
         let template = try await resolveTemplate(templateID, context: context, opening: opening, router: router)
 
-        guard let head = await router.head(for: .enhance) else { throw LLMError.unavailable("no LLM provider available") }
+        guard let head = await router.head(for: .enhance) else {
+            throw LLMError.unavailable("no LLM provider available")
+        }
         let transcript = TranscriptFormatter.forLLM(segments: segments, participants: participants)
         let estimate = (transcript.count + rawNotes.count) / 4
         let result: (response: LLMResponse, providerID: String)
         if estimate + Self.promptOverheadTokens > head.contextBudgetTokens {
-            logger.info("Map-reduce enhance: ~\(estimate) tokens > budget \(head.contextBudgetTokens) of \(head.id, privacy: .public)")
+            logger.info(
+                "Map-reduce enhance: ~\(estimate) tokens > budget \(head.contextBudgetTokens) of \(head.id, privacy: .public)"
+            )
             let summaries = try await summarizeWindows(
-                segments, participants: participants, router: router, concurrency: head.id == LLMRouter.localProviderID ? 1 : Self.mapConcurrency)
-            result = try await router.complete(LLMRequest(
-                task: .enhance, system: Prompts.enhanceSystem,
-                messages: [.user(Prompts.reduceUser(
-                    meeting: context, templateName: template.name, templateBody: template.bodyMarkdown, rawNotes: rawNotes, summaries: summaries))]))
+                segments, participants: participants, router: router,
+                concurrency: head.id == LLMRouter.localProviderID ? 1 : Self.mapConcurrency)
+            result = try await router.complete(
+                LLMRequest(
+                    task: .enhance, system: Prompts.enhanceSystem,
+                    messages: [
+                        .user(
+                            Prompts.reduceUser(
+                                meeting: context, templateName: template.name, templateBody: template.bodyMarkdown,
+                                rawNotes: rawNotes, summaries: summaries))
+                    ]))
         } else {
-            result = try await router.complete(LLMRequest(
-                task: .enhance, system: Prompts.enhanceSystem,
-                messages: [.user(Prompts.enhanceUser(
-                    meeting: context, templateName: template.name, templateBody: template.bodyMarkdown, rawNotes: rawNotes, transcript: transcript))]))
+            result = try await router.complete(
+                LLMRequest(
+                    task: .enhance, system: Prompts.enhanceSystem,
+                    messages: [
+                        .user(
+                            Prompts.enhanceUser(
+                                meeting: context, templateName: template.name, templateBody: template.bodyMarkdown,
+                                rawNotes: rawNotes, transcript: transcript))
+                    ]))
         }
 
         let segmentIDs = Set(segments.compactMap(\.id))
-        let markdown = Citations.normalizingBareSegmentIDs(Self.unfenced(result.response.text), validSegmentIDs: segmentIDs)
+        let markdown = Citations.normalizingBareSegmentIDs(
+            Self.unfenced(result.response.text), validSegmentIDs: segmentIDs)
         let citations = Citations.parse(markdown, validSegmentIDs: segmentIDs)
-        let note = try await store.insertEnhancedNote(EnhancedNote(
-            meetingID: meetingID, templateID: template.id, provider: result.providerID, model: result.response.model,
-            markdown: markdown, citationsJSON: Citations.json(citations),
-            basedOnPass: TranscriptFormatter.selectedPass(allSegments), createdAt: now()))
+        let note = try await store.insertEnhancedNote(
+            EnhancedNote(
+                meetingID: meetingID, templateID: template.id, provider: result.providerID,
+                model: result.response.model,
+                markdown: markdown, citationsJSON: Citations.json(citations),
+                basedOnPass: TranscriptFormatter.selectedPass(allSegments), createdAt: now()))
         try await store.recordEnhancement(
-            meetingID: meetingID, templateID: template.id, providerUsed: "\(result.providerID):\(result.response.model)", now: now())
+            meetingID: meetingID, templateID: template.id,
+            providerUsed: "\(result.providerID):\(result.response.model)", now: now())
 
         if snapshot == nil, MeetingTitle.isDefault(meeting.title) {
             await autoTitle(meeting: meeting, attendees: context.attendees, opening: opening, router: router)
@@ -101,7 +126,9 @@ public actor Enhancer {
     // MARK: - Steps
 
     /// `auto` asks the classifier; any classify failure or unknown answer falls back to `general`.
-    private func resolveTemplate(_ id: String, context: Prompts.MeetingContext, opening: String, router: LLMRouter) async throws -> Template {
+    private func resolveTemplate(_ id: String, context: Prompts.MeetingContext, opening: String, router: LLMRouter)
+        async throws -> Template
+    {
         guard id == TemplateLibrary.autoID else {
             guard let template = try await store.template(id: id) else { throw EnhancerError.templateNotFound(id) }
             return template
@@ -112,12 +139,15 @@ public actor Enhancer {
             let choice = try await router.completeJSON(
                 LLMRequest(
                     task: .classify, system: Prompts.classifySystem(templateIDs: templates.map(\.id)),
-                    messages: [.user(Prompts.classifyUser(meeting: context, openingTranscript: opening))], maxTokens: 256),
+                    messages: [.user(Prompts.classifyUser(meeting: context, openingTranscript: opening))],
+                    maxTokens: 256),
                 as: Choice.self)
             if let template = templates.first(where: { $0.id == choice.value.template_id }) { return template }
-            logger.warning("Classifier picked unknown template \(choice.value.template_id, privacy: .public); using general")
+            logger.warning(
+                "Classifier picked unknown template \(choice.value.template_id, privacy: .public); using general")
         } catch {
-            logger.warning("Template classification failed: \(error.localizedDescription, privacy: .public); using general")
+            logger.warning(
+                "Template classification failed: \(error.localizedDescription, privacy: .public); using general")
         }
         guard let general = templates.first(where: { $0.id == TemplateLibrary.generalID }) else {
             throw EnhancerError.templateNotFound(TemplateLibrary.generalID)
@@ -126,16 +156,21 @@ public actor Enhancer {
     }
 
     /// Map step: one `chunkSummarySystem` call per 10-minute window, joined in window order.
-    private func summarizeWindows(_ segments: [Segment], participants: [Participant], router: LLMRouter, concurrency: Int) async throws -> String {
+    private func summarizeWindows(
+        _ segments: [Segment], participants: [Participant], router: LLMRouter, concurrency: Int
+    ) async throws -> String {
         let windows = Self.windows(segments)
         var summaries = [String?](repeating: nil, count: windows.count)
         try await withThrowingTaskGroup(of: (Int, String).self) { group in
             var next = 0
             func submit() {
                 let index = next
-                let transcript = TranscriptFormatter.forLLM(segments: windows[index].segments, participants: participants)
+                let transcript = TranscriptFormatter.forLLM(
+                    segments: windows[index].segments, participants: participants)
                 group.addTask {
-                    let request = LLMRequest(task: .enhance, system: Prompts.chunkSummarySystem, messages: [.user(transcript)], maxTokens: 2048)
+                    let request = LLMRequest(
+                        task: .enhance, system: Prompts.chunkSummarySystem, messages: [.user(transcript)],
+                        maxTokens: 2048)
                     return (index, try await router.complete(request).response.text)
                 }
                 next += 1
@@ -167,7 +202,8 @@ public actor Enhancer {
             let reply = try await router.completeJSON(
                 LLMRequest(
                     task: .classify, system: Prompts.titleSystem,
-                    messages: [.user(Prompts.titleUser(attendees: attendees, openingTranscript: opening))], maxTokens: 128),
+                    messages: [.user(Prompts.titleUser(attendees: attendees, openingTranscript: opening))],
+                    maxTokens: 128),
                 as: Title.self)
             let title = reply.value.title
                 .components(separatedBy: .newlines).joined(separator: " ")
@@ -184,7 +220,8 @@ public actor Enhancer {
     /// Calendar attendees, then named participants (diarization clusters and unconfirmed LLM suggestions excluded).
     static func attendees(snapshot: CalendarSnapshot?, participants: [Participant]) -> [String] {
         var seen = Set<String>()
-        let names = (snapshot?.attendees ?? [])
+        let names =
+            (snapshot?.attendees ?? [])
             + participants.filter { $0.source != .cluster && $0.source != .llmSuggested }.map(\.displayName)
         return names.filter { !$0.isEmpty && seen.insert($0).inserted }
     }
@@ -193,7 +230,8 @@ public actor Enhancer {
     static func unfenced(_ text: String) -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         var lines = trimmed.split(separator: "\n", omittingEmptySubsequences: false)
-        guard lines.count >= 2, lines.first!.hasPrefix("```"), lines.last!.trimmingCharacters(in: .whitespaces) == "```" else {
+        guard lines.count >= 2, lines.first!.hasPrefix("```"), lines.last!.trimmingCharacters(in: .whitespaces) == "```"
+        else {
             return trimmed
         }
         lines.removeFirst()

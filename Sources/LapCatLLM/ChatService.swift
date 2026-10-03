@@ -5,7 +5,8 @@ import LapCatCore
 /// `.chat`); the user message is persisted before the request and the assistant message, with its parsed
 /// citations, once the stream completes.
 public final class ChatService: Sendable {
-    public static let chatSystem = "You answer questions about the user's meetings using only the provided context. Cite every claim with [[s:ID]] (single meeting) or [[m:MEETING_ID#s:ID]] (multiple meetings). If the context does not contain the answer, say so. Be concise."
+    public static let chatSystem =
+        "You answer questions about the user's meetings using only the provided context. Cite every claim with [[s:ID]] (single meeting) or [[m:MEETING_ID#s:ID]] (multiple meetings). If the context does not contain the answer, say so. Be concise."
 
     /// Prior thread messages sent with each question.
     static let historyLimit = 10
@@ -65,9 +66,10 @@ public final class ChatService: Sendable {
                         answer = Citations.normalizingBareSegmentIDs(answer, validSegmentIDs: ids)
                     }
                     let citations = try await citationsJSON(answer, scope: scope, scopeRef: scopeRef)
-                    try await store.appendChatMessage(ChatMessage(
-                        threadID: thread.id, role: .assistant, content: answer, citationsJSON: citations,
-                        provider: providerID, createdAt: Date()))
+                    try await store.appendChatMessage(
+                        ChatMessage(
+                            threadID: thread.id, role: .assistant, content: answer, citationsJSON: citations,
+                            provider: providerID, createdAt: Date()))
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -174,8 +176,11 @@ public final class ChatService: Sendable {
             var noteKey: String?
             switch hit.kind {
             case .segment:
-                guard let id = Int64(hit.refID), let index = entry.lines.firstIndex(where: { $0.id == id }) else { continue }
-                let window = entry.lines[max(0, index - Self.neighbourCount)...min(entry.lines.count - 1, index + Self.neighbourCount)]
+                guard let id = Int64(hit.refID), let index = entry.lines.firstIndex(where: { $0.id == id }) else {
+                    continue
+                }
+                let window = entry.lines[
+                    max(0, index - Self.neighbourCount)...min(entry.lines.count - 1, index + Self.neighbourCount)]
                 let fresh = window.filter { !emittedSegments.contains($0.id) }
                 guard !fresh.isEmpty else { continue }
                 block = fresh.map { "[[m:\(hit.meetingID)#s:\($0.id)]] \(label) \($0.speaker): \($0.text)" }
@@ -193,13 +198,16 @@ public final class ChatService: Sendable {
                     text = try await store.rawNote(meetingID: hit.meetingID)?.markdown
                 }
                 guard let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { continue }
-                let excerpt = text.count > Self.noteExcerptChars ? String(text.prefix(Self.noteExcerptChars)) + "…" : text
+                let excerpt =
+                    text.count > Self.noteExcerptChars ? String(text.prefix(Self.noteExcerptChars)) + "…" : text
                 block = "From \(label) — \(hit.kind == .enhanced ? "enhanced notes" : "my notes"):\n\(excerpt)"
                 noteKey = key
             case .person:
                 guard let participantID = Int64(hit.refID) else { continue }
-                let spoken = entry.lines.filter { $0.participantID == participantID && !emittedSegments.contains($0.id) }
-                    .prefix(Self.personLineLimit)
+                let spoken = entry.lines.filter {
+                    $0.participantID == participantID && !emittedSegments.contains($0.id)
+                }
+                .prefix(Self.personLineLimit)
                 guard !spoken.isEmpty else { continue }
                 block = spoken.map { "[[m:\(hit.meetingID)#s:\($0.id)]] \(label) \($0.speaker): \($0.text)" }
                     .joined(separator: "\n")
@@ -283,7 +291,8 @@ enum ChatCitations {
                     segments.append(id)
                 }
             }
-            return segments.isEmpty && refs.isEmpty ? nil : Citation(lineIndex: index, segmentIDs: segments, meetingSegments: refs)
+            return segments.isEmpty && refs.isEmpty
+                ? nil : Citation(lineIndex: index, segmentIDs: segments, meetingSegments: refs)
         }
     }
 }
@@ -302,7 +311,8 @@ enum ChatTranscriptLines {
     static func selected(segments: [Segment], participants: [Participant]) -> [Line] {
         let usable = segments.filter { !$0.isVolatile && !$0.isEchoDuplicate && $0.id != nil }
         let pass: SegmentPass = usable.contains { $0.pass == .final } ? .final : .live
-        let names = Dictionary(participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { a, _ in a })
+        let names = Dictionary(
+            participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { a, _ in a })
         return usable.filter { $0.pass == pass }
             .sorted { ($0.tStartMs, $0.id ?? 0) < ($1.tStartMs, $1.id ?? 0) }
             .map { segment in

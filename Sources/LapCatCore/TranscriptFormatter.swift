@@ -9,7 +9,8 @@ public enum TranscriptFormatter {
 
     /// The `forLLM` lines, unjoined (callers truncating to a budget drop from the front).
     public static func lines(segments: [Segment], participants: [Participant]) -> [String] {
-        let names = Dictionary(participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { first, _ in first })
+        let names = Dictionary(
+            participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { first, _ in first })
         return selectedSegments(segments).map { segment in
             let id = segment.id.map(String.init) ?? "?"
             let text = segment.text
@@ -25,7 +26,8 @@ public enum TranscriptFormatter {
     public static func selectedSegments(_ segments: [Segment]) -> [Segment] {
         let usable = segments.filter { !$0.isVolatile && !$0.isEchoDuplicate }
         let pass = selectedPass(usable)
-        return usable
+        return
+            usable
             .filter { $0.pass == pass }
             .sorted { ($0.tStartMs, $0.id ?? 0) < ($1.tStartMs, $1.id ?? 0) }
     }
@@ -37,8 +39,11 @@ public enum TranscriptFormatter {
 
     /// Participant display name, else `Me` (mic) / `Them` (system).
     public static func speakerName(for segment: Segment, participants: [Participant]) -> String {
-        speakerName(for: segment, names: Dictionary(
-            participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { first, _ in first }))
+        speakerName(
+            for: segment,
+            names: Dictionary(
+                participants.compactMap { p in p.id.map { ($0, p.displayName) } },
+                uniquingKeysWith: { first, _ in first }))
     }
 
     /// `hh:mm:ss` from milliseconds since session start.

@@ -49,13 +49,15 @@ import LapCatSpeech
         let services = SpeechServices()
         let directory = URL(fileURLWithPath: "/tmp/models")
         let live = await services.liveEngine(config: config(.whisper))
-        let liveAgain = await services.engine(for: .whisper(modelFile: "ggml-small.en.bin"), role: .live, modelsDirectory: directory)
+        let liveAgain = await services.engine(
+            for: .whisper(modelFile: "ggml-small.en.bin"), role: .live, modelsDirectory: directory)
         #expect(live.id == "whisper:ggml-small.en.bin")
         #expect(ObjectIdentifier(live as AnyObject) == ObjectIdentifier(liveAgain as AnyObject))
         // Same model for both passes (the Intel default): still two instances, so a long final pass
         // never blocks live transcription.
-        let sameModel = SpeechConfig(engine: .whisper, whisperLiveModel: "ggml-small.en.bin",
-                                     whisperFinalModel: "ggml-small.en.bin", modelsDirectory: directory)
+        let sameModel = SpeechConfig(
+            engine: .whisper, whisperLiveModel: "ggml-small.en.bin",
+            whisperFinalModel: "ggml-small.en.bin", modelsDirectory: directory)
         let final = await services.finalEngine(config: sameModel)
         #expect(final.id == live.id)
         #expect(ObjectIdentifier(live as AnyObject) != ObjectIdentifier(final as AnyObject))

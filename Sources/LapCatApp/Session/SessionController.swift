@@ -90,7 +90,8 @@ final class SessionController {
             if let capture { _ = await capture.stop() }
             capture = nil
             if let id = startingMeetingID {
-                try? await store.setMeetingStatus(meetingID: id, status: .error, errorMessage: "Recording failed to start: \(error)")
+                try? await store.setMeetingStatus(
+                    meetingID: id, status: .error, errorMessage: "Recording failed to start: \(error)")
             }
             startingMeetingID = nil
             state = .idle
@@ -108,7 +109,8 @@ final class SessionController {
             title: title ?? MeetingTitle.default(for: now), startedBy: startedBy,
             sourceApp: source?.appName ?? "other", bundleID: source?.bundleID, pid: source?.pid, now: now)
         startingMeetingID = meeting.id
-        try await store.upsertParticipant(meetingID: meeting.id, name: settings.userDisplayName, source: .manual, isMe: true)
+        try await store.upsertParticipant(
+            meetingID: meeting.id, name: settings.userDisplayName, source: .manual, isMe: true)
         // Title and attendees from the overlapping calendar event (nil without Calendar access).
         if let event = calendarEvent ?? CalendarService().currentOrUpcomingEvent(now: now) {
             try await store.applyCalendarEvent(event, toMeeting: meeting.id, now: now)
@@ -128,18 +130,20 @@ final class SessionController {
                 makeEngine: {
                     let spec = EngineSelector(config: config).liveEngine()
                     if let file = spec.requiredModelFile {
-                        try await ModelDownloader(modelsDirectory: config.modelsDirectory, offlineOnly: offline).download(file)
+                        try await ModelDownloader(modelsDirectory: config.modelsDirectory, offlineOnly: offline)
+                            .download(file)
                     }
                     return await speech.liveEngine(config: config)
                 })
         }
         observe(capture)
-        tasks.append(Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                self?.clock = Date()
-            }
-        })
+        tasks.append(
+            Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(1))
+                    self?.clock = Date()
+                }
+            })
 
         try await capture.start(
             scope: tapScope(for: source), directory: directory,
@@ -158,9 +162,10 @@ final class SessionController {
         let elapsed: @Sendable () async -> Int = { [weak self] in
             await MainActor.run { Int((self?.elapsed() ?? 0) * 1000) }
         }
-        guard let (recorder, adapter, pid) = SpeakerEventRecorder.make(
-            store: store, meetingID: meetingID, bundleID: source?.bundleID, pid: source?.pid,
-            settings: settings, elapsedMs: elapsed)
+        guard
+            let (recorder, adapter, pid) = SpeakerEventRecorder.make(
+                store: store, meetingID: meetingID, bundleID: source?.bundleID, pid: source?.pid,
+                settings: settings, elapsedMs: elapsed)
         else { return }
         speakerRecorder = recorder
         Task { await recorder.start(adapter: adapter, pid: pid) }
@@ -172,29 +177,35 @@ final class SessionController {
         guard settings.audioTapScope == "app", let source else { return .systemExcludingSelf }
         // By bundle first: it prefers the instance producing output, whereas the detected pid is
         // often an input-only helper (a browser's audio-capture process).
-        if let bundleID = source.bundleID, let id = AudioProcessRegistry.objectID(forBundleID: bundleID) { return .process(id) }
+        if let bundleID = source.bundleID, let id = AudioProcessRegistry.objectID(forBundleID: bundleID) {
+            return .process(id)
+        }
         if let pid = source.pid, let id = AudioProcessRegistry.objectID(forPID: pid) { return .process(id) }
         return .systemExcludingSelf
     }
 
     private func observe(_ capture: CaptureSession) {
         let transcribers = transcribers
-        tasks.append(Task.detached {
-            for await chunk in capture.chunks {
-                let channel: Channel = chunk.channel == .mic ? .mic : .system
-                await transcribers[channel]?.append(chunk.samples, tStartMs: chunk.tStartMs)
-            }
-        })
-        tasks.append(Task { [weak self] in
-            for await level in capture.levels { self?.levels = level }
-        })
-        tasks.append(Task { [weak self] in
-            for await event in capture.events { self?.handle(event) }
-        })
-        for transcriber in transcribers.values {
-            tasks.append(Task { [weak self] in
-                for await event in transcriber.events { self?.handle(event) }
+        tasks.append(
+            Task.detached {
+                for await chunk in capture.chunks {
+                    let channel: Channel = chunk.channel == .mic ? .mic : .system
+                    await transcribers[channel]?.append(chunk.samples, tStartMs: chunk.tStartMs)
+                }
             })
+        tasks.append(
+            Task { [weak self] in
+                for await level in capture.levels { self?.levels = level }
+            })
+        tasks.append(
+            Task { [weak self] in
+                for await event in capture.events { self?.handle(event) }
+            })
+        for transcriber in transcribers.values {
+            tasks.append(
+                Task { [weak self] in
+                    for await event in transcriber.events { self?.handle(event) }
+                })
         }
     }
 
@@ -266,9 +277,10 @@ final class SessionController {
                 (Channel.mic, summary.micFile, summary.micDuration),
                 (Channel.system, summary.systemFile, summary.systemDuration),
             ] where FileManager.default.fileExists(atPath: url.path) {
-                try await store.saveAudioFile(AudioFile(
-                    meetingID: meetingID, channel: channel, path: url.path,
-                    codec: CaptureFiles.codec, durationMs: Int(duration * 1000)))
+                try await store.saveAudioFile(
+                    AudioFile(
+                        meetingID: meetingID, channel: channel, path: url.path,
+                        codec: CaptureFiles.codec, durationMs: Int(duration * 1000)))
             }
             if var meeting = try await store.meeting(id: meetingID) {
                 meeting.endedAt = now
@@ -278,7 +290,8 @@ final class SessionController {
                 try await store.updateMeeting(meeting, now: now)
             }
         } catch {
-            Self.logger.error("finishing \(meetingID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+            Self.logger.error(
+                "finishing \(meetingID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
         }
         state = .idle
         onEnded?(meetingID)

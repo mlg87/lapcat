@@ -113,7 +113,9 @@ public final class AudioInputActivityMonitor: @unchecked Sendable {
             self.bundleIDs = bundleIDs
             guard running else { return }
             for (id, entry) in tracked
-            where !entry.gone && Self.matchedBundleID(processBundleID: entry.activity.processBundleID, configured: bundleIDs) == nil {
+            where !entry.gone
+                && Self.matchedBundleID(processBundleID: entry.activity.processBundleID, configured: bundleIDs) == nil
+            {
                 processGone(id)
             }
             refreshProcesses()
@@ -138,7 +140,8 @@ public final class AudioInputActivityMonitor: @unchecked Sendable {
     private func refreshProcesses() {
         guard running else { return }
         let ownPID = getpid()
-        let current = Set(CoreAudioProperty.objectList(CoreAudioProperty.system, kAudioHardwarePropertyProcessObjectList))
+        let current = Set(
+            CoreAudioProperty.objectList(CoreAudioProperty.system, kAudioHardwarePropertyProcessObjectList))
         let now = Date()
 
         for (id, entry) in tracked where !entry.gone && !current.contains(id) {
@@ -147,7 +150,7 @@ public final class AudioInputActivityMonitor: @unchecked Sendable {
         // A gone entry still in the list (bundle ids changed back) is skipped until retracted.
         for id in current where tracked[id] == nil {
             guard let info = AudioProcessRegistry.info(forObjectID: id), info.pid != ownPID,
-                  let matched = Self.matchedBundleID(processBundleID: info.bundleID, configured: bundleIDs)
+                let matched = Self.matchedBundleID(processBundleID: info.bundleID, configured: bundleIDs)
             else { continue }
             let activity = InputActivity(
                 bundleID: matched, processBundleID: info.bundleID, pid: info.pid, name: info.name,
@@ -155,7 +158,8 @@ public final class AudioInputActivityMonitor: @unchecked Sendable {
             let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in self?.inputChanged(id) }
             let status = addListener(id, Self.anyProcessProperty, listener)
             if status != noErr {
-                Self.logger.error("input listener for \(info.name, privacy: .public) failed: \(status.fourCC, privacy: .public)")
+                Self.logger.error(
+                    "input listener for \(info.name, privacy: .public) failed: \(status.fourCC, privacy: .public)")
             }
             tracked[id] = Tracked(activity: activity, listener: status == noErr ? listener : nil)
             // Re-read after installing the listener so a flip in between is not lost.
@@ -215,14 +219,16 @@ public final class AudioInputActivityMonitor: @unchecked Sendable {
         mElement: kAudioObjectPropertyElementWildcard)
 
     private func addListener(
-        _ object: AudioObjectID, _ address: AudioObjectPropertyAddress, _ listener: @escaping AudioObjectPropertyListenerBlock
+        _ object: AudioObjectID, _ address: AudioObjectPropertyAddress,
+        _ listener: @escaping AudioObjectPropertyListenerBlock
     ) -> OSStatus {
         var address = address
         return AudioObjectAddPropertyListenerBlock(object, &address, queue, listener)
     }
 
     private func removeListener(
-        _ object: AudioObjectID, _ address: AudioObjectPropertyAddress, _ listener: @escaping AudioObjectPropertyListenerBlock
+        _ object: AudioObjectID, _ address: AudioObjectPropertyAddress,
+        _ listener: @escaping AudioObjectPropertyListenerBlock
     ) {
         var address = address
         AudioObjectRemovePropertyListenerBlock(object, &address, queue, listener)

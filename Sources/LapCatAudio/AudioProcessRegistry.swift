@@ -22,7 +22,9 @@ public enum AudioProcessRegistry {
         guard let pid = CoreAudioProperty.read(objectID, kAudioProcessPropertyPID, default: pid_t(-1)), pid >= 0 else {
             return nil
         }
-        let bundleID = CoreAudioProperty.string(objectID, kAudioProcessPropertyBundleID).flatMap { $0.isEmpty ? nil : $0 }
+        let bundleID = CoreAudioProperty.string(objectID, kAudioProcessPropertyBundleID).flatMap {
+            $0.isEmpty ? nil : $0
+        }
         return AudioProcessInfo(
             objectID: objectID,
             pid: pid,

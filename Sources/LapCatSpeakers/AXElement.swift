@@ -60,7 +60,7 @@ public struct AXElement: @unchecked Sendable, Hashable {
 
     public var frame: CGRect? {
         guard let position: CGPoint = axValue(kAXPositionAttribute, type: .cgPoint, empty: .zero),
-              let size: CGSize = axValue(kAXSizeAttribute, type: .cgSize, empty: .zero)
+            let size: CGSize = axValue(kAXSizeAttribute, type: .cgSize, empty: .zero)
         else { return nil }
         return CGRect(origin: position, size: size)
     }
@@ -72,7 +72,8 @@ public struct AXElement: @unchecked Sendable, Hashable {
     /// windows on another Space) report an empty `AXWindows` while `AXMainWindow` still resolves.
     public var allWindows: [AXElement] {
         var result = windows
-        let extra = children.filter { $0.role == kAXWindowRole }
+        let extra =
+            children.filter { $0.role == kAXWindowRole }
             + [element(kAXMainWindowAttribute), element(kAXFocusedWindowAttribute)].compactMap { $0 }
         for window in extra where !result.contains(window) { result.append(window) }
         return result
@@ -164,7 +165,9 @@ public struct AXElement: @unchecked Sendable, Hashable {
     private func axValue<T: BitwiseCopyable>(_ name: String, type: AXValueType, empty: T) -> T? {
         guard let raw = attribute(name), CFGetTypeID(raw) == AXValueGetTypeID() else { return nil }
         var result = empty
-        guard withUnsafeMutableBytes(of: &result, { AXValueGetValue(raw as! AXValue, type, $0.baseAddress!) }) else { return nil }
+        guard withUnsafeMutableBytes(of: &result, { AXValueGetValue(raw as! AXValue, type, $0.baseAddress!) }) else {
+            return nil
+        }
         return result
     }
 }

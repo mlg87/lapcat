@@ -60,23 +60,27 @@ public final class AppSettings {
         /// provider → task → model.
         public static let llmModels: [String: [String: String]] = [
             "claude-cli": ["enhance": "sonnet", "chat": "sonnet", "classify": "haiku"],
-            "anthropic-api": ["enhance": "claude-haiku-4-5", "chat": "claude-sonnet-5-5", "classify": "claude-haiku-4-5"],
-            "local": ["enhance": "Qwen3-4B-Q4_K_M.gguf", "chat": "Qwen3-4B-Q4_K_M.gguf", "classify": "Qwen3-4B-Q4_K_M.gguf"],
+            "anthropic-api": [
+                "enhance": "claude-haiku-4-5", "chat": "claude-sonnet-5-5", "classify": "claude-haiku-4-5",
+            ],
+            "local": [
+                "enhance": "Qwen3-4B-Q4_K_M.gguf", "chat": "Qwen3-4B-Q4_K_M.gguf", "classify": "Qwen3-4B-Q4_K_M.gguf",
+            ],
         ]
         public static let sttEngine = "auto"
         public static let sttWhisperLiveModel = "ggml-small.en.bin"
         #if arch(arm64)
-        public static let sttWhisperFinalModel = "ggml-large-v3-turbo-q5_0.bin"
+            public static let sttWhisperFinalModel = "ggml-large-v3-turbo-q5_0.bin"
         #else
-        /// Measured on Intel: large-v3-turbo-q5_0 runs at RTF 0.46 (~130 min per 60-min meeting);
-        /// small.en at RTF 2.24 (~27 min) fits the post-meeting budget.
-        public static let sttWhisperFinalModel = "ggml-small.en.bin"
+            /// Measured on Intel: large-v3-turbo-q5_0 runs at RTF 0.46 (~130 min per 60-min meeting);
+            /// small.en at RTF 2.24 (~27 min) fits the post-meeting budget.
+            public static let sttWhisperFinalModel = "ggml-small.en.bin"
         #endif
         public static let sttParakeetVersion = "v2"
         #if arch(arm64)
-        public static let sttLiveHypothesis = true
+            public static let sttLiveHypothesis = true
         #else
-        public static let sttLiveHypothesis = false
+            public static let sttLiveHypothesis = false
         #endif
         public static let audioTapScope = "app"
         public static let audioRetention = AudioRetention.thirtyDays
@@ -98,31 +102,59 @@ public final class AppSettings {
     public var llmOfflineOnly: Bool { didSet { defaults.set(llmOfflineOnly, forKey: Key.llmOfflineOnly) } }
     /// `auto` | `whisper` | `parakeet`.
     public var sttEngine: String { didSet { defaults.set(sttEngine, forKey: Key.sttEngine) } }
-    public var sttWhisperLiveModel: String { didSet { defaults.set(sttWhisperLiveModel, forKey: Key.sttWhisperLiveModel) } }
-    public var sttWhisperFinalModel: String { didSet { defaults.set(sttWhisperFinalModel, forKey: Key.sttWhisperFinalModel) } }
-    public var sttParakeetVersion: String { didSet { defaults.set(sttParakeetVersion, forKey: Key.sttParakeetVersion) } }
+    public var sttWhisperLiveModel: String {
+        didSet { defaults.set(sttWhisperLiveModel, forKey: Key.sttWhisperLiveModel) }
+    }
+    public var sttWhisperFinalModel: String {
+        didSet { defaults.set(sttWhisperFinalModel, forKey: Key.sttWhisperFinalModel) }
+    }
+    public var sttParakeetVersion: String {
+        didSet { defaults.set(sttParakeetVersion, forKey: Key.sttParakeetVersion) }
+    }
     public var sttLiveHypothesis: Bool { didSet { defaults.set(sttLiveHypothesis, forKey: Key.sttLiveHypothesis) } }
     /// `app` | `system`.
     public var audioTapScope: String { didSet { defaults.set(audioTapScope, forKey: Key.audioTapScope) } }
     /// nil = system default input.
     public var audioInputDeviceUID: String? { didSet { setOptional(audioInputDeviceUID, Key.audioInputDeviceUID) } }
-    public var audioVoiceProcessing: Bool { didSet { defaults.set(audioVoiceProcessing, forKey: Key.audioVoiceProcessing) } }
-    public var audioRetention: AudioRetention { didSet { defaults.set(audioRetention.rawValue, forKey: Key.audioRetention) } }
+    public var audioVoiceProcessing: Bool {
+        didSet { defaults.set(audioVoiceProcessing, forKey: Key.audioVoiceProcessing) }
+    }
+    public var audioRetention: AudioRetention {
+        didSet { defaults.set(audioRetention.rawValue, forKey: Key.audioRetention) }
+    }
     public var detectEnabled: Bool { didSet { defaults.set(detectEnabled, forKey: Key.detectEnabled) } }
     public var detectBundleIDs: [String] { didSet { defaults.set(detectBundleIDs, forKey: Key.detectBundleIDs) } }
-    public var detectUseCalendarSignal: Bool { didSet { defaults.set(detectUseCalendarSignal, forKey: Key.detectUseCalendarSignal) } }
-    public var detectUseBrowserTabSignal: Bool { didSet { defaults.set(detectUseBrowserTabSignal, forKey: Key.detectUseBrowserTabSignal) } }
-    public var speakersAdaptersEnabled: Bool { didSet { defaults.set(speakersAdaptersEnabled, forKey: Key.speakersAdaptersEnabled) } }
+    public var detectUseCalendarSignal: Bool {
+        didSet { defaults.set(detectUseCalendarSignal, forKey: Key.detectUseCalendarSignal) }
+    }
+    public var detectUseBrowserTabSignal: Bool {
+        didSet { defaults.set(detectUseBrowserTabSignal, forKey: Key.detectUseBrowserTabSignal) }
+    }
+    public var speakersAdaptersEnabled: Bool {
+        didSet { defaults.set(speakersAdaptersEnabled, forKey: Key.speakersAdaptersEnabled) }
+    }
     /// Selector JSON override; nil = compiled defaults.
-    public var speakersSelectorsZoom: String? { didSet { setOptional(speakersSelectorsZoom, Key.speakersSelectorsZoom) } }
-    public var speakersSelectorsMeet: String? { didSet { setOptional(speakersSelectorsMeet, Key.speakersSelectorsMeet) } }
-    public var consentReminderEnabled: Bool { didSet { defaults.set(consentReminderEnabled, forKey: Key.consentReminderEnabled) } }
-    public var consentCannedMessage: String { didSet { defaults.set(consentCannedMessage, forKey: Key.consentCannedMessage) } }
+    public var speakersSelectorsZoom: String? {
+        didSet { setOptional(speakersSelectorsZoom, Key.speakersSelectorsZoom) }
+    }
+    public var speakersSelectorsMeet: String? {
+        didSet { setOptional(speakersSelectorsMeet, Key.speakersSelectorsMeet) }
+    }
+    public var consentReminderEnabled: Bool {
+        didSet { defaults.set(consentReminderEnabled, forKey: Key.consentReminderEnabled) }
+    }
+    public var consentCannedMessage: String {
+        didSet { defaults.set(consentCannedMessage, forKey: Key.consentCannedMessage) }
+    }
     /// Directory path; nil = auto-export off.
-    public var exportAutoExportFolder: String? { didSet { setOptional(exportAutoExportFolder, Key.exportAutoExportFolder) } }
+    public var exportAutoExportFolder: String? {
+        didSet { setOptional(exportAutoExportFolder, Key.exportAutoExportFolder) }
+    }
     public var templateDefaultID: String { didSet { defaults.set(templateDefaultID, forKey: Key.templateDefaultID) } }
     public var hotKeys: HotKeyBindings { didSet { hotKeys.save(to: defaults) } }
-    public var onboardingCompleted: Bool { didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) } }
+    public var onboardingCompleted: Bool {
+        didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) }
+    }
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -146,7 +178,8 @@ public final class AppSettings {
         audioTapScope = value(Key.audioTapScope, Default.audioTapScope)
         audioInputDeviceUID = defaults.string(forKey: Key.audioInputDeviceUID)
         audioVoiceProcessing = value(Key.audioVoiceProcessing, true)
-        audioRetention = defaults.string(forKey: Key.audioRetention).flatMap(AudioRetention.init(rawValue:))
+        audioRetention =
+            defaults.string(forKey: Key.audioRetention).flatMap(AudioRetention.init(rawValue:))
             ?? Default.audioRetention
         detectEnabled = value(Key.detectEnabled, true)
         detectBundleIDs = value(Key.detectBundleIDs, Default.detectBundleIDs)

@@ -35,12 +35,16 @@ public enum LiveMerge {
                 // Keep the stronger match's edit; still take a participant it lacks.
                 var merged = existing.update
                 if merged.participantID == nil { merged.participantID = update.participantID }
-                if merged.text == nil, update.text != nil { (merged.text, merged.textOriginal) = (update.text, update.textOriginal) }
+                if merged.text == nil, update.text != nil {
+                    (merged.text, merged.textOriginal) = (update.text, update.textOriginal)
+                }
                 best[target.id] = (existing.overlap, merged)
             } else {
                 if let existing = best[target.id]?.update {
                     if update.participantID == nil { update.participantID = existing.participantID }
-                    if update.text == nil { (update.text, update.textOriginal) = (existing.text, existing.textOriginal) }
+                    if update.text == nil {
+                        (update.text, update.textOriginal) = (existing.text, existing.textOriginal)
+                    }
                 }
                 best[target.id] = (target.overlap, update)
             }
@@ -52,7 +56,9 @@ public enum LiveMerge {
 extension Store {
     /// Replaces the channel's final-pass segments in one transaction (re-runs are idempotent).
     @discardableResult
-    public func replaceFinalSegments(meetingID: String, channel: Channel, with segments: [Segment]) async throws -> [Segment] {
+    public func replaceFinalSegments(meetingID: String, channel: Channel, with segments: [Segment]) async throws
+        -> [Segment]
+    {
         try await pool.write { db in
             try db.execute(
                 sql: "DELETE FROM segment WHERE meeting_id = ? AND channel = ? AND pass = 'final'",
@@ -107,10 +113,14 @@ extension Store {
         meetingID: String, status: MeetingStatus, errorMessage: String? = nil, now: Date = Date()
     ) async throws {
         try await pool.write { db in
-            let step: String? = status == .ready ? nil : try String.fetchOne(
-                db, sql: "SELECT processing_step FROM meeting WHERE id = ?", arguments: [meetingID])
+            let step: String? =
+                status == .ready
+                ? nil
+                : try String.fetchOne(
+                    db, sql: "SELECT processing_step FROM meeting WHERE id = ?", arguments: [meetingID])
             try db.execute(
-                sql: "UPDATE meeting SET status = ?, error_message = ?, processing_step = ?, updated_at = ? WHERE id = ?",
+                sql:
+                    "UPDATE meeting SET status = ?, error_message = ?, processing_step = ?, updated_at = ? WHERE id = ?",
                 arguments: [status.rawValue, errorMessage, step, now.timeIntervalSince1970, meetingID])
         }
     }

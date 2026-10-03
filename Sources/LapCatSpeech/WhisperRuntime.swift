@@ -12,7 +12,7 @@ public enum WhisperRuntime {
     /// (set by the user) is kept.
     public static func configure() {
         #if arch(x86_64)
-        setenv("GGML_METAL_DEVICES", "0", 0)
+            setenv("GGML_METAL_DEVICES", "0", 0)
         #endif
     }
 }

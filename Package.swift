@@ -2,7 +2,7 @@
 import PackageDescription
 
 let rpath: [LinkerSetting] = [
-    .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"]),
+    .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])
 ]
 
 let libraries: [Target.Dependency] = ["LapCatCore", "LapCatSpeech", "LapCatLLM", "LapCatAudio", "LapCatSpeakers"]
@@ -41,7 +41,10 @@ let package = Package(
             name: "lapcat-dev",
             dependencies: libraries,
             linkerSettings: rpath + [
-                .unsafeFlags(["-Xlinker", "-sectcreate", "-Xlinker", "__TEXT", "-Xlinker", "__info_plist", "-Xlinker", "Resources/Info.plist"]),
+                .unsafeFlags([
+                    "-Xlinker", "-sectcreate", "-Xlinker", "__TEXT", "-Xlinker", "__info_plist", "-Xlinker",
+                    "Resources/Info.plist",
+                ])
             ]
         ),
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),

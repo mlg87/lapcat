@@ -94,7 +94,8 @@ extension Store {
         try await pool.read { db in
             try String.fetchAll(
                 db,
-                sql: "SELECT id FROM meeting WHERE audio_retained_until IS NOT NULL AND audio_retained_until <= ? ORDER BY id",
+                sql:
+                    "SELECT id FROM meeting WHERE audio_retained_until IS NOT NULL AND audio_retained_until <= ? ORDER BY id",
                 arguments: [now.timeIntervalSince1970])
         }
     }

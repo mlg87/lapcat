@@ -80,13 +80,16 @@ public struct ModelDownloader: Sendable {
         return destination
     }
 
-    private static func transfer(entry: ModelEntry, to partial: URL, progress: @escaping @Sendable (Double) -> Void) async throws {
+    private static func transfer(entry: ModelEntry, to partial: URL, progress: @escaping @Sendable (Double) -> Void)
+        async throws
+    {
         let existing = size(of: partial)
         var request = URLRequest(url: entry.url)
         if existing > 0 {
             request.setValue("bytes=\(existing)-", forHTTPHeaderField: "Range")
         }
-        let delegate = DownloadDelegate(partial: partial, existingBytes: existing, expectedTotal: entry.sizeBytes, progress: progress)
+        let delegate = DownloadDelegate(
+            partial: partial, existingBytes: existing, expectedTotal: entry.sizeBytes, progress: progress)
         let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
         defer { session.finishTasksAndInvalidate() }
         let task = session.dataTask(with: request)

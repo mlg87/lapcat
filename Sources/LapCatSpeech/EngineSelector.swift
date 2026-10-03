@@ -32,9 +32,9 @@ public enum CPUArchitecture: Sendable {
 
     public static var current: CPUArchitecture {
         #if arch(arm64)
-        .arm64
+            .arm64
         #else
-        .x86_64
+            .x86_64
         #endif
     }
 }
@@ -111,10 +111,12 @@ public actor SpeechServices {
     public func engine(for spec: EngineSpec, role: Role, modelsDirectory: URL) -> any TranscriptionEngine {
         let key = "\(role.rawValue):\(spec.id)"
         if let cached = engines[key] { return cached }
-        let engine: any TranscriptionEngine = switch spec {
-        case .whisper(let file): WhisperCppEngine(modelURL: modelsDirectory.appending(path: file, directoryHint: .notDirectory))
-        case .parakeet(let version): ParakeetEngine(version: version)
-        }
+        let engine: any TranscriptionEngine =
+            switch spec {
+            case .whisper(let file):
+                WhisperCppEngine(modelURL: modelsDirectory.appending(path: file, directoryHint: .notDirectory))
+            case .parakeet(let version): ParakeetEngine(version: version)
+            }
         engines[key] = engine
         return engine
     }

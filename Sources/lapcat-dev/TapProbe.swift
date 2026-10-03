@@ -43,16 +43,20 @@ enum TapProbe {
             print("scope: system (all processes except lapcat-dev)")
         } else {
             guard let objectID = AudioProcessRegistry.objectID(forBundleID: args[0]),
-                  let info = AudioProcessRegistry.info(forObjectID: objectID)
+                let info = AudioProcessRegistry.info(forObjectID: objectID)
             else {
                 print("no audio process for \(args[0]). Running audio processes:")
                 for process in AudioProcessRegistry.processes() {
-                    print("  pid \(process.pid) \(process.bundleID ?? "-") \(process.name) out=\(process.isRunningOutput)")
+                    print(
+                        "  pid \(process.pid) \(process.bundleID ?? "-") \(process.name) out=\(process.isRunningOutput)"
+                    )
                 }
                 return 1
             }
             scope = .process(objectID)
-            print("scope: process \(info.name) pid \(info.pid) bundle \(info.bundleID ?? "-") object \(objectID) output=\(info.isRunningOutput)")
+            print(
+                "scope: process \(info.name) pid \(info.pid) bundle \(info.bundleID ?? "-") object \(objectID) output=\(info.isRunningOutput)"
+            )
         }
 
         let session = CaptureSession()
@@ -94,7 +98,9 @@ enum TapProbe {
         let summary = await session.stop()
         let stats = await statsTask.value
         await eventsTask.value
-        print("stopped (\(reason)); mic \(format(summary.micDuration)) s, system \(format(summary.systemDuration)) s, fallback \(summary.usedFallback)")
+        print(
+            "stopped (\(reason)); mic \(format(summary.micDuration)) s, system \(format(summary.systemDuration)) s, fallback \(summary.usedFallback)"
+        )
 
         let mic = stats.seconds[.mic] ?? [:]
         let system = stats.seconds[.system] ?? [:]
@@ -106,7 +112,9 @@ enum TapProbe {
         for channel in AudioChannel.allCases {
             let table = stats.seconds[channel] ?? [:]
             let zero = table.filter { !$0.value.nonZero }.keys.sorted()
-            print("\(channel.rawValue) all-zero seconds: \(zero.isEmpty ? "none" : zero.map(String.init).joined(separator: ","))")
+            print(
+                "\(channel.rawValue) all-zero seconds: \(zero.isEmpty ? "none" : zero.map(String.init).joined(separator: ","))"
+            )
         }
         for url in [summary.micFile, summary.systemFile] {
             describeFile(url)
@@ -128,7 +136,9 @@ enum TapProbe {
             let duration = Double(file.length) / format.sampleRate
             let formatID = (format.settings[AVFormatIDKey] as? NSNumber)?.uint32Value ?? 0
             let code = withUnsafeBytes(of: formatID.bigEndian) { String(decoding: $0, as: UTF8.self) }
-            print("\(url.lastPathComponent): '\(code)' \(Int(format.sampleRate)) Hz \(format.channelCount) ch, \(Self.format(duration)) s")
+            print(
+                "\(url.lastPathComponent): '\(code)' \(Int(format.sampleRate)) Hz \(format.channelCount) ch, \(Self.format(duration)) s"
+            )
         } catch {
             print("\(url.lastPathComponent): unreadable (\(error.localizedDescription))")
         }

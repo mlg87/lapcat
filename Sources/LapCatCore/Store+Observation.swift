@@ -31,7 +31,8 @@ extension Store {
         }
     }
 
-    private func observe<Value: Sendable>(_ fetch: @escaping @Sendable (Database) throws -> Value) -> AsyncStream<Value> {
+    private func observe<Value: Sendable>(_ fetch: @escaping @Sendable (Database) throws -> Value) -> AsyncStream<Value>
+    {
         AsyncStream { continuation in
             let task = Task {
                 do {

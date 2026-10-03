@@ -19,7 +19,8 @@ extension Store {
                     WHERE status = 'recording'
                     """,
                 arguments: [now.timeIntervalSince1970])
-            return try String.fetchAll(db, sql: "SELECT id FROM meeting WHERE status = 'processing' ORDER BY started_at")
+            return try String.fetchAll(
+                db, sql: "SELECT id FROM meeting WHERE status = 'processing' ORDER BY started_at")
         }
     }
 }

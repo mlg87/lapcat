@@ -28,25 +28,31 @@ private final class ScriptedProvider: LLMProvider, @unchecked Sendable {
 }
 
 @Suite struct SpeakerSuggesterTests {
-    private func suggest(reply: String, clusters: [String] = ["Speaker 1", "Speaker 2"], candidates: [String] = ["Priya Shah", "Tom Lee"]) async throws -> ([SpeakerSuggester.Suggestion], ScriptedProvider) {
+    private func suggest(
+        reply: String, clusters: [String] = ["Speaker 1", "Speaker 2"],
+        candidates: [String] = ["Priya Shah", "Tom Lee"]
+    ) async throws -> ([SpeakerSuggester.Suggestion], ScriptedProvider) {
         let provider = ScriptedProvider(reply: reply)
         let router = LLMRouter(providers: [provider], offlineOnly: false)
-        let result = try await SpeakerSuggester.suggest(router: router, transcript: "[12] 00:00:05 Speaker 1: Thanks Tom.", clusters: clusters, candidates: candidates)
+        let result = try await SpeakerSuggester.suggest(
+            router: router, transcript: "[12] 00:00:05 Speaker 1: Thanks Tom.", clusters: clusters,
+            candidates: candidates)
         return (result, provider)
     }
 
     @Test func decodesFencedReplyAsClassifyTask() async throws {
         let reply = """
-        Here you go:
-        ```json
-        {"suggestions":[{"cluster":"Speaker 2","name":"Tom Lee","evidence_segment_id":12},{"cluster":"Speaker 1","name":"Priya Shah","evidence_segment_id":"40"}]}
-        ```
-        """
+            Here you go:
+            ```json
+            {"suggestions":[{"cluster":"Speaker 2","name":"Tom Lee","evidence_segment_id":12},{"cluster":"Speaker 1","name":"Priya Shah","evidence_segment_id":"40"}]}
+            ```
+            """
         let (suggestions, provider) = try await suggest(reply: reply)
-        #expect(suggestions == [
-            .init(cluster: "Speaker 2", name: "Tom Lee", evidenceSegmentID: 12),
-            .init(cluster: "Speaker 1", name: "Priya Shah", evidenceSegmentID: 40),
-        ])
+        #expect(
+            suggestions == [
+                .init(cluster: "Speaker 2", name: "Tom Lee", evidenceSegmentID: 12),
+                .init(cluster: "Speaker 1", name: "Priya Shah", evidenceSegmentID: 40),
+            ])
         let request = try #require(provider.requests.first)
         #expect(request.task == .classify)
         #expect(request.expectJSON)
@@ -55,14 +61,14 @@ private final class ScriptedProvider: LLMProvider, @unchecked Sendable {
 
     @Test func dropsUnknownNamesUnrequestedClustersAndDuplicates() async throws {
         let reply = #"""
-        {"suggestions":[
-          {"cluster":"Speaker 1","name":"priya shah","evidence_segment_id":3},
-          {"cluster":"Speaker 1","name":"Tom Lee","evidence_segment_id":4},
-          {"cluster":"Speaker 2","name":"Priya Shah","evidence_segment_id":5},
-          {"cluster":"Speaker 3","name":"Tom Lee","evidence_segment_id":6},
-          {"cluster":"Speaker 2","name":"Alex Kim"}
-        ]}
-        """#
+            {"suggestions":[
+              {"cluster":"Speaker 1","name":"priya shah","evidence_segment_id":3},
+              {"cluster":"Speaker 1","name":"Tom Lee","evidence_segment_id":4},
+              {"cluster":"Speaker 2","name":"Priya Shah","evidence_segment_id":5},
+              {"cluster":"Speaker 3","name":"Tom Lee","evidence_segment_id":6},
+              {"cluster":"Speaker 2","name":"Alex Kim"}
+            ]}
+            """#
         let (suggestions, _) = try await suggest(reply: reply)
         // Canonical candidate spelling; Speaker 1 suggested once; Priya not reused; Speaker 3 not asked; Alex not a candidate.
         #expect(suggestions == [.init(cluster: "Speaker 1", name: "Priya Shah", evidenceSegmentID: 3)])

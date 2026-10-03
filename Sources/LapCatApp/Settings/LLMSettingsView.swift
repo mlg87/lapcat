@@ -46,10 +46,12 @@ struct LLMSettingsView: View {
                         GridRow {
                             Text(Self.names[provider] ?? provider)
                             ForEach(Self.tasks, id: \.self) { task in
-                                TextField(task, text: Binding(
-                                    get: { settings.llmModel(provider: provider, task: task) ?? "" },
-                                    set: { settings.setLLMModel($0, provider: provider, task: task) }
-                                ))
+                                TextField(
+                                    task,
+                                    text: Binding(
+                                        get: { settings.llmModel(provider: provider, task: task) ?? "" },
+                                        set: { settings.setLLMModel($0, provider: provider, task: task) }
+                                    ))
                             }
                         }
                     }
@@ -71,10 +73,12 @@ struct LLMSettingsView: View {
             }
 
             Section("Claude CLI") {
-                TextField("Path to claude (blank = ~/.local/bin, /usr/local/bin, /opt/homebrew/bin)", text: Binding(
-                    get: { settings.llmClaudePath ?? "" },
-                    set: { settings.llmClaudePath = $0.isEmpty ? nil : $0 }
-                ))
+                TextField(
+                    "Path to claude (blank = ~/.local/bin, /usr/local/bin, /opt/homebrew/bin)",
+                    text: Binding(
+                        get: { settings.llmClaudePath ?? "" },
+                        set: { settings.llmClaudePath = $0.isEmpty ? nil : $0 }
+                    ))
             }
 
             Section("Local model") {
@@ -107,8 +111,10 @@ struct LLMSettingsView: View {
             Spacer()
             switch testResults[id] {
             case .running?: ProgressView().controlSize(.small)
-            case .passed(let detail)?: Label(detail, systemImage: "checkmark.circle.fill").foregroundStyle(.green).lineLimit(1)
-            case .failed(let detail)?: Label(detail, systemImage: "xmark.octagon.fill").foregroundStyle(.red).lineLimit(1)
+            case .passed(let detail)?:
+                Label(detail, systemImage: "checkmark.circle.fill").foregroundStyle(.green).lineLimit(1)
+            case .failed(let detail)?:
+                Label(detail, systemImage: "xmark.octagon.fill").foregroundStyle(.red).lineLimit(1)
             case nil: EmptyView()
             }
             Button("Test") { test(id) }.disabled(testResults[id] == .running)
@@ -140,7 +146,8 @@ struct LLMSettingsView: View {
                 messages: [.init(role: .user, content: "Reply with exactly: OK")], maxTokens: 16)
             do {
                 let response = try await provider.complete(request)
-                testResults[id] = .passed("\(response.model): \(response.text.trimmingCharacters(in: .whitespacesAndNewlines))")
+                testResults[id] = .passed(
+                    "\(response.model): \(response.text.trimmingCharacters(in: .whitespacesAndNewlines))")
             } catch {
                 testResults[id] = .failed(error.localizedDescription)
             }

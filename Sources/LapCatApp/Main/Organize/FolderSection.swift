@@ -13,13 +13,16 @@ struct FolderSection: View {
 
     var body: some View {
         Section {
-            FolderRow(title: "All meetings", systemImage: "tray.full", isSelected: organizer.listFilter.folderID == nil) {
+            FolderRow(title: "All meetings", systemImage: "tray.full", isSelected: organizer.listFilter.folderID == nil)
+            {
                 organizer.listFilter.folderID = nil
             } drop: { ids in
                 organizer.move(meetingIDs: ids, toFolder: nil, store: appState.store)
             }
             ForEach(organizer.folders) { folder in
-                FolderRow(title: folder.name, systemImage: "folder", isSelected: organizer.listFilter.folderID == folder.id) {
+                FolderRow(
+                    title: folder.name, systemImage: "folder", isSelected: organizer.listFilter.folderID == folder.id
+                ) {
                     organizer.listFilter.folderID = folder.id
                 } drop: { ids in
                     organizer.move(meetingIDs: ids, toFolder: folder.id, store: appState.store)
@@ -49,23 +52,25 @@ struct FolderSection: View {
             }
         } header: {
             Text("Folders")
-            // Attached to the header, which exists once (modifiers on a Section apply to each row).
-            .alert(naming?.title ?? "", isPresented: Binding(get: { naming != nil }, set: { if !$0 { naming = nil } })) {
-                TextField("Folder name", text: $nameText)
-                Button(naming?.confirmTitle ?? "OK") { commitNaming() }
-                Button("Cancel", role: .cancel) { naming = nil }
-            }
-            .confirmationDialog(
-                "Delete folder \u{201C}\(pendingDelete?.name ?? "")\u{201D}?",
-                isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })
-            ) {
-                Button("Delete Folder", role: .destructive) {
-                    if let folder = pendingDelete { organizer.deleteFolder(folder, store: appState.store) }
-                    pendingDelete = nil
+                // Attached to the header, which exists once (modifiers on a Section apply to each row).
+                .alert(
+                    naming?.title ?? "", isPresented: Binding(get: { naming != nil }, set: { if !$0 { naming = nil } })
+                ) {
+                    TextField("Folder name", text: $nameText)
+                    Button(naming?.confirmTitle ?? "OK") { commitNaming() }
+                    Button("Cancel", role: .cancel) { naming = nil }
                 }
-            } message: {
-                Text("Its meetings are kept and become unfiled.")
-            }
+                .confirmationDialog(
+                    "Delete folder \u{201C}\(pendingDelete?.name ?? "")\u{201D}?",
+                    isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })
+                ) {
+                    Button("Delete Folder", role: .destructive) {
+                        if let folder = pendingDelete { organizer.deleteFolder(folder, store: appState.store) }
+                        pendingDelete = nil
+                    }
+                } message: {
+                    Text("Its meetings are kept and become unfiled.")
+                }
         }
     }
 
@@ -123,13 +128,17 @@ private struct FolderRow: View {
         .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 5)
-                .fill(isTargeted ? Color.accentColor.opacity(0.35) : isSelected ? Color.secondary.opacity(0.18) : .clear))
+                .fill(
+                    isTargeted ? Color.accentColor.opacity(0.35) : isSelected ? Color.secondary.opacity(0.18) : .clear)
+        )
         .help("Show \(title); drop meetings here to move them")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .dropDestination(for: String.self) { ids, _ in
             guard !ids.isEmpty else { return false }
             drop(ids)
             return true
-        } isTargeted: { isTargeted = $0 }
+        } isTargeted: {
+            isTargeted = $0
+        }
     }
 }

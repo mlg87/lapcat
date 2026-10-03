@@ -38,7 +38,8 @@ public enum DiarizationLabels {
     /// appearance, so labels are stable and readable regardless of the engine's internal ids.
     /// Turns with a non-positive duration are dropped.
     public static func normalize(_ turns: [RawSpeakerTurn]) -> [DiarizedTurn] {
-        let ordered = turns
+        let ordered =
+            turns
             .filter { $0.endSeconds > $0.startSeconds }
             .sorted { ($0.startSeconds, $0.endSeconds) < ($1.startSeconds, $1.endSeconds) }
         var labels: [String: String] = [:]
@@ -101,7 +102,9 @@ public actor FluidDiarizer: DiarizationEngine {
     private nonisolated static func process(_ box: ManagerBox, samples: [Float]) async throws -> [RawSpeakerTurn] {
         let result = try await box.manager.process(audio: samples)
         return result.segments.map {
-            RawSpeakerTurn(startSeconds: Double($0.startTimeSeconds), endSeconds: Double($0.endTimeSeconds), speakerID: $0.speakerId)
+            RawSpeakerTurn(
+                startSeconds: Double($0.startTimeSeconds), endSeconds: Double($0.endTimeSeconds),
+                speakerID: $0.speakerId)
         }
     }
 }

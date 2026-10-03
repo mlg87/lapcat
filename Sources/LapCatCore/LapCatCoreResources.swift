@@ -11,7 +11,7 @@ enum LapCatCoreResources {
 
     static let bundle: Bundle = {
         if let resources = Bundle.main.resourceURL,
-           let bundle = Bundle(url: resources.appendingPathComponent(bundleName))
+            let bundle = Bundle(url: resources.appendingPathComponent(bundleName))
         {
             return bundle
         }

@@ -14,7 +14,7 @@ final class HotKeyCenter {
     private var refs: [HotKeyAction: EventHotKeyRef] = [:]
     private var handlers: [HotKeyAction: @MainActor () -> Void] = [:]
     private var eventHandler: EventHandlerRef?
-    private static let signature: OSType = 0x4C_43_41_54 // 'LCAT'
+    private static let signature: OSType = 0x4C_43_41_54  // 'LCAT'
 
     private init() {}
 
@@ -54,18 +54,20 @@ final class HotKeyCenter {
     private func installEventHandlerIfNeeded() {
         guard eventHandler == nil else { return }
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
-            var id = EventHotKeyID()
-            let status = GetEventParameter(
-                event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
-                nil, MemoryLayout<EventHotKeyID>.size, nil, &id
-            )
-            guard status == noErr, id.signature == HotKeyCenter.signature else { return status }
-            let index = id.id
-            // Carbon delivers application-target events on the main thread.
-            MainActor.assumeIsolated { HotKeyCenter.shared.fire(index: index) }
-            return noErr
-        }, 1, &spec, nil, &eventHandler)
+        let status = InstallEventHandler(
+            GetApplicationEventTarget(),
+            { _, event, _ -> OSStatus in
+                var id = EventHotKeyID()
+                let status = GetEventParameter(
+                    event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                    nil, MemoryLayout<EventHotKeyID>.size, nil, &id
+                )
+                guard status == noErr, id.signature == HotKeyCenter.signature else { return status }
+                let index = id.id
+                // Carbon delivers application-target events on the main thread.
+                MainActor.assumeIsolated { HotKeyCenter.shared.fire(index: index) }
+                return noErr
+            }, 1, &spec, nil, &eventHandler)
         if status != noErr { log.error("InstallEventHandler failed: \(status)") }
     }
 }

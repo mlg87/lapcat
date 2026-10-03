@@ -6,7 +6,9 @@ public struct Paths: Sendable {
 
     /// `root` overrides the app-support directory (tests use a temp dir).
     public init(root: URL? = nil) {
-        appSupport = root ?? FileManager.default
+        appSupport =
+            root
+            ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("LapCat", isDirectory: true)
     }

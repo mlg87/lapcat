@@ -29,32 +29,41 @@ enum EnhanceDemo {
             case "--template": templateID = iterator.next() ?? templateID
             case "--model": model = iterator.next()
             default:
-                FileHandle.standardError.write(Data("usage: lapcat-dev enhance-demo [--template ID] [--model M]\n".utf8))
+                FileHandle.standardError.write(
+                    Data("usage: lapcat-dev enhance-demo [--template ID] [--model M]\n".utf8))
                 return 64
             }
         }
         do {
-            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("lapcat-enhance-demo-\(UUID().uuidString)")
+            let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "lapcat-enhance-demo-\(UUID().uuidString)")
             let store = try Store(databaseURL: dir.appendingPathComponent("lapcat.sqlite"))
             try await TemplateLibrary.sync(store: store, customDirectory: dir.appendingPathComponent("templates"))
             let started = Date()
             let meeting = try await store.createMeeting(title: defaultTitle(started), startedBy: .manual, now: started)
             let priya = try await store.upsertParticipant(meetingID: meeting.id, name: "Priya Shah", source: .zoomAX)
-            try await store.appendSegments(transcript.map { channel, ms, text in
-                Segment(meetingID: meeting.id, channel: channel, tStartMs: ms, tEndMs: ms + 5_000, text: text,
+            try await store.appendSegments(
+                transcript.map { channel, ms, text in
+                    Segment(
+                        meetingID: meeting.id, channel: channel, tStartMs: ms, tEndMs: ms + 5_000, text: text,
                         participantID: channel == .system ? priya.id : nil, pass: .final)
-            })
+                })
             try await store.saveRawNote(meetingID: meeting.id, markdown: rawNotes)
 
-            let models: [LLMTask: String] = [.enhance: model ?? "sonnet", .chat: model ?? "sonnet", .classify: model ?? "haiku"]
+            let models: [LLMTask: String] = [
+                .enhance: model ?? "sonnet", .chat: model ?? "sonnet", .classify: model ?? "haiku",
+            ]
             let router = LLMRouter(providers: [ClaudeCLIProvider(models: models, claudePath: nil)], offlineOnly: false)
             let clock = ContinuousClock.now
-            let note = try await Enhancer(store: store, router: router).enhance(meetingID: meeting.id, templateID: templateID)
+            let note = try await Enhancer(store: store, router: router).enhance(
+                meetingID: meeting.id, templateID: templateID)
             let elapsed = ContinuousClock.now - clock
             let title = try await store.meeting(id: meeting.id)?.title ?? "?"
 
             print("database: \(dir.path)")
-            print("template: \(note.templateID)  provider: \(note.provider)  model: \(note.model)  v\(note.version)  \(elapsed)")
+            print(
+                "template: \(note.templateID)  provider: \(note.provider)  model: \(note.model)  v\(note.version)  \(elapsed)"
+            )
             print("title: \(meeting.title) -> \(title)")
             print("----- markdown -----\n\(note.markdown)\n--------------------")
             print("citations_json: \(note.citationsJSON)")

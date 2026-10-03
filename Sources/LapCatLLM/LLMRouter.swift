@@ -89,7 +89,9 @@ public actor LLMRouter {
                             return
                         } catch {
                             lastError = normalize(error)
-                            guard !started, lastError.allowsFailover, index + 1 < candidates.count else { throw lastError }
+                            guard !started, lastError.allowsFailover, index + 1 < candidates.count else {
+                                throw lastError
+                            }
                             await self.failedOver(from: provider, to: candidates[index + 1], reason: lastError)
                         }
                     }
@@ -126,7 +128,9 @@ public actor LLMRouter {
     private func candidates(for task: LLMTask) async throws -> [any LLMProvider] {
         let candidates = await providers(for: task)
         if candidates.isEmpty {
-            throw offlineOnly ? LLMError.unavailable("local model not available (offline only)") : LLMError.unavailable("no LLM provider available")
+            throw offlineOnly
+                ? LLMError.unavailable("local model not available (offline only)")
+                : LLMError.unavailable("no LLM provider available")
         }
         return candidates
     }

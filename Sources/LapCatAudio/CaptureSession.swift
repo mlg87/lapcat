@@ -250,10 +250,11 @@ public actor CaptureSession {
     private func engageFallback() async {
         guard phase == .running, let pipeline = systemPipeline else { return }
         if case .screenCapture = systemSource { return }
-        let pid: pid_t? = switch scope {
-        case .process(let objectID): AudioProcessRegistry.info(forObjectID: objectID)?.pid
-        case .systemExcludingSelf: nil
-        }
+        let pid: pid_t? =
+            switch scope {
+            case .process(let objectID): AudioProcessRegistry.info(forObjectID: objectID)?.pid
+            case .systemExcludingSelf: nil
+            }
         let capture = SCKAudioCapture(pid: pid) { pipeline.ingest($0) }
         do {
             try await capture.start()
@@ -343,13 +344,14 @@ public actor CaptureSession {
 
     private static func describe(_ format: AVAudioFormat) -> String {
         let asbd = format.streamDescription.pointee
-        let kind = switch format.commonFormat {
-        case .pcmFormatFloat32: "Float32"
-        case .pcmFormatFloat64: "Float64"
-        case .pcmFormatInt16: "Int16"
-        case .pcmFormatInt32: "Int32"
-        default: "format \(asbd.mFormatID)"
-        }
+        let kind =
+            switch format.commonFormat {
+            case .pcmFormatFloat32: "Float32"
+            case .pcmFormatFloat64: "Float64"
+            case .pcmFormatInt16: "Int16"
+            case .pcmFormatInt32: "Int32"
+            default: "format \(asbd.mFormatID)"
+            }
         return "\(Int(format.sampleRate)) Hz, \(format.channelCount) ch, \(kind), "
             + (format.isInterleaved ? "interleaved" : "non-interleaved")
     }

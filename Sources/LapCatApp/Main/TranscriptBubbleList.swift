@@ -109,7 +109,8 @@ private struct TranscriptBubble: View {
                     .padding(.vertical, 6)
                     .background(
                         isMe ? Color.accentColor.opacity(0.22) : Color.gray.opacity(0.18),
-                        in: RoundedRectangle(cornerRadius: 10))
+                        in: RoundedRectangle(cornerRadius: 10)
+                    )
                     .opacity(paragraph.isVolatile ? 0.6 : 1)
             }
             if !isMe { Spacer(minLength: 40) }

@@ -26,7 +26,7 @@ public enum BrowserTabProbe {
     /// unsupported, has no window, Automation is denied, or `osascript` exceeds `timeout`.
     public static func activeURL(bundleID: String, timeout: TimeInterval = 5) async -> URL? {
         guard let source = script(for: bundleID),
-              !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty
+            !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty
         else { return nil }
         guard let output = await runOSAScript(source, timeout: timeout) else { return nil }
         let text = output.trimmingCharacters(in: .whitespacesAndNewlines)

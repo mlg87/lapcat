@@ -38,7 +38,7 @@ public final class ProcessTap: @unchecked Sendable {
         self.tapID = tapID
 
         guard var asbd = CoreAudioProperty.read(tapID, kAudioTapPropertyFormat, default: AudioStreamBasicDescription()),
-              let format = AVAudioFormat(streamDescription: &asbd)
+            let format = AVAudioFormat(streamDescription: &asbd)
         else {
             AudioHardwareDestroyProcessTap(tapID)
             throw .tapFormatUnavailable
@@ -46,7 +46,7 @@ public final class ProcessTap: @unchecked Sendable {
         self.format = format
 
         guard let outputID = CoreAudioProperty.defaultOutputDevice(),
-              let outputUID = CoreAudioProperty.string(outputID, kAudioDevicePropertyDeviceUID)
+            let outputUID = CoreAudioProperty.string(outputID, kAudioDevicePropertyDeviceUID)
         else {
             AudioHardwareDestroyProcessTap(tapID)
             throw .aggregateCreation(kAudioHardwareBadDeviceError)
@@ -60,7 +60,7 @@ public final class ProcessTap: @unchecked Sendable {
             kAudioAggregateDeviceTapAutoStartKey: true,
             kAudioAggregateDeviceSubDeviceListKey: [[kAudioSubDeviceUIDKey: outputUID]],
             kAudioAggregateDeviceTapListKey: [
-                [kAudioSubTapDriftCompensationKey: true, kAudioSubTapUIDKey: description.uuid.uuidString],
+                [kAudioSubTapDriftCompensationKey: true, kAudioSubTapUIDKey: description.uuid.uuidString]
             ],
         ]
         var aggregateID = AudioObjectID(kAudioObjectUnknown)
@@ -86,7 +86,7 @@ public final class ProcessTap: @unchecked Sendable {
             let source = list[(list.count - tapBufferCount)...]
             let frames = Int(source[source.startIndex].mDataByteSize) / bytesPerFrame
             guard frames > 0,
-                  let copy = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames))
+                let copy = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames))
             else { return }
             copy.frameLength = AVAudioFrameCount(frames)
             let destination = UnsafeMutableAudioBufferListPointer(copy.mutableAudioBufferList)

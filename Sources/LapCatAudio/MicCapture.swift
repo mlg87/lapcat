@@ -71,7 +71,8 @@ final class MicCapture: @unchecked Sendable {
         }
         if voiceProcessing {
             // Keep the meeting app audible: voice processing ducks other output by default.
-            input.voiceProcessingOtherAudioDuckingConfiguration = .init(enableAdvancedDucking: false, duckingLevel: .min)
+            input.voiceProcessingOtherAudioDuckingConfiguration = .init(
+                enableAdvancedDucking: false, duckingLevel: .min)
         }
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {

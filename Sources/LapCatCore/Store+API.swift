@@ -15,7 +15,10 @@ public struct MeetingFilter: Sendable, Equatable {
     /// Substring of a participant's display name.
     public var personName: String?
 
-    public init(search: String? = nil, folderID: String? = nil, starredOnly: Bool = false, dateRange: ClosedRange<Date>? = nil, personName: String? = nil) {
+    public init(
+        search: String? = nil, folderID: String? = nil, starredOnly: Bool = false, dateRange: ClosedRange<Date>? = nil,
+        personName: String? = nil
+    ) {
         self.search = search
         self.folderID = folderID
         self.starredOnly = starredOnly
@@ -131,7 +134,9 @@ extension Store {
     /// Deletes the channel's volatile (hypothesis) row, then inserts `segment` as the new one.
     /// Passing nil only clears it. At most one volatile row per meeting and channel exists.
     @discardableResult
-    public func replaceVolatileSegment(meetingID: String, channel: Channel, with segment: Segment?) async throws -> Segment? {
+    public func replaceVolatileSegment(meetingID: String, channel: Channel, with segment: Segment?) async throws
+        -> Segment?
+    {
         try await pool.write { db in
             try db.execute(
                 sql: "DELETE FROM segment WHERE meeting_id = ? AND channel = ? AND is_volatile = 1",
@@ -183,7 +188,8 @@ extension Store {
         meetingID: String, name: String, source: ParticipantSource, email: String? = nil, isMe: Bool = false
     ) async throws -> Participant {
         try await pool.write { db in
-            if var existing = try Participant
+            if var existing =
+                try Participant
                 .filter(Column("meeting_id") == meetingID && Column("display_name") == name)
                 .fetchOne(db)
             {
@@ -193,7 +199,8 @@ extension Store {
                 if changed { try existing.update(db) }
                 return existing
             }
-            var participant = Participant(meetingID: meetingID, displayName: name, email: email, source: source, isMe: isMe)
+            var participant = Participant(
+                meetingID: meetingID, displayName: name, email: email, source: source, isMe: isMe)
             try participant.insert(db)
             return participant
         }
@@ -210,9 +217,15 @@ extension Store {
     @discardableResult
     public func renameParticipant(id: Int64, to name: String) async throws -> Participant {
         try await pool.write { db in
-            guard var participant = try Participant.fetchOne(db, key: id) else { throw StoreError.notFound("participant \(id)") }
-            if let clash = try Participant
-                .filter(Column("meeting_id") == participant.meetingID && Column("display_name") == name && Column("id") != id)
+            guard var participant = try Participant.fetchOne(db, key: id) else {
+                throw StoreError.notFound("participant \(id)")
+            }
+            if let clash =
+                try Participant
+                .filter(
+                    Column("meeting_id") == participant.meetingID && Column("display_name") == name
+                        && Column("id") != id
+                )
                 .fetchOne(db)
             {
                 return try Self.merge(db, keep: clash, remove: participant)
@@ -227,8 +240,12 @@ extension Store {
     @discardableResult
     public func mergeParticipants(keep keepID: Int64, remove removeID: Int64) async throws -> Participant {
         try await pool.write { db in
-            guard let keep = try Participant.fetchOne(db, key: keepID) else { throw StoreError.notFound("participant \(keepID)") }
-            guard let remove = try Participant.fetchOne(db, key: removeID) else { throw StoreError.notFound("participant \(removeID)") }
+            guard let keep = try Participant.fetchOne(db, key: keepID) else {
+                throw StoreError.notFound("participant \(keepID)")
+            }
+            guard let remove = try Participant.fetchOne(db, key: removeID) else {
+                throw StoreError.notFound("participant \(removeID)")
+            }
             return try Self.merge(db, keep: keep, remove: remove)
         }
     }
@@ -236,7 +253,8 @@ extension Store {
     private static func merge(_ db: Database, keep: Participant, remove: Participant) throws -> Participant {
         guard keep.id != remove.id else { return keep }
         guard keep.meetingID == remove.meetingID else { throw StoreError.participantsInDifferentMeetings }
-        try db.execute(sql: "UPDATE segment SET participant_id = ? WHERE participant_id = ?", arguments: [keep.id, remove.id])
+        try db.execute(
+            sql: "UPDATE segment SET participant_id = ? WHERE participant_id = ?", arguments: [keep.id, remove.id])
         _ = try remove.delete(db)
         var keep = keep
         if remove.isMe, !keep.isMe {
@@ -247,7 +265,9 @@ extension Store {
     }
 
     @discardableResult
-    public func appendSpeakerEvent(meetingID: String, displayName: String, source: SpeakerEventSource, tStartMs: Int) async throws -> SpeakerEvent {
+    public func appendSpeakerEvent(meetingID: String, displayName: String, source: SpeakerEventSource, tStartMs: Int)
+        async throws -> SpeakerEvent
+    {
         try await pool.write { db in
             var event = SpeakerEvent(meetingID: meetingID, tStartMs: tStartMs, displayName: displayName, source: source)
             try event.insert(db)
@@ -263,7 +283,8 @@ extension Store {
 
     public func speakerEvents(meetingID: String) async throws -> [SpeakerEvent] {
         try await pool.read { db in
-            try SpeakerEvent.filter(Column("meeting_id") == meetingID).order(Column("t_start_ms"), Column("id")).fetchAll(db)
+            try SpeakerEvent.filter(Column("meeting_id") == meetingID).order(Column("t_start_ms"), Column("id"))
+                .fetchAll(db)
         }
     }
 }
@@ -285,8 +306,10 @@ extension Store {
     @discardableResult
     public func insertEnhancedNote(_ note: EnhancedNote) async throws -> EnhancedNote {
         try await pool.write { db in
-            let latest = try Int.fetchOne(
-                db, sql: "SELECT MAX(version) FROM enhanced_note WHERE meeting_id = ?", arguments: [note.meetingID]) ?? 0
+            let latest =
+                try Int.fetchOne(
+                    db, sql: "SELECT MAX(version) FROM enhanced_note WHERE meeting_id = ?", arguments: [note.meetingID])
+                ?? 0
             var note = note
             note.id = nil
             note.version = latest + 1
@@ -414,7 +437,8 @@ extension Store {
         try await pool.read { db in
             try Tag.fetchAll(
                 db,
-                sql: "SELECT tag.* FROM tag JOIN meeting_tag ON meeting_tag.tag_id = tag.id WHERE meeting_tag.meeting_id = ? ORDER BY tag.name",
+                sql:
+                    "SELECT tag.* FROM tag JOIN meeting_tag ON meeting_tag.tag_id = tag.id WHERE meeting_tag.meeting_id = ? ORDER BY tag.name",
                 arguments: [meetingID])
         }
     }

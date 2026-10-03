@@ -55,7 +55,10 @@ public struct SpeakerEvent: LapCatRecord, MutablePersistableRecord, Identifiable
     public var displayName: String
     public var source: SpeakerEventSource
 
-    public init(id: Int64? = nil, meetingID: String, tStartMs: Int, tEndMs: Int? = nil, displayName: String, source: SpeakerEventSource) {
+    public init(
+        id: Int64? = nil, meetingID: String, tStartMs: Int, tEndMs: Int? = nil, displayName: String,
+        source: SpeakerEventSource
+    ) {
         self.id = id
         self.meetingID = meetingID
         self.tStartMs = tStartMs
@@ -77,8 +80,12 @@ public struct SpeakerEvent: LapCatRecord, MutablePersistableRecord, Identifiable
 
 public struct Segment: LapCatRecord, MutablePersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "segment"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: Int64?
     public var meetingID: String
@@ -145,8 +152,12 @@ public struct Segment: LapCatRecord, MutablePersistableRecord, Identifiable, Has
 
 public struct Voiceprint: LapCatRecord, MutablePersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "voiceprint"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: Int64?
     public var participantName: String

@@ -26,7 +26,8 @@ public struct LLMRequest: Sendable {
     public var maxTokens: Int
     public var expectJSON: Bool
 
-    public init(task: LLMTask, system: String, messages: [LLMMessage], maxTokens: Int = 4096, expectJSON: Bool = false) {
+    public init(task: LLMTask, system: String, messages: [LLMMessage], maxTokens: Int = 4096, expectJSON: Bool = false)
+    {
         self.task = task
         self.system = system
         self.messages = messages
@@ -43,7 +44,10 @@ public struct LLMResponse: Sendable {
     public var outputTokens: Int?
     public var costUSD: Double?
 
-    public init(text: String, provider: String, model: String, inputTokens: Int? = nil, outputTokens: Int? = nil, costUSD: Double? = nil) {
+    public init(
+        text: String, provider: String, model: String, inputTokens: Int? = nil, outputTokens: Int? = nil,
+        costUSD: Double? = nil
+    ) {
         self.text = text
         self.provider = provider
         self.model = model

@@ -16,7 +16,7 @@ struct TemplatesSettingsView: View {
                     Text("Automatic (LapCat picks per meeting)").tag(TemplateLibrary.autoID)
                     ForEach(templates) { Text($0.name).tag($0.id) }
                     if settings.templateDefaultID != TemplateLibrary.autoID,
-                       !templates.contains(where: { $0.id == settings.templateDefaultID })
+                        !templates.contains(where: { $0.id == settings.templateDefaultID })
                     {
                         Text("Missing (\(settings.templateDefaultID))").tag(settings.templateDefaultID)
                     }
@@ -35,10 +35,13 @@ struct TemplatesSettingsView: View {
                         Text(template.isBuiltin ? "Built-in" : "Custom")
                             .font(.caption)
                             .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(template.isBuiltin ? Color.secondary.opacity(0.15) : Color.accentColor.opacity(0.2),
-                                        in: Capsule())
+                            .background(
+                                template.isBuiltin ? Color.secondary.opacity(0.15) : Color.accentColor.opacity(0.2),
+                                in: Capsule())
                         if let path = template.filePath {
-                            Button("Show") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
+                            Button("Show") {
+                                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+                            }
                         }
                     }
                 }
@@ -46,9 +49,11 @@ struct TemplatesSettingsView: View {
             } header: {
                 Text("Templates")
             } footer: {
-                Text("Add a template by saving a Markdown file in the templates folder: `---` frontmatter with "
-                    + "`name:` and `description:`, then `##` sections with `<!-- instructions -->`. Then press Rescan.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(
+                    "Add a template by saving a Markdown file in the templates folder: `---` frontmatter with "
+                        + "`name:` and `description:`, then `##` sections with `<!-- instructions -->`. Then press Rescan."
+                )
+                .font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 HStack {

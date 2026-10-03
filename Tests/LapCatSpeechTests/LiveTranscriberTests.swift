@@ -14,7 +14,10 @@ private actor FakeEngine: TranscriptionEngine {
     func load() async throws { if failLoad { throw SpeechError.modelLoadFailed("boom") } }
     func transcribe(_ samples16k: [Float], offsetMs: Int) async throws -> [TranscribedSegment] {
         calls.append((samples16k.count, offsetMs))
-        return [TranscribedSegment(tStartMs: offsetMs, tEndMs: offsetMs + samples16k.count / 16, text: "words \(calls.count)")]
+        return [
+            TranscribedSegment(
+                tStartMs: offsetMs, tEndMs: offsetMs + samples16k.count / 16, text: "words \(calls.count)")
+        ]
     }
     func transcribeFile(_ url: URL, progress: @Sendable (Double) -> Void) async throws -> [TranscribedSegment] { [] }
     func unload() async {}
@@ -54,7 +57,9 @@ struct LiveTranscriberTests {
     private func bursts(_ count: Int, tone: Double = 1.0, silence: Double = 1.5) -> [Float] {
         var out: [Float] = []
         var seed: UInt32 = 1
-        func noise() -> Float { seed = seed &* 1_664_525 &+ 1_013_904_223; return (Float(seed % 1000) / 1000 - 0.5) * 0.002 }
+        func noise() -> Float {
+            seed = seed &* 1_664_525 &+ 1_013_904_223; return (Float(seed % 1000) / 1000 - 0.5) * 0.002
+        }
         for _ in 0..<count {
             out += (0..<Int(silence * 16_000)).map { _ in noise() }
             out += (0..<Int(tone * 16_000)).map { i in 0.3 * sin(2 * .pi * 220 * Float(i) / 16_000) }
@@ -78,8 +83,8 @@ struct LiveTranscriberTests {
 
         let starts = await engine.transcribedOffsets.map { Double($0) / 1000 }
         try #require(starts.count == 2)
-        #expect(abs(starts[0] - 11.5) < 0.1) // fifth burst
-        #expect(abs(starts[1] - 14.0) < 0.1) // sixth burst
+        #expect(abs(starts[0] - 11.5) < 0.1)  // fifth burst
+        #expect(abs(starts[1] - 14.0) < 0.1)  // sixth burst
     }
 
     @Test func closedUtterancesBecomeOrderedNonOverlappingLiveSegments() async throws {
@@ -135,10 +140,10 @@ struct LiveTranscriberTests {
 
     @Test func engineTimesAreClampedIntoTheUtteranceAndAfterThePreviousSegment() {
         let recognised = [
-            TranscribedSegment(tStartMs: 900, tEndMs: 1_500, text: "a"),   // starts before the utterance/previous end
-            TranscribedSegment(tStartMs: 1_400, tEndMs: 2_000, text: "b"), // overlaps "a"
-            TranscribedSegment(tStartMs: 2_500, tEndMs: 9_000, text: "c"), // runs past the utterance
-            TranscribedSegment(tStartMs: 2_600, tEndMs: 2_700, text: "  "), // blank
+            TranscribedSegment(tStartMs: 900, tEndMs: 1_500, text: "a"),  // starts before the utterance/previous end
+            TranscribedSegment(tStartMs: 1_400, tEndMs: 2_000, text: "b"),  // overlaps "a"
+            TranscribedSegment(tStartMs: 2_500, tEndMs: 9_000, text: "c"),  // runs past the utterance
+            TranscribedSegment(tStartMs: 2_600, tEndMs: 2_700, text: "  "),  // blank
         ]
         let rows = LiveTranscriber.liveSegments(
             recognised, meetingID: "m", channel: .mic, utterance: 1_000...3_000, notBefore: 1_200)

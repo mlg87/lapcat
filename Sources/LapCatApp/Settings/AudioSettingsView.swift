@@ -26,8 +26,9 @@ struct AudioSettingsView: View {
                     Label(
                         "Without echo cancellation, remote voices played on your speakers leak into your microphone "
                             + "and show up as your own lines. Use headphones for the cleanest “Me” transcript.",
-                        systemImage: "headphones")
-                        .font(.caption).foregroundStyle(.orange)
+                        systemImage: "headphones"
+                    )
+                    .font(.caption).foregroundStyle(.orange)
                 }
             }
             Section("Meeting audio (“Them”)") {

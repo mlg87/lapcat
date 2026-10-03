@@ -52,7 +52,8 @@ enum MeetingExportActions {
             let formatPicker = TranscriptFormatPicker(panel: panel, meeting: export.meeting)
             panel.accessoryView = formatPicker.view
             guard await present(panel) == .OK, let url = panel.url else { return nil }
-            try MarkdownExporter.transcript(export, format: formatPicker.format).write(to: url, atomically: true, encoding: .utf8)
+            try MarkdownExporter.transcript(export, format: formatPicker.format).write(
+                to: url, atomically: true, encoding: .utf8)
             return nil
         } catch {
             return failure("export transcript", error)

@@ -28,12 +28,16 @@ final class AudioFileReader {
         } catch {
             throw SpeechError.audioDecodeFailed("\(url.lastPathComponent): \(error.localizedDescription)")
         }
-        guard let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 1, interleaved: false) else {
+        guard
+            let target = AVAudioFormat(
+                commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 1, interleaved: false)
+        else {
             throw SpeechError.audioDecodeFailed("cannot build 16 kHz target format")
         }
         targetFormat = target
         let source = file.processingFormat
-        let needsConversion = source.sampleRate != Self.sampleRate || source.channelCount != 1
+        let needsConversion =
+            source.sampleRate != Self.sampleRate || source.channelCount != 1
             || source.commonFormat != .pcmFormatFloat32
         if needsConversion {
             guard let conv = AVAudioConverter(from: source, to: target) else {

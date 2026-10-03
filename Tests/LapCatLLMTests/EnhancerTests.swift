@@ -41,7 +41,9 @@ private struct Fixture {
 struct EnhancerTests {
     private static let enhanced = "## Summary\n- We agreed on pricing [[s:1]] [[s:424242]]\nraw line kept"
 
-    private static func reply(classify: String = #"{"template_id":"one-on-one"}"#, title: String = #"{"title":"Pricing sync"}"#) -> @Sendable (LLMRequest) throws -> String {
+    private static func reply(
+        classify: String = #"{"template_id":"one-on-one"}"#, title: String = #"{"title":"Pricing sync"}"#
+    ) -> @Sendable (LLMRequest) throws -> String {
         { request in
             switch request.system {
             case Prompts.enhanceSystem: return enhanced
@@ -55,19 +57,25 @@ struct EnhancerTests {
     }
 
     /// Meeting with `minutes` of system-channel segments every 5 s (~140 chars each), plus raw notes.
-    private func fixture(minutes: Int, title: String = "Note 2026-10-01 14:05", calendar: Bool = false) async throws -> Fixture {
+    private func fixture(minutes: Int, title: String = "Note 2026-10-01 14:05", calendar: Bool = false) async throws
+        -> Fixture
+    {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("lapcat-enhancer-\(UUID().uuidString)")
         let store = try Store(databaseURL: dir.appendingPathComponent("db.sqlite"))
         try await TemplateLibrary.sync(store: store, customDirectory: dir.appendingPathComponent("templates"))
         let meeting = try await store.createMeeting(title: title, startedBy: .manual)
         let filler = String(repeating: "we talked about the pricing model and the rollout plan ", count: 2)
-        let segments = try await store.appendSegments((0..<(minutes * 12)).map { i in
-            Segment(meetingID: meeting.id, channel: i.isMultiple(of: 7) ? .mic : .system, tStartMs: i * 5_000, tEndMs: i * 5_000 + 4_000,
+        let segments = try await store.appendSegments(
+            (0..<(minutes * 12)).map { i in
+                Segment(
+                    meetingID: meeting.id, channel: i.isMultiple(of: 7) ? .mic : .system, tStartMs: i * 5_000,
+                    tEndMs: i * 5_000 + 4_000,
                     text: "\(filler)\(i)", pass: .final)
-        })
+            })
         try await store.saveRawNote(meetingID: meeting.id, markdown: "raw line kept")
         if calendar {
-            try await store.saveCalendarSnapshot(CalendarSnapshot(meetingID: meeting.id, eventTitle: "Pricing", attendees: ["Priya"]))
+            try await store.saveCalendarSnapshot(
+                CalendarSnapshot(meetingID: meeting.id, eventTitle: "Pricing", attendees: ["Priya"]))
         }
         return Fixture(store: store, meeting: meeting, segments: segments)
     }
@@ -125,7 +133,9 @@ struct EnhancerTests {
         #expect(note.templateID == "one-on-one")
 
         let failing = ScriptedProvider(budget: 150_000) { request in
-            if request.task == .classify, request.system != Prompts.titleSystem { throw LLMError.invalidResponse("boom") }
+            if request.task == .classify, request.system != Prompts.titleSystem {
+                throw LLMError.invalidResponse("boom")
+            }
             return try Self.reply()(request)
         }
         let fallback = try await Enhancer(store: f.store, router: LLMRouter(providers: [failing], offlineOnly: false))
@@ -134,8 +144,10 @@ struct EnhancerTests {
         #expect(fallback.version == note.version + 1)
 
         let unknown = ScriptedProvider(budget: 150_000, reply: Self.reply(classify: #"{"template_id":"nope"}"#))
-        let unknownPick = try await Enhancer(store: f.store, router: LLMRouter(providers: [unknown], offlineOnly: false))
-            .enhance(meetingID: f.meeting.id, templateID: TemplateLibrary.autoID)
+        let unknownPick = try await Enhancer(
+            store: f.store, router: LLMRouter(providers: [unknown], offlineOnly: false)
+        )
+        .enhance(meetingID: f.meeting.id, templateID: TemplateLibrary.autoID)
         #expect(unknownPick.templateID == "general")
     }
 
@@ -183,7 +195,8 @@ struct EnhancerTests {
 
     @Test func windowsGroupByTenMinutesSkippingEmptyOnes() {
         let segments = [0, 599_999, 600_000, 2_500_000].enumerated().map { i, ms in
-            Segment(id: Int64(i), meetingID: "m", channel: .system, tStartMs: ms, tEndMs: ms + 1, text: "t", pass: .final)
+            Segment(
+                id: Int64(i), meetingID: "m", channel: .system, tStartMs: ms, tEndMs: ms + 1, text: "t", pass: .final)
         }
         let windows = Enhancer.windows(segments)
         #expect(windows.map(\.index) == [0, 1, 4])

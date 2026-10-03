@@ -132,7 +132,7 @@ final class ChannelPipeline: @unchecked Sendable {
     private func process(_ buffer: AVAudioPCMBuffer) {
         guard !paused, !finished, buffer.frameLength > 0 else { return }
         guard let mono = monoSamples(buffer), let samples = resample(mono, rate: buffer.format.sampleRate),
-              !samples.isEmpty
+            !samples.isEmpty
         else { return }
 
         if !signalSeen, samples.contains(where: { $0 != 0 }) {
@@ -171,10 +171,12 @@ final class ChannelPipeline: @unchecked Sendable {
 
     private func write(_ samples: [Float]) {
         guard let file, !writeFailed,
-              let buffer = AVAudioPCMBuffer(pcmFormat: Self.outputFormat, frameCapacity: AVAudioFrameCount(samples.count))
+            let buffer = AVAudioPCMBuffer(pcmFormat: Self.outputFormat, frameCapacity: AVAudioFrameCount(samples.count))
         else { return }
         buffer.frameLength = AVAudioFrameCount(samples.count)
-        samples.withUnsafeBufferPointer { buffer.floatChannelData![0].update(from: $0.baseAddress!, count: samples.count) }
+        samples.withUnsafeBufferPointer {
+            buffer.floatChannelData![0].update(from: $0.baseAddress!, count: samples.count)
+        }
         do { try file.write(from: buffer) } catch {
             writeFailed = true
             Self.logger.error("\(self.channel.rawValue) write failed: \(error, privacy: .public)")
@@ -186,13 +188,18 @@ final class ChannelPipeline: @unchecked Sendable {
     private func monoSamples(_ buffer: AVAudioPCMBuffer) -> [Float]? {
         var input = buffer
         if buffer.format.commonFormat != .pcmFormatFloat32 || buffer.format.isInterleaved {
-            guard let target = AVAudioFormat(
-                commonFormat: .pcmFormatFloat32, sampleRate: buffer.format.sampleRate,
-                channels: buffer.format.channelCount, interleaved: false
-            ) else { return nil }
-            if normalizer?.inputFormat != buffer.format { normalizer = AVAudioConverter(from: buffer.format, to: target) }
-            guard let normalizer, let converted = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: buffer.frameLength),
-                  (try? normalizer.convert(to: converted, from: buffer)) != nil
+            guard
+                let target = AVAudioFormat(
+                    commonFormat: .pcmFormatFloat32, sampleRate: buffer.format.sampleRate,
+                    channels: buffer.format.channelCount, interleaved: false
+                )
+            else { return nil }
+            if normalizer?.inputFormat != buffer.format {
+                normalizer = AVAudioConverter(from: buffer.format, to: target)
+            }
+            guard let normalizer,
+                let converted = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: buffer.frameLength),
+                (try? normalizer.convert(to: converted, from: buffer)) != nil
             else { return nil }
             input = converted
         }
@@ -214,12 +221,16 @@ final class ChannelPipeline: @unchecked Sendable {
 
     private func resample(_ mono: [Float], rate: Double) -> [Float]? {
         if rate == Double(Self.sampleRate) { return mono }
-        guard let inputFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: rate, channels: 1, interleaved: false),
-              let input = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(mono.count))
+        guard
+            let inputFormat = AVAudioFormat(
+                commonFormat: .pcmFormatFloat32, sampleRate: rate, channels: 1, interleaved: false),
+            let input = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(mono.count))
         else { return nil }
         input.frameLength = AVAudioFrameCount(mono.count)
         mono.withUnsafeBufferPointer { input.floatChannelData![0].update(from: $0.baseAddress!, count: mono.count) }
-        if resampler?.inputFormat != inputFormat { resampler = AVAudioConverter(from: inputFormat, to: Self.outputFormat) }
+        if resampler?.inputFormat != inputFormat {
+            resampler = AVAudioConverter(from: inputFormat, to: Self.outputFormat)
+        }
         guard let resampler else { return nil }
         let capacity = AVAudioFrameCount(Double(mono.count) * Double(Self.sampleRate) / rate) + 64
         guard let output = AVAudioPCMBuffer(pcmFormat: Self.outputFormat, frameCapacity: capacity) else { return nil }

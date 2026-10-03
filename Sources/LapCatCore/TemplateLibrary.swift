@@ -10,12 +10,15 @@ public struct TemplateDocument: Sendable, Equatable {
 
     /// Parses `text`. Without frontmatter, the whole text is the body and `fallbackName` the name.
     public init(parsing text: String, fallbackName: String) {
-        let lines = text.replacingOccurrences(of: "\r\n", with: "\n").split(separator: "\n", omittingEmptySubsequences: false)
+        let lines = text.replacingOccurrences(of: "\r\n", with: "\n").split(
+            separator: "\n", omittingEmptySubsequences: false)
         var name: String?
         var description = ""
         var bodyStart = 0
         if lines.first?.trimmingCharacters(in: .whitespaces) == "---",
-           let close = lines.indices.dropFirst().first(where: { lines[$0].trimmingCharacters(in: .whitespaces) == "---" })
+            let close = lines.indices.dropFirst().first(where: {
+                lines[$0].trimmingCharacters(in: .whitespaces) == "---"
+            })
         {
             for line in lines[1..<close] {
                 guard let colon = line.firstIndex(of: ":") else { continue }
@@ -59,7 +62,9 @@ public enum TemplateLibrary {
     /// The templates shipped in LapCatCore's resource bundle.
     public static func builtinTemplates(now: Date = Date()) throws -> [Template] {
         guard let directory = LapCatCoreResources.bundle.url(forResource: "Templates", withExtension: nil) else {
-            throw CocoaError(.fileNoSuchFile, userInfo: [NSLocalizedDescriptionKey: "Templates missing from \(LapCatCoreResources.bundleName)"])
+            throw CocoaError(
+                .fileNoSuchFile,
+                userInfo: [NSLocalizedDescriptionKey: "Templates missing from \(LapCatCoreResources.bundleName)"])
         }
         return try templates(in: directory, idPrefix: "", isBuiltin: true, now: now)
     }
@@ -80,7 +85,8 @@ public enum TemplateLibrary {
         return builtins + custom
     }
 
-    private static func templates(in directory: URL, idPrefix: String, isBuiltin: Bool, now: Date) throws -> [Template] {
+    private static func templates(in directory: URL, idPrefix: String, isBuiltin: Bool, now: Date) throws -> [Template]
+    {
         let files = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension.lowercased() == "md" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
@@ -95,7 +101,8 @@ public enum TemplateLibrary {
                 id: idPrefix + stem, name: document.name, description: document.description,
                 bodyMarkdown: document.body, isBuiltin: isBuiltin,
                 // Under `directory` as given (contentsOfDirectory resolves symlinks such as /var → /private/var).
-                filePath: isBuiltin ? nil : directory.appendingPathComponent(file.lastPathComponent).path, updatedAt: now)
+                filePath: isBuiltin ? nil : directory.appendingPathComponent(file.lastPathComponent).path,
+                updatedAt: now)
         }
     }
 }

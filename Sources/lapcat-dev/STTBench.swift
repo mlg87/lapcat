@@ -8,9 +8,9 @@ import LapCatSpeech
 /// and prints the real-time factor (audio seconds ÷ wall seconds) of each plus the transcript.
 enum STTBench {
     static let usage = """
-    usage: lapcat-dev stt-bench --engine whisper|parakeet [--model <file>] [--version v2|v3] [--live-only|--file-only] <audio-file>
-      whisper models (default ggml-small.en.bin) are downloaded into ~/Library/Application Support/LapCat/models/ if missing
-    """
+        usage: lapcat-dev stt-bench --engine whisper|parakeet [--model <file>] [--version v2|v3] [--live-only|--file-only] <audio-file>
+          whisper models (default ggml-small.en.bin) are downloaded into ~/Library/Application Support/LapCat/models/ if missing
+        """
 
     static func run(_ arguments: [String]) async -> Int32 {
         var engineName: String?
@@ -39,7 +39,8 @@ enum STTBench {
         do {
             let engine: any TranscriptionEngine
             if engineName == "whisper" {
-                let modelsDirectory = URL.applicationSupportDirectory.appending(path: "LapCat/models", directoryHint: .isDirectory)
+                let modelsDirectory = URL.applicationSupportDirectory.appending(
+                    path: "LapCat/models", directoryHint: .isDirectory)
                 let downloader = ModelDownloader(modelsDirectory: modelsDirectory, offlineOnly: false)
                 if !downloader.isAvailable(model) {
                     print("downloading \(model) → \(modelsDirectory.path)")
@@ -66,7 +67,9 @@ enum STTBench {
                 let start = ContinuousClock.now
                 let segments = try await engine.transcribeFile(url) { _ in }
                 let wall = seconds(start.duration(to: .now))
-                print("\n== transcribeFile (final pass): wall \(String(format: "%.2f", wall)) s, RTF \(String(format: "%.2f", audioSeconds / wall))")
+                print(
+                    "\n== transcribeFile (final pass): wall \(String(format: "%.2f", wall)) s, RTF \(String(format: "%.2f", audioSeconds / wall))"
+                )
                 printSegments(segments)
             }
 
@@ -83,7 +86,9 @@ enum STTBench {
                     slowest = min(slowest, chunkRTF)
                 }
                 let wall = seconds(start.duration(to: .now))
-                print("\n== transcribe (live, 15 s chunks): wall \(String(format: "%.2f", wall)) s, RTF \(String(format: "%.2f", audioSeconds / wall)), slowest chunk RTF \(String(format: "%.2f", slowest))")
+                print(
+                    "\n== transcribe (live, 15 s chunks): wall \(String(format: "%.2f", wall)) s, RTF \(String(format: "%.2f", audioSeconds / wall)), slowest chunk RTF \(String(format: "%.2f", slowest))"
+                )
                 printSegments(segments)
             }
             await engine.unload()
@@ -96,7 +101,9 @@ enum STTBench {
 
     private static func printSegments(_ segments: [TranscribedSegment]) {
         for segment in segments {
-            print(String(format: "[%7.2f – %7.2f] ", Double(segment.tStartMs) / 1000, Double(segment.tEndMs) / 1000) + segment.text)
+            print(
+                String(format: "[%7.2f – %7.2f] ", Double(segment.tStartMs) / 1000, Double(segment.tEndMs) / 1000)
+                    + segment.text)
         }
     }
 
