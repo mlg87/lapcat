@@ -22,10 +22,31 @@ public struct AudioChunk: Sendable {
 
 /// What the system channel taps.
 public enum TapScope: Sendable, Equatable {
-    /// One process, by its Core Audio process object (see `AudioProcessRegistry`).
-    case process(AudioObjectID)
+    /// Every Core Audio process of one app, mixed: its main process and all helpers. A browser plays a
+    /// call from a helper (Chromium's audio service), and that helper may produce no output yet when a
+    /// recording starts. `appPID` is the main process, for the ScreenCaptureKit fallback.
+    case app(objectIDs: [AudioObjectID], appPID: pid_t?)
     /// Every process's output except LapCat's own.
     case systemExcludingSelf
+}
+
+extension TapScope {
+    /// The `.app` scope for `bundleID`: every process whose bundle id is `bundleID` or a dotted child of it
+    /// (`company.thebrowser.browser.helper`), case-insensitive, plus the process `pid` that triggered
+    /// detection. Nil when none of them is registered with Core Audio.
+    public static func forApp(bundleID: String?, pid: pid_t?, in processes: [AudioProcessInfo]) -> TapScope? {
+        let wanted = bundleID?.lowercased()
+        func inFamily(_ process: AudioProcessInfo) -> Bool {
+            guard let wanted, let id = process.bundleID?.lowercased() else { return false }
+            return id == wanted || id.hasPrefix(wanted + ".")
+        }
+        let tapped = processes.filter { inFamily($0) || $0.pid == pid }
+        guard !tapped.isEmpty else { return nil }
+        var seen = Set<AudioObjectID>()
+        let objectIDs = tapped.map(\.objectID).filter { seen.insert($0).inserted }
+        let appPID = tapped.first { $0.bundleID?.lowercased() == wanted }?.pid
+        return .app(objectIDs: objectIDs, appPID: appPID)
+    }
 }
 
 /// File names of the per-channel recordings inside a meeting's audio directory.

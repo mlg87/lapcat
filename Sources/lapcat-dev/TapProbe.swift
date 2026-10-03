@@ -42,21 +42,25 @@ enum TapProbe {
             scope = .systemExcludingSelf
             print("scope: system (all processes except lapcat-dev)")
         } else {
-            guard let objectID = AudioProcessRegistry.objectID(forBundleID: args[0]),
-                let info = AudioProcessRegistry.info(forObjectID: objectID)
+            let processes = AudioProcessRegistry.processes()
+            guard let resolved = TapScope.forApp(bundleID: args[0], pid: nil, in: processes),
+                case .app(let objectIDs, let appPID) = resolved
             else {
                 print("no audio process for \(args[0]). Running audio processes:")
-                for process in AudioProcessRegistry.processes() {
+                for process in processes {
                     print(
                         "  pid \(process.pid) \(process.bundleID ?? "-") \(process.name) out=\(process.isRunningOutput)"
                     )
                 }
                 return 1
             }
-            scope = .process(objectID)
-            print(
-                "scope: process \(info.name) pid \(info.pid) bundle \(info.bundleID ?? "-") object \(objectID) output=\(info.isRunningOutput)"
-            )
+            scope = resolved
+            print("scope: app \(args[0]), main pid \(appPID.map(String.init) ?? "none")")
+            for process in processes where objectIDs.contains(process.objectID) {
+                print(
+                    "  pid \(process.pid) \(process.bundleID ?? "-") \(process.name) object \(process.objectID) output=\(process.isRunningOutput)"
+                )
+            }
         }
 
         let session = CaptureSession()
