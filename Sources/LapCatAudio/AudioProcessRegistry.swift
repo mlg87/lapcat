@@ -47,18 +47,6 @@ public enum AudioProcessRegistry {
         return id.flatMap { $0 == kAudioObjectUnknown ? nil : $0 }
     }
 
-    /// The running instance of `bundleID` that is producing output, else any instance. Helper
-    /// processes count too (Chrome plays audio from `com.google.Chrome.helper`; Arc's helper is
-    /// `company.thebrowser.browser.helper`), matched case-insensitively by prefix.
-    public static func objectID(forBundleID bundleID: String) -> AudioObjectID? {
-        let wanted = bundleID.lowercased()
-        let candidates = processes().filter { process in
-            guard let id = process.bundleID?.lowercased() else { return false }
-            return id == wanted || id.hasPrefix(wanted + ".")
-        }
-        return (candidates.first(where: \.isRunningOutput) ?? candidates.first)?.objectID
-    }
-
     /// Whether the process object is currently producing output.
     public static func isRunningOutput(_ objectID: AudioObjectID) -> Bool {
         CoreAudioProperty.bool(objectID, kAudioProcessPropertyIsRunningOutput)

@@ -22,8 +22,8 @@ public final class ProcessTap: @unchecked Sendable {
         self.scope = scope
         let description: CATapDescription
         switch scope {
-        case .process(let objectID):
-            description = CATapDescription(stereoMixdownOfProcesses: [objectID])
+        case .app(let objectIDs, _):
+            description = CATapDescription(stereoMixdownOfProcesses: objectIDs)
         case .systemExcludingSelf:
             let own = AudioProcessRegistry.objectID(forPID: getpid())
             description = CATapDescription(stereoGlobalTapButExcludeProcesses: own.map { [$0] } ?? [])

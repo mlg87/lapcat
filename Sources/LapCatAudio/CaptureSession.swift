@@ -214,9 +214,10 @@ public actor CaptureSession {
         systemSource = .tap(tap)
         pipeline.sourceChanged()
         let scope = scope
+        Self.logger.info("system tap started: \(Self.describe(scope), privacy: .public)")
         pipeline.monitorHealth {
             switch scope {
-            case .process(let objectID): AudioProcessRegistry.isRunningOutput(objectID)
+            case .app(let objectIDs, _): objectIDs.contains(where: AudioProcessRegistry.isRunningOutput)
             case .systemExcludingSelf: AudioProcessRegistry.anyOtherProcessRunningOutput()
             }
         }
@@ -252,7 +253,7 @@ public actor CaptureSession {
         if case .screenCapture = systemSource { return }
         let pid: pid_t? =
             switch scope {
-            case .process(let objectID): AudioProcessRegistry.info(forObjectID: objectID)?.pid
+            case .app(_, let appPID): appPID
             case .systemExcludingSelf: nil
             }
         let capture = SCKAudioCapture(pid: pid) { pipeline.ingest($0) }
@@ -340,6 +341,20 @@ public actor CaptureSession {
         let target = activeSamples
         micPipeline?.padSilence(upTo: target)
         systemPipeline?.padSilence(upTo: target)
+    }
+
+    /// `app pid 11771: Arc pid 11771 out=0, Browser Helper pid 73835 out=1` — which processes the tap mixes.
+    private static func describe(_ scope: TapScope) -> String {
+        switch scope {
+        case .systemExcludingSelf:
+            return "all system audio except LapCat"
+        case .app(let objectIDs, let appPID):
+            let processes = objectIDs.map { id in
+                guard let info = AudioProcessRegistry.info(forObjectID: id) else { return "object \(id) gone" }
+                return "\(info.name) pid \(info.pid) out=\(info.isRunningOutput ? 1 : 0)"
+            }
+            return "app pid \(appPID.map(String.init) ?? "none"): \(processes.joined(separator: ", "))"
+        }
     }
 
     private static func describe(_ format: AVAudioFormat) -> String {

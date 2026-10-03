@@ -175,13 +175,8 @@ final class SessionController {
 
     private func tapScope(for source: SessionSource?) -> TapScope {
         guard settings.audioTapScope == "app", let source else { return .systemExcludingSelf }
-        // By bundle first: it prefers the instance producing output, whereas the detected pid is
-        // often an input-only helper (a browser's audio-capture process).
-        if let bundleID = source.bundleID, let id = AudioProcessRegistry.objectID(forBundleID: bundleID) {
-            return .process(id)
-        }
-        if let pid = source.pid, let id = AudioProcessRegistry.objectID(forPID: pid) { return .process(id) }
-        return .systemExcludingSelf
+        return TapScope.forApp(bundleID: source.bundleID, pid: source.pid, in: AudioProcessRegistry.processes())
+            ?? .systemExcludingSelf
     }
 
     private func observe(_ capture: CaptureSession) {
