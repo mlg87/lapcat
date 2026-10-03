@@ -42,7 +42,8 @@ extension Store {
         AsyncStream { continuation in
             let task = Task {
                 let observation = ValueObservation.tracking { db in
-                    try EnhancedNote.filter(Column("meeting_id") == meetingID).order(Column("version").desc).fetchAll(db)
+                    try EnhancedNote.filter(Column("meeting_id") == meetingID).order(Column("version").desc).fetchAll(
+                        db)
                 }
                 do {
                     for try await value in observation.values(in: pool) { continuation.yield(value) }
@@ -58,10 +59,16 @@ extension Store {
     @discardableResult
     public func confirmSpeakerSuggestion(suggestedID: Int64, clusterID: Int64) async throws -> Participant {
         try await pool.write { db in
-            guard var keep = try Participant.fetchOne(db, key: suggestedID) else { throw StoreError.notFound("participant \(suggestedID)") }
-            guard let remove = try Participant.fetchOne(db, key: clusterID) else { throw StoreError.notFound("participant \(clusterID)") }
+            guard var keep = try Participant.fetchOne(db, key: suggestedID) else {
+                throw StoreError.notFound("participant \(suggestedID)")
+            }
+            guard let remove = try Participant.fetchOne(db, key: clusterID) else {
+                throw StoreError.notFound("participant \(clusterID)")
+            }
             guard keep.meetingID == remove.meetingID else { throw StoreError.participantsInDifferentMeetings }
-            try db.execute(sql: "UPDATE segment SET participant_id = ? WHERE participant_id = ?", arguments: [suggestedID, clusterID])
+            try db.execute(
+                sql: "UPDATE segment SET participant_id = ? WHERE participant_id = ?",
+                arguments: [suggestedID, clusterID])
             _ = try remove.delete(db)
             keep.clusterLabel = nil
             try keep.update(db)

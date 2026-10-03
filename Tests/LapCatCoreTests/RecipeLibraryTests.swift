@@ -5,7 +5,8 @@ import Testing
 struct RecipeTests {
     @Test func seedingTwiceKeepsOneRowPerBuiltinAndRemovesRetiredBuiltins() async throws {
         let (store, _) = try makeTempStore()
-        try await store.upsertRecipe(Recipe(id: "retired", name: "Old", slashCommand: "/old", prompt: "x", isBuiltin: true))
+        try await store.upsertRecipe(
+            Recipe(id: "retired", name: "Old", slashCommand: "/old", prompt: "x", isBuiltin: true))
         try await RecipeLibrary.seed(store: store)
         try await RecipeLibrary.seed(store: store)
         let recipes = try await store.recipes()

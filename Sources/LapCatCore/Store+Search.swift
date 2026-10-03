@@ -27,9 +27,10 @@ extension Store {
                     arguments: [text, meetingID, kind.rawValue, ref])
             }
 
-            let hasFinal = try Bool.fetchOne(
-                db, sql: "SELECT EXISTS(SELECT 1 FROM segment WHERE meeting_id = ? AND pass = 'final')",
-                arguments: [meetingID]) ?? false
+            let hasFinal =
+                try Bool.fetchOne(
+                    db, sql: "SELECT EXISTS(SELECT 1 FROM segment WHERE meeting_id = ? AND pass = 'final')",
+                    arguments: [meetingID]) ?? false
             let pass: SegmentPass = hasFinal ? .final : .live
             let rows = try Row.fetchAll(
                 db,

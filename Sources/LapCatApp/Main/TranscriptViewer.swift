@@ -37,7 +37,8 @@ struct TranscriptViewer: View {
         let matches = matches
         VStack(spacing: 0) {
             SpeakerSuggestionBanners(
-                meetingID: meetingID, suggestions: SpeakerSuggestion.pending(participants: participants, segments: segments))
+                meetingID: meetingID,
+                suggestions: SpeakerSuggestion.pending(participants: participants, segments: segments))
             controls(paragraphs: paragraphs, matches: matches)
             Divider()
             ScrollViewReader { proxy in
@@ -46,7 +47,9 @@ struct TranscriptViewer: View {
                         guard let index, index < matches.count else { return }
                         scroll(to: matches[index].segmentID, in: paragraphs, proxy: proxy, highlight: false)
                     }
-                    .onChange(of: navigation.segmentRequest, initial: true) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
+                    .onChange(of: navigation.segmentRequest, initial: true) {
+                        handleRequest(paragraphs: paragraphs, proxy: proxy)
+                    }
                     .onChange(of: paragraphs.isEmpty) { handleRequest(paragraphs: paragraphs, proxy: proxy) }
                     .onChange(of: jumpTarget) { _, target in
                         guard let target else { return }
@@ -62,7 +65,9 @@ struct TranscriptViewer: View {
         .confirmationDialog("Delete this meeting's audio?", isPresented: $confirmDeleteAudio) {
             Button("Delete Audio", role: .destructive) { deleteAudio() }
         } message: {
-            Text("The recording is removed from disk now. The transcript and notes are kept, but playback is no longer possible.")
+            Text(
+                "The recording is removed from disk now. The transcript and notes are kept, but playback is no longer possible."
+            )
         }
     }
 
@@ -168,7 +173,9 @@ struct TranscriptViewer: View {
             Menu("Export") {
                 Button("Export Transcript…") {
                     let store = appState.store
-                    Task { exportError = await MeetingExportActions.exportTranscript(meetingID: meetingID, store: store) }
+                    Task {
+                        exportError = await MeetingExportActions.exportTranscript(meetingID: meetingID, store: store)
+                    }
                 }
                 Divider()
                 Button("Delete Audio Now…", role: .destructive) { confirmDeleteAudio = true }
@@ -209,13 +216,15 @@ struct TranscriptViewer: View {
 
     private func handleRequest(paragraphs: [TranscriptParagraph], proxy: ScrollViewProxy) {
         guard let request = navigation.segmentRequest, request.token != handledRequest,
-              paragraphs.contains(where: { $0.contains(segmentID: request.segmentID) })
+            paragraphs.contains(where: { $0.contains(segmentID: request.segmentID) })
         else { return }
         handledRequest = request.token
         scroll(to: request.segmentID, in: paragraphs, proxy: proxy, highlight: true)
     }
 
-    private func scroll(to segmentID: Int64, in paragraphs: [TranscriptParagraph], proxy: ScrollViewProxy, highlight: Bool) {
+    private func scroll(
+        to segmentID: Int64, in paragraphs: [TranscriptParagraph], proxy: ScrollViewProxy, highlight: Bool
+    ) {
         guard let paragraph = paragraphs.first(where: { $0.contains(segmentID: segmentID) }) else { return }
         withAnimation { proxy.scrollTo(paragraph.id, anchor: .center) }
         guard highlight else { return }
@@ -230,7 +239,8 @@ struct TranscriptViewer: View {
     // MARK: Rows
 
     private func row(_ paragraph: TranscriptParagraph, matches: [TranscriptFindMatch]) -> some View {
-        let speaker = paragraph.segments.first.map { TranscriptFormatter.speakerName(for: $0, participants: participants) } ?? ""
+        let speaker =
+            paragraph.segments.first.map { TranscriptFormatter.speakerName(for: $0, participants: participants) } ?? ""
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             if player.isAvailable {
                 Button(TranscriptFormatter.timestamp(ms: paragraph.tStartMs)) {
@@ -249,10 +259,12 @@ struct TranscriptViewer: View {
                 .foregroundStyle(.primary)
                 .fontWeight(.semibold)
                 .help("Rename, merge or reassign this speaker")
-                .popover(isPresented: Binding(
-                    get: { speakerPopover == paragraph.id },
-                    set: { if !$0 { speakerPopover = nil } }
-                )) {
+                .popover(
+                    isPresented: Binding(
+                        get: { speakerPopover == paragraph.id },
+                        set: { if !$0 { speakerPopover = nil } }
+                    )
+                ) {
                     SpeakerEditor(
                         meetingID: meetingID, paragraph: paragraph, speaker: speaker, participants: participants,
                         dismiss: { speakerPopover = nil })

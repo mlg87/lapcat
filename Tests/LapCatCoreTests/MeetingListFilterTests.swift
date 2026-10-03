@@ -28,7 +28,8 @@ import Testing
     }
 
     @Test func lastSevenDaysIncludesTodayAndSixPriorDays() {
-        let range = MeetingListFilter(dateScope: .last7Days).dateRange(now: date("2026-10-02T09:00:00Z"), calendar: calendar)
+        let range = MeetingListFilter(dateScope: .last7Days).dateRange(
+            now: date("2026-10-02T09:00:00Z"), calendar: calendar)
         #expect(range == date("2026-09-26T00:00:00Z")...date("2026-10-02T23:59:59Z"))
     }
 
@@ -42,14 +43,18 @@ import Testing
         let (store, dir) = try makeTempStore()
         defer { try? FileManager.default.removeItem(at: dir) }
         let folder = try await store.createFolder(name: "Clients")
-        let filed = try await store.createMeeting(title: "Filed", startedBy: .manual, sourceApp: "zoom", bundleID: nil, pid: nil)
-        let starred = try await store.createMeeting(title: "Starred", startedBy: .manual, sourceApp: "zoom", bundleID: nil, pid: nil)
+        let filed = try await store.createMeeting(
+            title: "Filed", startedBy: .manual, sourceApp: "zoom", bundleID: nil, pid: nil)
+        let starred = try await store.createMeeting(
+            title: "Starred", startedBy: .manual, sourceApp: "zoom", bundleID: nil, pid: nil)
         try await store.setFolder(meetingID: filed.id, folderID: folder.id)
         try await store.setStarred(meetingID: starred.id, starred: true)
 
-        let inFolder = try await store.meetings(filter: MeetingListFilter(folderID: folder.id).meetingFilter(search: ""))
+        let inFolder = try await store.meetings(
+            filter: MeetingListFilter(folderID: folder.id).meetingFilter(search: ""))
         #expect(inFolder.map(\.id) == [filed.id])
-        let onlyStarred = try await store.meetings(filter: MeetingListFilter(starredOnly: true).meetingFilter(search: ""))
+        let onlyStarred = try await store.meetings(
+            filter: MeetingListFilter(starredOnly: true).meetingFilter(search: ""))
         #expect(onlyStarred.map(\.id) == [starred.id])
 
         try await store.deleteFolder(id: folder.id)

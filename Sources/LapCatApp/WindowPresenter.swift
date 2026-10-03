@@ -10,7 +10,9 @@ import SwiftUI
 final class WindowPresenter: NSObject, NSWindowDelegate {
     private var windows: [String: NSWindow] = [:]
 
-    func show<Content: View>(id: String, title: String, size: NSSize, resizable: Bool, @ViewBuilder content: () -> Content) {
+    func show<Content: View>(
+        id: String, title: String, size: NSSize, resizable: Bool, @ViewBuilder content: () -> Content
+    ) {
         let window = windows[id] ?? makeWindow(id: id, title: title, size: size, resizable: resizable, content: content)
         updateActivationPolicy()
         NSApp.activate(ignoringOtherApps: true)
@@ -20,10 +22,13 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.makeKey()
     }
 
-    private func makeWindow<Content: View>(id: String, title: String, size: NSSize, resizable: Bool, content: () -> Content) -> NSWindow {
+    private func makeWindow<Content: View>(
+        id: String, title: String, size: NSSize, resizable: Bool, content: () -> Content
+    ) -> NSWindow {
         var style: NSWindow.StyleMask = [.titled, .closable, .miniaturizable]
         if resizable { style.insert(.resizable) }
-        let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: style, backing: .buffered, defer: false)
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: size), styleMask: style, backing: .buffered, defer: false)
         window.title = title
         window.identifier = NSUserInterfaceItemIdentifier(id)
         window.isReleasedWhenClosed = false

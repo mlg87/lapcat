@@ -19,12 +19,13 @@ enum SentenceGrouper {
 
         func close() {
             guard let first = current.first, let last = current.last else { return }
-            segments.append(TranscribedSegment(
-                tStartMs: offsetMs + ms(first.startTime),
-                tEndMs: offsetMs + ms(last.endTime),
-                text: current.map(\.word).joined(separator: " "),
-                confidence: confidence
-            ))
+            segments.append(
+                TranscribedSegment(
+                    tStartMs: offsetMs + ms(first.startTime),
+                    tEndMs: offsetMs + ms(last.endTime),
+                    text: current.map(\.word).joined(separator: " "),
+                    confidence: confidence
+                ))
             current.removeAll()
         }
 
@@ -45,7 +46,10 @@ enum SentenceGrouper {
     static func fallback(text: String, offsetMs: Int, sampleCount: Int, confidence: Float?) -> [TranscribedSegment] {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
-        return [TranscribedSegment(tStartMs: offsetMs, tEndMs: offsetMs + sampleCount / 16, text: trimmed, confidence: confidence)]
+        return [
+            TranscribedSegment(
+                tStartMs: offsetMs, tEndMs: offsetMs + sampleCount / 16, text: trimmed, confidence: confidence)
+        ]
     }
 
     private static func ms(_ seconds: TimeInterval) -> Int { Int((seconds * 1000).rounded()) }

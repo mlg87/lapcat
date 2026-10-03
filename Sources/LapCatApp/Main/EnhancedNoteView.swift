@@ -26,15 +26,21 @@ struct EnhancedNoteView: View {
                 header(note)
                 Divider()
                 ScrollView {
-                    EnhancedMarkdown(markdown: note.markdown, kinds: LineAttribution.classify(enhanced: note.markdown, raw: rawNote))
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    EnhancedMarkdown(
+                        markdown: note.markdown, kinds: LineAttribution.classify(enhanced: note.markdown, raw: rawNote)
+                    )
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .environment(\.openURL, OpenURLAction { url in
-                    guard let action = CitationLinkAction(url: url, currentMeetingID: meetingID) else { return .systemAction }
-                    navigation.handle(action)
-                    return .handled
-                })
+                .environment(
+                    \.openURL,
+                    OpenURLAction { url in
+                        guard let action = CitationLinkAction(url: url, currentMeetingID: meetingID) else {
+                            return .systemAction
+                        }
+                        navigation.handle(action)
+                        return .handled
+                    })
             } else {
                 VStack(spacing: 12) {
                     Text("No enhanced notes yet — End the meeting or press Enhance.")
@@ -46,7 +52,8 @@ struct EnhancedNoteView: View {
         }
         .task(id: meetingID) {
             for await notes in appState.store.observeEnhancedNotes(meetingID: meetingID) {
-                if notes.first?.id != self.notes.first?.id { selectedID = notes.first?.id }  // a new version shows itself
+                // a new version shows itself
+                if notes.first?.id != self.notes.first?.id { selectedID = notes.first?.id }
                 self.notes = notes
                 rawNote = (try? await appState.store.rawNote(meetingID: meetingID))?.markdown ?? ""
             }
@@ -137,8 +144,9 @@ struct EnhancedMarkdown: View {
 
     private func inline(_ content: String) -> Text {
         let linked = Citations.linkified(content)
-        let attributed = (try? AttributedString(
-            markdown: linked, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+        let attributed =
+            (try? AttributedString(
+                markdown: linked, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
             ?? AttributedString(content)
         return Text(attributed)
     }

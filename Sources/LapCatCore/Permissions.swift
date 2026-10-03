@@ -36,15 +36,16 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
 
     /// System Settings deep link for this pane.
     public var settingsURL: URL {
-        let anchor = switch self {
-        case .microphone: "Privacy_Microphone"
-        case .systemAudio: "Privacy_AudioCapture"
-        case .accessibility: "Privacy_Accessibility"
-        case .calendars: "Privacy_Calendars"
-        case .notifications: "Notifications"
-        case .automation: "Privacy_Automation"
-        case .screenRecording: "Privacy_ScreenCapture"
-        }
+        let anchor =
+            switch self {
+            case .microphone: "Privacy_Microphone"
+            case .systemAudio: "Privacy_AudioCapture"
+            case .accessibility: "Privacy_Accessibility"
+            case .calendars: "Privacy_Calendars"
+            case .notifications: "Notifications"
+            case .automation: "Privacy_Automation"
+            case .screenRecording: "Privacy_ScreenCapture"
+            }
         return URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)")!
     }
 }

@@ -8,7 +8,8 @@ import ImageIO
 import UniformTypeIdentifiers
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-let sourceURL = CommandLine.arguments.count > 1
+let sourceURL =
+    CommandLine.arguments.count > 1
     ? URL(fileURLWithPath: CommandLine.arguments[1])
     : root.appendingPathComponent("docs/design/app-icon/lapcat-app_icon.png")
 let resources = root.appendingPathComponent("Resources")
@@ -19,15 +20,16 @@ func fail(_ message: String) -> Never {
 }
 
 guard let imageSource = CGImageSourceCreateWithURL(sourceURL as CFURL, nil),
-      let artwork = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+    let artwork = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
 else { fail("cannot read \(sourceURL.path)") }
 
 let rgb = CGColorSpace(name: CGColorSpace.sRGB)!
 
 func context(_ width: Int, _ height: Int) -> CGContext {
-    guard let ctx = CGContext(
-        data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: rgb,
-        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+    guard
+        let ctx = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: rgb,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
     else { fail("cannot create \(width)x\(height) context") }
     ctx.interpolationQuality = .high
     return ctx
@@ -49,8 +51,9 @@ func appIcon(size: Int) -> CGImage {
     let shape = CGPath(roundedRect: tile, cornerWidth: 185 * k, cornerHeight: 185 * k, transform: nil)
     // Soft drop shadow under the tile, as on Apple's own icons.
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -10 * k), blur: 20 * k,
-                  color: CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.3))
+    ctx.setShadow(
+        offset: CGSize(width: 0, height: -10 * k), blur: 20 * k,
+        color: CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.3))
     ctx.addPath(shape)
     ctx.setFillColor(CGColor(srgbRed: 0.99, green: 0.89, blue: 0.77, alpha: 1))
     ctx.fillPath()
@@ -140,7 +143,8 @@ for i in 0..<work {
 }
 while let p = stack.popLast() {
     let x = p % work, y = p / work
-    for (nx, ny) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] where nx >= 0 && nx < work && ny >= 0 && ny < work {
+    for (nx, ny) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] where nx >= 0 && nx < work && ny >= 0 && ny < work
+    {
         let n = ny * work + nx
         if !ink[n] && !outside[n] { outside[n] = true; stack.append(n) }
     }
@@ -154,21 +158,25 @@ for i in 0..<(work * work) where solid[i] && !innerLines[i] { mask[i] = 255 }
 
 // Crop to the ink's bounding box.
 var (minX, minY, maxX, maxY) = (work, work, -1, -1)
-for y in 0..<work { for x in 0..<work where mask[y * work + x] != 0 {
-    minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
-} }
+for y in 0..<work {
+    for x in 0..<work where mask[y * work + x] != 0 {
+        minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+    }
+}
 guard maxX >= minX else { fail("no ink found in artwork") }
 let cropW = maxX - minX + 1, cropH = maxY - minY + 1
 
 let glyphCtx = context(cropW, cropH)
 let glyphPixels = glyphCtx.data!.bindMemory(to: UInt8.self, capacity: cropW * cropH * 4)
 let rowBytes = glyphCtx.bytesPerRow
-for y in 0..<cropH { for x in 0..<cropW {
-    // The mask is in context memory order (row 0 = top), as is glyphCtx's buffer.
-    let value = mask[(minY + y) * work + (minX + x)]
-    let o = y * rowBytes + x * 4
-    glyphPixels[o] = 0; glyphPixels[o + 1] = 0; glyphPixels[o + 2] = 0; glyphPixels[o + 3] = value
-} }
+for y in 0..<cropH {
+    for x in 0..<cropW {
+        // The mask is in context memory order (row 0 = top), as is glyphCtx's buffer.
+        let value = mask[(minY + y) * work + (minX + x)]
+        let o = y * rowBytes + x * 4
+        glyphPixels[o] = 0; glyphPixels[o + 1] = 0; glyphPixels[o + 2] = 0; glyphPixels[o + 3] = value
+    }
+}
 let glyph = glyphCtx.makeImage()!
 
 for (scale, suffix) in [(1, ""), (2, "@2x")] {

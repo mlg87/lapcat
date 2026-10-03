@@ -10,8 +10,9 @@ struct SidebarFilterButton: View {
         Button {
             showing.toggle()
         } label: {
-            Image(systemName: organizer.listFilter.isActive
-                ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+            Image(
+                systemName: organizer.listFilter.isActive
+                    ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
         }
         .buttonStyle(.borderless)
         .help("Filter meetings")

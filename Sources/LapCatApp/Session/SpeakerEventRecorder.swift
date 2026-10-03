@@ -22,20 +22,27 @@ actor SpeakerEventRecorder {
         elapsedMs: @escaping @Sendable () async -> Int
     ) -> (SpeakerEventRecorder, any SpeakerSource, pid_t)? {
         guard settings.speakersAdaptersEnabled, AXElement.isProcessTrusted,
-              let bundleID, let pid, let type = SpeakerSources.adapterType(for: bundleID) else { return nil }
+            let bundleID, let pid, let type = SpeakerSources.adapterType(for: bundleID)
+        else { return nil }
         let adapter: any SpeakerSource
         let source: SpeakerEventSource
         if type == ZoomAXAdapter.self {
-            adapter = ZoomAXAdapter(selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsZoom, fallback: .zoomDefault))
+            adapter = ZoomAXAdapter(
+                selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsZoom, fallback: .zoomDefault))
             source = .zoomAX
         } else {
-            adapter = MeetAXAdapter(selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsMeet, fallback: .meetDefault))
+            adapter = MeetAXAdapter(
+                selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsMeet, fallback: .meetDefault))
             source = .meetAX
         }
-        return (SpeakerEventRecorder(store: store, meetingID: meetingID, source: source, elapsedMs: elapsedMs), adapter, pid)
+        return (
+            SpeakerEventRecorder(store: store, meetingID: meetingID, source: source, elapsedMs: elapsedMs), adapter, pid
+        )
     }
 
-    private init(store: Store, meetingID: String, source: SpeakerEventSource, elapsedMs: @escaping @Sendable () async -> Int) {
+    private init(
+        store: Store, meetingID: String, source: SpeakerEventSource, elapsedMs: @escaping @Sendable () async -> Int
+    ) {
         self.store = store
         self.meetingID = meetingID
         self.source = source

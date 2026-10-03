@@ -11,7 +11,8 @@ import Testing
     )
 
     private func tree(_ children: [AXNodeSnapshot]) -> AXNodeSnapshot {
-        AXNodeSnapshot(role: "AXWindow", title: "Meeting", children: [AXNodeSnapshot(role: "AXGroup", children: children)])
+        AXNodeSnapshot(
+            role: "AXWindow", title: "Meeting", children: [AXNodeSnapshot(role: "AXGroup", children: children)])
     }
 
     @Test func readsNamesFromNestedNodesInOrderWithoutDuplicates() {
@@ -19,7 +20,7 @@ import Testing
             AXNodeSnapshot(role: "AXRow", description: "Tom Lee, unmuted"),
             AXNodeSnapshot(role: "AXRow", description: "Priya Shah, muted"),
             AXNodeSnapshot(role: "AXRow", description: "Tom Lee, unmuted"),
-            AXNodeSnapshot(role: "AXCell", description: "Alex Kim, muted"), // wrong role
+            AXNodeSnapshot(role: "AXCell", description: "Alex Kim, muted"),  // wrong role
             AXNodeSnapshot(role: "AXStaticText", value: "Priya Shah is speaking"),
         ])
         let observation = selectors.observation(from: [root])
@@ -43,7 +44,9 @@ import Testing
     @Test func invalidPatternIsIgnoredNotFatal() {
         var broken = selectors
         broken.participants.append(AXNameRule(attribute: .any, pattern: "(unclosed"))
-        let observation = broken.observation(from: [tree([AXNodeSnapshot(role: "AXRow", description: "Tom Lee, muted")])])
+        let observation = broken.observation(from: [
+            tree([AXNodeSnapshot(role: "AXRow", description: "Tom Lee, muted")])
+        ])
         #expect(observation.participants == ["Tom Lee"])
     }
 

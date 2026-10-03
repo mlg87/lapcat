@@ -9,13 +9,24 @@ struct SpeakerStoreTests {
         let store = try Store(databaseURL: dir.appendingPathComponent("lapcat.sqlite"))
         let meeting = try await store.createMeeting(title: "t", startedBy: .manual)
         let me = try await store.upsertParticipant(meetingID: meeting.id, name: "Mason", source: .manual, isMe: true)
-        let segments = try await store.replaceFinalSegments(meetingID: meeting.id, channel: .system, with: [
-            Segment(meetingID: meeting.id, channel: .system, tStartMs: 0, tEndMs: 1_000, text: "a", pass: .final),
-            Segment(meetingID: meeting.id, channel: .system, tStartMs: 1_000, tEndMs: 2_000, text: "b", pass: .final),
-            Segment(meetingID: meeting.id, channel: .system, tStartMs: 2_000, tEndMs: 3_000, text: "c", pass: .final),
-        ]) + store.replaceFinalSegments(meetingID: meeting.id, channel: .mic, with: [
-            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 900, text: "hi", pass: .final),
-        ])
+        let segments =
+            try await store.replaceFinalSegments(
+                meetingID: meeting.id, channel: .system,
+                with: [
+                    Segment(
+                        meetingID: meeting.id, channel: .system, tStartMs: 0, tEndMs: 1_000, text: "a", pass: .final),
+                    Segment(
+                        meetingID: meeting.id, channel: .system, tStartMs: 1_000, tEndMs: 2_000, text: "b", pass: .final
+                    ),
+                    Segment(
+                        meetingID: meeting.id, channel: .system, tStartMs: 2_000, tEndMs: 3_000, text: "c", pass: .final
+                    ),
+                ])
+            + store.replaceFinalSegments(
+                meetingID: meeting.id, channel: .mic,
+                with: [
+                    Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 900, text: "hi", pass: .final)
+                ])
         return (store, meeting, segments, me)
     }
 
@@ -37,7 +48,8 @@ struct SpeakerStoreTests {
         #expect(priya.source == .zoomAX)
         #expect(cluster.source == .cluster && cluster.clusterLabel == "Speaker 2")
 
-        let byID = Dictionary(uniqueKeysWithValues: try await store.segments(meetingID: meeting.id).map { ($0.id!, $0) })
+        let byID = Dictionary(
+            uniqueKeysWithValues: try await store.segments(meetingID: meeting.id).map { ($0.id!, $0) })
         #expect(byID[s[0].id!]?.participantID == priya.id && byID[s[0].id!]?.clusterLabel == "Speaker 1")
         #expect(byID[s[1].id!]?.participantID == cluster.id)
         #expect(byID[s[2].id!]?.participantID == nil)
@@ -49,7 +61,7 @@ struct SpeakerStoreTests {
         let mic = s[3].id!
         try await store.setEchoDuplicates(meetingID: meeting.id, micSegmentIDs: [mic, s[0].id!])
         var rows = try await store.segments(meetingID: meeting.id)
-        #expect(rows.filter(\.isEchoDuplicate).map(\.id) == [mic]) // system segment ids are never flagged
+        #expect(rows.filter(\.isEchoDuplicate).map(\.id) == [mic])  // system segment ids are never flagged
         try await store.setEchoDuplicates(meetingID: meeting.id, micSegmentIDs: [])
         rows = try await store.segments(meetingID: meeting.id)
         #expect(rows.filter(\.isEchoDuplicate).isEmpty)

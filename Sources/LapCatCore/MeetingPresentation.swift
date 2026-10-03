@@ -13,7 +13,9 @@ public enum MeetingListSection: String, Sendable, CaseIterable {
 
     /// Groups meetings (kept in their given order) by `startedAt` relative to `now`; empty sections
     /// are omitted. "This week" = the calendar week containing `now`, before yesterday.
-    public static func group(_ meetings: [Meeting], now: Date = Date(), calendar: Calendar = .current) -> [(MeetingListSection, [Meeting])] {
+    public static func group(_ meetings: [Meeting], now: Date = Date(), calendar: Calendar = .current) -> [(
+        MeetingListSection, [Meeting]
+    )] {
         var buckets: [MeetingListSection: [Meeting]] = [:]
         let week = calendar.dateInterval(of: .weekOfYear, for: now)
         for meeting in meetings {
@@ -21,7 +23,9 @@ public enum MeetingListSection: String, Sendable, CaseIterable {
             let section: MeetingListSection
             if calendar.isDate(date, inSameDayAs: now) {
                 section = .today
-            } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+                calendar.isDate(date, inSameDayAs: yesterday)
+            {
                 section = .yesterday
             } else if let week, week.contains(date), date < now {
                 section = .thisWeek
@@ -61,7 +65,8 @@ public enum TranscriptGrouping {
     /// (volatile rows included); echo duplicates only when `showEcho`.
     public static func displayed(_ segments: [Segment], showEcho: Bool) -> [Segment] {
         let pass = TranscriptFormatter.selectedPass(segments)
-        return segments
+        return
+            segments
             .filter { $0.pass == pass && (showEcho || !$0.isEchoDuplicate) }
             .sorted { ($0.tStartMs, $0.id ?? 0) < ($1.tStartMs, $1.id ?? 0) }
     }
@@ -73,19 +78,23 @@ public enum TranscriptGrouping {
         var result: [TranscriptParagraph] = []
         for segment in shown where !segment.isVolatile {
             if var last = result.last,
-               last.channel == segment.channel, last.participantID == segment.participantID,
-               segment.tStartMs - last.tEndMs <= maxGapMs
+                last.channel == segment.channel, last.participantID == segment.participantID,
+                segment.tStartMs - last.tEndMs <= maxGapMs
             {
                 last.segments.append(segment)
                 result[result.count - 1] = last
             } else {
-                result.append(TranscriptParagraph(
-                    segments: [segment], channel: segment.channel, participantID: segment.participantID, isVolatile: false))
+                result.append(
+                    TranscriptParagraph(
+                        segments: [segment], channel: segment.channel, participantID: segment.participantID,
+                        isVolatile: false))
             }
         }
         for segment in shown where segment.isVolatile {
-            result.append(TranscriptParagraph(
-                segments: [segment], channel: segment.channel, participantID: segment.participantID, isVolatile: true))
+            result.append(
+                TranscriptParagraph(
+                    segments: [segment], channel: segment.channel, participantID: segment.participantID,
+                    isVolatile: true))
         }
         return result
     }
@@ -124,7 +133,8 @@ public enum TranscriptFind {
         var result: [Range<Int>] = []
         var searchStart = text.startIndex
         while searchStart < text.endIndex,
-              let found = text.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive], range: searchStart..<text.endIndex)
+            let found = text.range(
+                of: needle, options: [.caseInsensitive, .diacriticInsensitive], range: searchStart..<text.endIndex)
         {
             let lower = text.distance(from: text.startIndex, to: found.lowerBound)
             result.append(lower..<(lower + text.distance(from: found.lowerBound, to: found.upperBound)))
@@ -178,7 +188,8 @@ public enum MarkdownListContinuation {
     public static func action(forLine line: String) -> Action? {
         let indent = String(line.prefix { $0 == " " || $0 == "\t" })
         let body = line.dropFirst(indent.count)
-        for (marker, next) in [("- [ ] ", "- [ ] "), ("- [x] ", "- [ ] "), ("- [X] ", "- [ ] "), ("- ", "- ")] where body.hasPrefix(marker) {
+        for (marker, next) in [("- [ ] ", "- [ ] "), ("- [x] ", "- [ ] "), ("- [X] ", "- [ ] "), ("- ", "- ")]
+        where body.hasPrefix(marker) {
             let rest = body.dropFirst(marker.count)
             return rest.trimmingCharacters(in: .whitespaces).isEmpty ? .endList : .continueList(indent + next)
         }
@@ -194,16 +205,25 @@ public enum MarkdownBold {
         let selected = ns.substring(with: range)
         if selected.count >= 4, selected.hasPrefix("**"), selected.hasSuffix("**") {
             let inner = String(selected.dropFirst(2).dropLast(2))
-            return (ns.replacingCharacters(in: range, with: inner), NSRange(location: range.location, length: (inner as NSString).length))
+            return (
+                ns.replacingCharacters(in: range, with: inner),
+                NSRange(location: range.location, length: (inner as NSString).length)
+            )
         }
         if range.location >= 2, range.location + range.length + 2 <= ns.length,
-           ns.substring(with: NSRange(location: range.location - 2, length: 2)) == "**",
-           ns.substring(with: NSRange(location: range.location + range.length, length: 2)) == "**"
+            ns.substring(with: NSRange(location: range.location - 2, length: 2)) == "**",
+            ns.substring(with: NSRange(location: range.location + range.length, length: 2)) == "**"
         {
             let outer = NSRange(location: range.location - 2, length: range.length + 4)
-            return (ns.replacingCharacters(in: outer, with: selected), NSRange(location: range.location - 2, length: range.length))
+            return (
+                ns.replacingCharacters(in: outer, with: selected),
+                NSRange(location: range.location - 2, length: range.length)
+            )
         }
-        return (ns.replacingCharacters(in: range, with: "**\(selected)**"), NSRange(location: range.location + 2, length: range.length))
+        return (
+            ns.replacingCharacters(in: range, with: "**\(selected)**"),
+            NSRange(location: range.location + 2, length: range.length)
+        )
     }
 }
 
@@ -267,8 +287,11 @@ public enum EnhancedNoteLabel {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = timeZone
         formatter.dateFormat = "HH:mm"
-        return ["v\(note.version)", templateName ?? note.templateID, ProviderLabel.displayName(note.provider), formatter.string(from: note.createdAt)]
-            .joined(separator: " · ")
+        return [
+            "v\(note.version)", templateName ?? note.templateID, ProviderLabel.displayName(note.provider),
+            formatter.string(from: note.createdAt),
+        ]
+        .joined(separator: " · ")
     }
 }
 
@@ -289,7 +312,8 @@ extension CitationLinkAction {
         case .segment(let id):
             self = .transcriptSegment(id)
         case .meetingSegment(let ref):
-            self = ref.meetingID == currentMeetingID
+            self =
+                ref.meetingID == currentMeetingID
                 ? .transcriptSegment(ref.segmentID)
                 : .otherMeeting(meetingID: ref.meetingID, segmentID: ref.segmentID)
         case nil:
@@ -316,7 +340,8 @@ public struct SpeakerSuggestion: Sendable, Hashable, Identifiable {
             uniquingKeysWith: { first, _ in first })
         return participants.compactMap { p in
             guard p.source != .cluster, let label = p.clusterLabel, let id = p.id, !assigned.contains(id),
-                  let cluster = clusters[label] else { return nil }
+                let cluster = clusters[label]
+            else { return nil }
             return SpeakerSuggestion(suggested: p, cluster: cluster)
         }
     }

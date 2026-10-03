@@ -28,7 +28,9 @@ final class TranscriptPlayer {
                 player.prepareToPlay()
                 return player
             } catch {
-                Self.logger.error("cannot open \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                Self.logger.error(
+                    "cannot open \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
                 return nil
             }
         }

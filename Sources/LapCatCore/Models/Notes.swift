@@ -3,8 +3,12 @@ import GRDB
 
 public struct RawNote: LapCatRecord, PersistableRecord, Hashable {
     public static let databaseTableName = "raw_note"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var meetingID: String
     public var markdown: String
@@ -25,8 +29,12 @@ public struct RawNote: LapCatRecord, PersistableRecord, Hashable {
 
 public struct EnhancedNote: LapCatRecord, MutablePersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "enhanced_note"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: Int64?
     public var meetingID: String
@@ -77,8 +85,12 @@ public struct EnhancedNote: LapCatRecord, MutablePersistableRecord, Identifiable
 
 public struct Template: LapCatRecord, PersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "template"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: String
     public var name: String
@@ -88,7 +100,10 @@ public struct Template: LapCatRecord, PersistableRecord, Identifiable, Hashable 
     public var filePath: String?
     public var updatedAt: Date
 
-    public init(id: String, name: String, description: String = "", bodyMarkdown: String, isBuiltin: Bool, filePath: String? = nil, updatedAt: Date) {
+    public init(
+        id: String, name: String, description: String = "", bodyMarkdown: String, isBuiltin: Bool,
+        filePath: String? = nil, updatedAt: Date
+    ) {
         self.id = id
         self.name = name
         self.description = description
@@ -133,8 +148,12 @@ public struct Recipe: LapCatRecord, PersistableRecord, Identifiable, Hashable {
 
 public struct ChatThread: LapCatRecord, PersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "chat_thread"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: String
     public var scope: ChatScope
@@ -143,7 +162,9 @@ public struct ChatThread: LapCatRecord, PersistableRecord, Identifiable, Hashabl
     public var title: String?
     public var createdAt: Date
 
-    public init(id: String = UUID().uuidString, scope: ChatScope, scopeRef: String?, title: String? = nil, createdAt: Date) {
+    public init(
+        id: String = UUID().uuidString, scope: ChatScope, scopeRef: String?, title: String? = nil, createdAt: Date
+    ) {
         self.id = id
         self.scope = scope
         self.scopeRef = scopeRef
@@ -160,8 +181,12 @@ public struct ChatThread: LapCatRecord, PersistableRecord, Identifiable, Hashabl
 
 public struct ChatMessage: LapCatRecord, MutablePersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "chat_message"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: Int64?
     public var threadID: String

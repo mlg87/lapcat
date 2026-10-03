@@ -11,9 +11,11 @@ struct SpeakersSettingsView: View {
         Form {
             Section {
                 Toggle("Read speaker names from Zoom and Google Meet", isOn: $settings.speakersAdaptersEnabled)
-                Text("Uses the Accessibility permission. Keep the Meet tab visible for best results; otherwise "
-                    + "speakers are labelled Speaker 1, Speaker 2… and you can rename them.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(
+                    "Uses the Accessibility permission. Keep the Meet tab visible for best results; otherwise "
+                        + "speakers are labelled Speaker 1, Speaker 2… and you can rename them."
+                )
+                .font(.caption).foregroundStyle(.secondary)
             }
             Section("Advanced: Zoom selectors (JSON)") {
                 SelectorEditor(json: $settings.speakersSelectorsZoom, defaults: .zoomDefault)

@@ -37,7 +37,9 @@ struct MeetingView: View {
             for await segments in appState.store.observeSegments(meetingID: meetingID) { self.segments = segments }
         }
         .task {
-            for await participants in appState.store.observeParticipants(meetingID: meetingID) { self.participants = participants }
+            for await participants in appState.store.observeParticipants(meetingID: meetingID) {
+                self.participants = participants
+            }
         }
     }
 
@@ -97,9 +99,11 @@ struct MeetingView: View {
                 TranscriptViewer(meetingID: meeting.id, segments: segments, participants: participants)
                     .tabItem { Text("Transcript") }
                     .tag(MeetingNavigation.Tab.transcript)
-                ChatView(scope: .meeting, scopeRef: meeting.id, placeholder: "Ask about this meeting — type / for recipes")
-                    .tabItem { Text("Chat") }
-                    .tag(MeetingNavigation.Tab.chat)
+                ChatView(
+                    scope: .meeting, scopeRef: meeting.id, placeholder: "Ask about this meeting — type / for recipes"
+                )
+                .tabItem { Text("Chat") }
+                .tag(MeetingNavigation.Tab.chat)
             }
             .padding(8)
         }
@@ -239,12 +243,15 @@ struct MeetingStatusBadge: View {
             let session = appState.session
             if session.meetingID == meeting.id {
                 let time = MenuBarLabel.format(session.elapsed(at: session.clock))
-                Badge(text: session.isPaused ? "Paused \(time)" : "Recording \(time)", systemImage: "record.circle", tint: .red)
+                Badge(
+                    text: session.isPaused ? "Paused \(time)" : "Recording \(time)", systemImage: "record.circle",
+                    tint: .red)
             } else {
                 Badge(text: "Recording", systemImage: "record.circle", tint: .red)
             }
         case .processing:
-            let step = meeting.processingStep.map { PostMeetingPipeline.Step(rawValue: $0)?.displayName ?? $0 } ?? "Queued"
+            let step =
+                meeting.processingStep.map { PostMeetingPipeline.Step(rawValue: $0)?.displayName ?? $0 } ?? "Queued"
             Badge(text: "Processing: \(step)", systemImage: "gearshape.2", tint: .blue)
         case .ready:
             Badge(text: "Ready", systemImage: "checkmark.circle", tint: .green)

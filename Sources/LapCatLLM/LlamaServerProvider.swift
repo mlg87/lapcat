@@ -41,9 +41,9 @@ public actor LlamaServerProvider: LLMProvider {
 
     static var arch: String {
         #if arch(arm64)
-        "arm64"
+            "arm64"
         #else
-        "x64"
+            "x64"
         #endif
     }
 
@@ -53,7 +53,9 @@ public actor LlamaServerProvider: LLMProvider {
         let bundle = Bundle.main.bundleURL
         if bundle.pathExtension == "app" { return bundle.appendingPathComponent("Contents/Helpers") }
         let fm = FileManager.default
-        let starts = [Bundle.main.executableURL?.deletingLastPathComponent(), URL(fileURLWithPath: fm.currentDirectoryPath)]
+        let starts = [
+            Bundle.main.executableURL?.deletingLastPathComponent(), URL(fileURLWithPath: fm.currentDirectoryPath),
+        ]
         for start in starts.compactMap({ $0?.standardizedFileURL }) {
             var dir = start
             while dir.path != "/" {
@@ -185,10 +187,12 @@ public actor LlamaServerProvider: LLMProvider {
 
     private static func launch(binary: URL, gguf: URL, session: URLSession) async throws -> LlamaServerProcess {
         let port = try LlamaServerProcess.freePort()
-        let process = try LlamaServerProcess(binary: binary, arguments: [
-            "-m", gguf.path, "--host", "127.0.0.1", "--port", String(port), "-c", String(contextSize),
-            "--jinja", "-np", "1", "--reasoning", "off", "--no-webui", "--offline",
-        ], port: port)
+        let process = try LlamaServerProcess(
+            binary: binary,
+            arguments: [
+                "-m", gguf.path, "--host", "127.0.0.1", "--port", String(port), "-c", String(contextSize),
+                "--jinja", "-np", "1", "--reasoning", "off", "--no-webui", "--offline",
+            ], port: port)
         let health = URL(string: "http://127.0.0.1:\(port)/health")!
         let deadline = ContinuousClock.now + startupTimeout
         do {
@@ -200,7 +204,8 @@ public actor LlamaServerProvider: LLMProvider {
                 var probe = URLRequest(url: health, timeoutInterval: 2)
                 probe.httpMethod = "GET"
                 if let (_, response) = try? await session.data(for: probe),
-                   (response as? HTTPURLResponse)?.statusCode == 200 {
+                    (response as? HTTPURLResponse)?.statusCode == 200
+                {
                     return process
                 }
                 try await Task.sleep(for: .milliseconds(250))
@@ -237,7 +242,8 @@ public actor LlamaServerProvider: LLMProvider {
         guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse("not an HTTP response") }
         guard !(200..<300).contains(http.statusCode) else { return }
         let json = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
-        let message = (json?["error"] as? [String: Any])?["message"] as? String
+        let message =
+            (json?["error"] as? [String: Any])?["message"] as? String
             ?? String(decoding: body.prefix(300), as: UTF8.self)
         // 400 is a request the server rejects (e.g. prompt longer than the context); retrying elsewhere may help.
         throw LLMError.unavailable("llama-server HTTP \(http.statusCode): \(message)")
@@ -246,9 +252,10 @@ public actor LlamaServerProvider: LLMProvider {
     /// Parses a non-streaming OpenAI chat completion.
     static func parseCompletion(_ data: Data, model: String) throws -> LLMResponse {
         guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              let choice = (json["choices"] as? [[String: Any]])?.first,
-              let message = choice["message"] as? [String: Any],
-              let text = message["content"] as? String else {
+            let choice = (json["choices"] as? [[String: Any]])?.first,
+            let message = choice["message"] as? [String: Any],
+            let text = message["content"] as? String
+        else {
             throw LLMError.invalidResponse("llama-server response has no message content")
         }
         let usage = json["usage"] as? [String: Any]

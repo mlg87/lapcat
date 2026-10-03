@@ -35,11 +35,13 @@ struct SpeakerEditor: View {
                 Button("Rename", action: rename)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
-            Text(participant == nil
-                 ? "Renames every unassigned \(paragraph.channel == .mic ? "Me" : "Them") paragraph in this meeting."
-                 : "Renames \(speaker) everywhere in this meeting.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(
+                participant == nil
+                    ? "Renames every unassigned \(paragraph.channel == .mic ? "Me" : "Them") paragraph in this meeting."
+                    : "Renames \(speaker) everywhere in this meeting."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
             Divider()
             if let participant, let id = participant.id {
                 Menu("Merge into…") {
@@ -87,7 +89,8 @@ struct SpeakerEditor: View {
                 try await store.renameParticipant(id: participantID, to: newName)
             } else {
                 // "Me"/"Them" without a participant: name every unassigned segment of the channel.
-                let target = try await store.upsertParticipant(meetingID: meetingID, name: newName, source: .manual, isMe: channel == .mic)
+                let target = try await store.upsertParticipant(
+                    meetingID: meetingID, name: newName, source: .manual, isMe: channel == .mic)
                 guard let targetID = target.id else { return }
                 for segment in try await store.segments(meetingID: meetingID)
                 where segment.channel == channel && segment.participantID == nil {

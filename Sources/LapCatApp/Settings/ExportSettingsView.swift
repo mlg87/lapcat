@@ -18,7 +18,9 @@ struct ExportSettingsView: View {
                 HStack {
                     Button("Choose folder…", action: choose)
                     Button("Show in Finder") {
-                        if let path = settings.exportAutoExportFolder { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
+                        if let path = settings.exportAutoExportFolder {
+                            NSWorkspace.shared.open(URL(fileURLWithPath: path))
+                        }
                     }
                     .disabled(settings.exportAutoExportFolder == nil)
                     Button("Turn off") { settings.exportAutoExportFolder = nil }
@@ -27,9 +29,11 @@ struct ExportSettingsView: View {
             } header: {
                 Text("Auto-export")
             } footer: {
-                Text("After a meeting’s final notes are ready, LapCat writes “YYYY-MM-DD Title.md” (notes, your notes "
-                    + "and transcript) here, replacing the previous export of the same meeting.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(
+                    "After a meeting’s final notes are ready, LapCat writes “YYYY-MM-DD Title.md” (notes, your notes "
+                        + "and transcript) here, replacing the previous export of the same meeting."
+                )
+                .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

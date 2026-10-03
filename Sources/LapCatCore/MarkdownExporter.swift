@@ -24,7 +24,9 @@ public struct MeetingExport: Sendable {
     }
 
     public static func load(meetingID: String, store: Store) async throws -> MeetingExport {
-        guard let meeting = try await store.meeting(id: meetingID) else { throw StoreError.notFound("meeting \(meetingID)") }
+        guard let meeting = try await store.meeting(id: meetingID) else {
+            throw StoreError.notFound("meeting \(meetingID)")
+        }
         return MeetingExport(
             meeting: meeting,
             calendar: try await store.calendarSnapshot(meetingID: meetingID),
@@ -50,11 +52,14 @@ public enum MarkdownExporter {
     /// citations share one parenthesis, unknown ids are dropped. Falls back to the raw note.
     public static func notes(_ export: MeetingExport) -> String {
         guard let note = export.enhancedNote else { return export.rawNote }
-        let starts = Dictionary(export.segments.compactMap { s in s.id.map { ($0, s.tStartMs) } }, uniquingKeysWith: min)
+        let starts = Dictionary(
+            export.segments.compactMap { s in s.id.map { ($0, s.tStartMs) } }, uniquingKeysWith: min)
         return replacingCitationRuns(in: note.markdown) { refs in
             var seen = Set<String>()
             let stamps = refs.compactMap { ref -> String? in
-                guard ref.meetingID == nil || ref.meetingID == export.meeting.id, let ms = starts[ref.segmentID] else { return nil }
+                guard ref.meetingID == nil || ref.meetingID == export.meeting.id, let ms = starts[ref.segmentID] else {
+                    return nil
+                }
                 let stamp = timestamp(ms: ms)
                 return seen.insert(stamp).inserted ? stamp : nil
             }
@@ -128,15 +133,22 @@ public enum MarkdownExporter {
     }
 
     /// `YYYY-MM-DD <Title>.<ext>` with every character outside `[A-Za-z0-9 _-]` in the title replaced by `-`.
-    public static func fileName(for meeting: Meeting, fileExtension: String = "md", timeZone: TimeZone = .current) -> String {
+    public static func fileName(for meeting: Meeting, fileExtension: String = "md", timeZone: TimeZone = .current)
+        -> String
+    {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         let parts = calendar.dateComponents([.year, .month, .day], from: meeting.startedAt)
         let date = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
-        var title = String(meeting.title.unicodeScalars.map { scalar -> Character in
-            let allowed = scalar.isASCII && (scalar.properties.isAlphabetic || ("0"..."9").contains(scalar) || " _-".unicodeScalars.contains(scalar))
-            return allowed ? Character(scalar) : "-"
-        }).trimmingCharacters(in: .whitespaces)
+        var title = String(
+            meeting.title.unicodeScalars.map { scalar -> Character in
+                let allowed =
+                    scalar.isASCII
+                    && (scalar.properties.isAlphabetic || ("0"..."9").contains(scalar)
+                        || " _-".unicodeScalars.contains(scalar))
+                return allowed ? Character(scalar) : "-"
+            }
+        ).trimmingCharacters(in: .whitespaces)
         if title.count > 120 { title = String(title.prefix(120)).trimmingCharacters(in: .whitespaces) }
         if title.isEmpty { title = "Untitled" }
         return "\(date) \(title).\(fileExtension)"
@@ -164,7 +176,8 @@ public enum MarkdownExporter {
     static func transcriptLines(_ export: MeetingExport) -> [Line] {
         let usable = export.segments.filter { !$0.isVolatile && !$0.isEchoDuplicate }
         let pass: SegmentPass = usable.contains { $0.pass == .final } ? .final : .live
-        let names = Dictionary(export.participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { a, _ in a })
+        let names = Dictionary(
+            export.participants.compactMap { p in p.id.map { ($0, p.displayName) } }, uniquingKeysWith: { a, _ in a })
         return usable.filter { $0.pass == pass }
             .sorted { ($0.tStartMs, $0.id ?? 0) < ($1.tStartMs, $1.id ?? 0) }
             .map { segment in
@@ -182,7 +195,7 @@ public enum MarkdownExporter {
         var result: [Line] = []
         for line in lines {
             if var last = result.last, last.speaker == line.speaker, last.channel == line.channel,
-               last.participantID == line.participantID, line.startMs - last.endMs <= paragraphGapMs
+                last.participantID == line.participantID, line.startMs - last.endMs <= paragraphGapMs
             {
                 last.text += " " + line.text
                 last.endMs = max(last.endMs, line.endMs)
@@ -195,14 +208,16 @@ public enum MarkdownExporter {
     }
 
     private static func markdownTranscript(_ lines: [Line]) -> String {
-        paragraphs(lines).map { "**\($0.speaker)** (\(timestamp(ms: $0.startMs))): \($0.text)" }.joined(separator: "\n\n")
+        paragraphs(lines).map { "**\($0.speaker)** (\(timestamp(ms: $0.startMs))): \($0.text)" }.joined(
+            separator: "\n\n")
     }
 
     /// `HH:MM:SS<sep>mmm` (SRT uses `,`, WebVTT `.`).
     static func cueTime(_ ms: Int, separator: String) -> String {
         let ms = max(0, ms)
         let seconds = ms / 1000
-        return String(format: "%02d:%02d:%02d%@%03d", seconds / 3600, seconds % 3600 / 60, seconds % 60, separator, ms % 1000)
+        return String(
+            format: "%02d:%02d:%02d%@%03d", seconds / 3600, seconds % 3600 / 60, seconds % 60, separator, ms % 1000)
     }
 
     // MARK: - Frontmatter

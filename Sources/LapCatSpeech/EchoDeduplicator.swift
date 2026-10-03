@@ -49,7 +49,8 @@ public enum EchoDeduplicator {
         for i in 1...a.count {
             current[0] = i
             for j in 1...b.count {
-                current[j] = a[i - 1] == b[j - 1]
+                current[j] =
+                    a[i - 1] == b[j - 1]
                     ? previous[j - 1]
                     : 1 + min(previous[j - 1], previous[j], current[j - 1])
             }

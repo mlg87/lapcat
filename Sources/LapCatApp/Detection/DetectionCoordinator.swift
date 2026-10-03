@@ -50,27 +50,31 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
     func start() {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
-        center.setNotificationCategories([UNNotificationCategory(
-            identifier: Self.category,
-            actions: [
-                UNNotificationAction(identifier: Self.recordAction, title: "Record", options: [.foreground]),
-                UNNotificationAction(identifier: Self.notNowAction, title: "Not now"),
-            ],
-            intentIdentifiers: [])])
+        center.setNotificationCategories([
+            UNNotificationCategory(
+                identifier: Self.category,
+                actions: [
+                    UNNotificationAction(identifier: Self.recordAction, title: "Record", options: [.foreground]),
+                    UNNotificationAction(identifier: Self.notNowAction, title: "Not now"),
+                ],
+                intentIdentifiers: [])
+        ])
         reconfigure()
         observeSettings()
-        tasks.append(Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.checkCalendar()
-                try? await Task.sleep(for: .seconds(60))
-            }
-        })
-        tasks.append(Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.checkBrowserTabs()
-                try? await Task.sleep(for: .seconds(30))
-            }
-        })
+        tasks.append(
+            Task { [weak self] in
+                while !Task.isCancelled {
+                    await self?.checkCalendar()
+                    try? await Task.sleep(for: .seconds(60))
+                }
+            })
+        tasks.append(
+            Task { [weak self] in
+                while !Task.isCancelled {
+                    await self?.checkBrowserTabs()
+                    try? await Task.sleep(for: .seconds(30))
+                }
+            })
     }
 
     /// Re-arms the microphone-activity monitor whenever the detection settings change.
@@ -101,9 +105,10 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
         let monitor = AudioInputActivityMonitor(bundleIDs: settings.detectBundleIDs)
         self.monitor = monitor
         monitor.start()
-        tasks.append(Task { [weak self] in
-            for await activity in monitor.activities { self?.handle(activity) }
-        })
+        tasks.append(
+            Task { [weak self] in
+                for await activity in monitor.activities { self?.handle(activity) }
+            })
     }
 
     // MARK: Signals
@@ -114,22 +119,24 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
         if let until = suppressedUntil[activity.pid], until > Date() { return }
         let appName = NSRunningApplication(processIdentifier: activity.pid)?.localizedName ?? activity.name
         let event = settings.detectUseCalendarSignal ? CalendarService().currentOrUpcomingEvent() : nil
-        prompt(Prompt(
-            id: "pid-\(activity.pid)", title: event?.title ?? appName, appName: appName,
-            source: SessionSource(appName: appName, bundleID: activity.bundleID, pid: activity.pid),
-            calendarEvent: event))
+        prompt(
+            Prompt(
+                id: "pid-\(activity.pid)", title: event?.title ?? appName, appName: appName,
+                source: SessionSource(appName: appName, bundleID: activity.bundleID, pid: activity.pid),
+                calendarEvent: event))
     }
 
     private func checkCalendar() async {
         guard settings.detectEnabled, settings.detectUseCalendarSignal, session.state == .idle,
-              let event = CalendarService().currentOrUpcomingEvent(window: 0...60),
-              event.conferenceURL != nil, !promptedEvents.contains(event.id)
+            let event = CalendarService().currentOrUpcomingEvent(window: 0...60),
+            event.conferenceURL != nil, !promptedEvents.contains(event.id)
         else { return }
         promptedEvents.insert(event.id)
         let platform = event.conferenceURL.flatMap(MeetingURLMatcher.platform(of:))
-        prompt(Prompt(
-            id: "event-\(event.id)", title: event.title, appName: platform == .zoom ? "Zoom" : "Google Meet",
-            source: nil, calendarEvent: event))
+        prompt(
+            Prompt(
+                id: "event-\(event.id)", title: event.title, appName: platform == .zoom ? "Zoom" : "Google Meet",
+                source: nil, calendarEvent: event))
     }
 
     private func checkBrowserTabs() async {
@@ -143,10 +150,12 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
             guard let code = MeetingURLMatcher.meetCode(inTab: url), !promptedTabs.contains(code) else { continue }
             promptedTabs.insert(code)
             let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
-            prompt(Prompt(
-                id: "meet-\(code)", title: "Google Meet", appName: app?.localizedName ?? "Browser",
-                source: SessionSource(appName: app?.localizedName ?? "Browser", bundleID: bundleID, pid: app?.processIdentifier),
-                calendarEvent: nil))
+            prompt(
+                Prompt(
+                    id: "meet-\(code)", title: "Google Meet", appName: app?.localizedName ?? "Browser",
+                    source: SessionSource(
+                        appName: app?.localizedName ?? "Browser", bundleID: bundleID, pid: app?.processIdentifier),
+                    calendarEvent: nil))
         }
     }
 
@@ -157,7 +166,8 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
         pending = prompt
         let content = UNMutableNotificationContent()
         content.title = "Record \"\(prompt.title)\"?"
-        content.body = prompt.source != nil
+        content.body =
+            prompt.source != nil
             ? "\(prompt.appName) is using your microphone."
             : "\(prompt.appName) meeting starting now."
         content.categoryIdentifier = Self.category

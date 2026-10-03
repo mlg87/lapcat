@@ -43,7 +43,9 @@ struct AskWindow: View {
                 scope: chatScope, scopeRef: scopeRef, dateRange: dateRange,
                 placeholder: "Ask across your meetings — type / for recipes")
         }
-        .frame(minWidth: 520, idealWidth: 640, maxWidth: .infinity, minHeight: 420, idealHeight: 600, maxHeight: .infinity)
+        .frame(
+            minWidth: 520, idealWidth: 640, maxWidth: .infinity, minHeight: 420, idealHeight: 600, maxHeight: .infinity
+        )
         .task {
             folders = (try? await appState.store.folders()) ?? []
         }
@@ -77,7 +79,9 @@ extension WindowID {
 extension AppState {
     /// Opens the "Ask across meetings" window.
     func showAskWindow() {
-        windows.show(id: WindowID.ask, title: "Ask across meetings", size: NSSize(width: 640, height: 600), resizable: true) {
+        windows.show(
+            id: WindowID.ask, title: "Ask across meetings", size: NSSize(width: 640, height: 600), resizable: true
+        ) {
             AskWindow().environment(self)
         }
     }

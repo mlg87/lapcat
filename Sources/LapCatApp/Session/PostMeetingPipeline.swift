@@ -83,7 +83,8 @@ actor PostMeetingPipeline {
         self.store = store
         self.speech = speech
         self.config = config
-        (progress, progressContinuation) = AsyncStream.makeStream(of: Progress.self, bufferingPolicy: .bufferingNewest(32))
+        (progress, progressContinuation) = AsyncStream.makeStream(
+            of: Progress.self, bufferingPolicy: .bufferingNewest(32))
     }
 
     func enqueue(_ meetingID: String) {
@@ -114,14 +115,18 @@ actor PostMeetingPipeline {
                 progressContinuation.yield(Progress(meetingID: meetingID, step: step, fraction: 0))
                 do {
                     try await perform(step, meetingID: meetingID, config: config)
-                } catch where step.isBestEffort {
-                    Self.logger.warning("\(step.rawValue, privacy: .public) skipped for \(meetingID, privacy: .public): \(String(describing: error), privacy: .public)")
+                } catch  where step.isBestEffort {
+                    Self.logger.warning(
+                        "\(step.rawValue, privacy: .public) skipped for \(meetingID, privacy: .public): \(String(describing: error), privacy: .public)"
+                    )
                 }
             }
             try await store.setMeetingStatus(meetingID: meetingID, status: .ready)
         } catch {
-            Self.logger.error("processing \(meetingID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
-            try? await store.setMeetingStatus(meetingID: meetingID, status: .error, errorMessage: String(describing: error))
+            Self.logger.error(
+                "processing \(meetingID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+            try? await store.setMeetingStatus(
+                meetingID: meetingID, status: .error, errorMessage: String(describing: error))
         }
         progressContinuation.yield(Progress(meetingID: meetingID, step: nil, fraction: 1))
     }
@@ -175,7 +180,8 @@ actor PostMeetingPipeline {
         guard let meeting = try await store.meeting(id: meetingID) else { return }
         let enhancer = Enhancer(store: store, router: config.router)
         do {
-            _ = try await enhancer.enhance(meetingID: meetingID, templateID: meeting.templateID ?? config.defaultTemplateID)
+            _ = try await enhancer.enhance(
+                meetingID: meetingID, templateID: meeting.templateID ?? config.defaultTemplateID)
         } catch EnhancerError.nothingToEnhance {
             // No notes and no speech: nothing to write.
         }
@@ -186,7 +192,9 @@ actor PostMeetingPipeline {
             .appendingPathComponent(CaptureFiles.fileName(for: channel == .mic ? .mic : .system))
     }
 
-    private func finalTranscription(meetingID: String, channel: Channel, step: Step, config: PipelineConfig) async throws {
+    private func finalTranscription(meetingID: String, channel: Channel, step: Step, config: PipelineConfig)
+        async throws
+    {
         let file = audioFile(meetingID, channel)
         // No recording for this channel (e.g. audio already deleted): keep whatever exists.
         guard FileManager.default.fileExists(atPath: file.path) else { return }
@@ -232,28 +240,32 @@ actor PostMeetingPipeline {
             throw error
         }
         await diarizer.unload()
-        let data = try JSONEncoder().encode(turns.map { CachedTurn(startMs: $0.startMs, endMs: $0.endMs, cluster: $0.cluster) })
+        let data = try JSONEncoder().encode(
+            turns.map { CachedTurn(startMs: $0.startMs, endMs: $0.endMs, cluster: $0.cluster) })
         try data.write(to: cache, options: .atomic)
     }
 
     private func mapNames(meetingID: String, config: PipelineConfig) async throws {
         guard let meeting = try await store.meeting(id: meetingID) else { return }
-        let turns: [DiarizedTurn] = ((try? Data(contentsOf: diarizationCache(meetingID)))
+        let turns: [DiarizedTurn] =
+            ((try? Data(contentsOf: diarizationCache(meetingID)))
             .flatMap { try? JSONDecoder().decode([CachedTurn].self, from: $0) } ?? [])
             .map { DiarizedTurn(startMs: $0.startMs, endMs: $0.endMs, cluster: $0.cluster) }
         let segments = try await store.segments(meetingID: meetingID, pass: .final)
         let events = try await store.speakerEvents(meetingID: meetingID)
         let me = try await store.participants(meetingID: meetingID).first(where: \.isMe)?.displayName ?? config.meName
         let rows = NameMapper.assign(segments: segments, turns: turns, events: events, meName: me).map { assignment in
-            let kind: SpeakerAssignmentRow.Kind = switch assignment.basis {
-            case .me: .me
-            case .speakerEvents, .clusterVote: assignment.participantName.map { .named($0) } ?? .unassigned
-            case .cluster: assignment.participantName.map { .cluster($0) } ?? .unassigned
-            case .unassigned: .unassigned
-            }
+            let kind: SpeakerAssignmentRow.Kind =
+                switch assignment.basis {
+                case .me: .me
+                case .speakerEvents, .clusterVote: assignment.participantName.map { .named($0) } ?? .unassigned
+                case .cluster: assignment.participantName.map { .cluster($0) } ?? .unassigned
+                case .unassigned: .unassigned
+                }
             return SpeakerAssignmentRow(segmentID: assignment.segmentID, kind: kind, cluster: assignment.cluster)
         }
-        let namedSource: ParticipantSource = meeting.sourceBundleID?.lowercased().hasPrefix("us.zoom") == true ? .zoomAX : .meetAX
+        let namedSource: ParticipantSource =
+            meeting.sourceBundleID?.lowercased().hasPrefix("us.zoom") == true ? .zoomAX : .meetAX
         try await store.applySpeakerAssignments(meetingID: meetingID, rows: rows, namedSource: namedSource)
     }
 
@@ -261,7 +273,8 @@ actor PostMeetingPipeline {
         let participants = try await store.participants(meetingID: meetingID)
         let segments = try await store.segments(meetingID: meetingID, pass: .final)
         let assigned = Set(segments.compactMap(\.participantID))
-        let clusters = participants.filter { $0.source == .cluster && assigned.contains($0.id ?? -1) }.map(\.displayName)
+        let clusters = participants.filter { $0.source == .cluster && assigned.contains($0.id ?? -1) }.map(
+            \.displayName)
         let candidates = participants.filter {
             !$0.isMe && $0.source != .cluster && $0.source != .llmSuggested && !assigned.contains($0.id ?? -1)
         }.map(\.displayName)
@@ -270,7 +283,8 @@ actor PostMeetingPipeline {
         let suggestions = try await SpeakerSuggester.suggest(
             router: config.router, transcript: transcript, clusters: clusters, candidates: candidates)
         for suggestion in suggestions {
-            try await store.recordSpeakerSuggestion(meetingID: meetingID, cluster: suggestion.cluster, name: suggestion.name)
+            try await store.recordSpeakerSuggestion(
+                meetingID: meetingID, cluster: suggestion.cluster, name: suggestion.name)
         }
     }
 }

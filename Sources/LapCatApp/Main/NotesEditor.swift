@@ -115,16 +115,20 @@ struct MarkdownTextView: NSViewRepresentable {
             let string = textView.string as NSString
             let lineRange = string.lineRange(for: NSRange(location: selection.location, length: 0))
             // Only when the cursor is at the end of the line's content.
-            let contentEnd = lineRange.location + lineRange.length
+            let contentEnd =
+                lineRange.location + lineRange.length
                 - (string.substring(with: lineRange).hasSuffix("\n") ? 1 : 0)
             guard selection.location == contentEnd else { return false }
-            let line = string.substring(with: NSRange(location: lineRange.location, length: contentEnd - lineRange.location))
+            let line = string.substring(
+                with: NSRange(location: lineRange.location, length: contentEnd - lineRange.location))
             switch MarkdownListContinuation.action(forLine: line) {
             case .continueList(let prefix):
                 textView.insertText("\n" + prefix, replacementRange: selection)
                 return true
             case .endList:
-                textView.insertText("", replacementRange: NSRange(location: lineRange.location, length: contentEnd - lineRange.location))
+                textView.insertText(
+                    "", replacementRange: NSRange(location: lineRange.location, length: contentEnd - lineRange.location)
+                )
                 return true
             case nil:
                 return false
@@ -159,11 +163,14 @@ final class NotesTextView: NSTextView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard string.isEmpty, !placeholder.isEmpty else { return }
-        let origin = NSPoint(x: textContainerInset.width + (textContainer?.lineFragmentPadding ?? 0), y: textContainerInset.height)
-        (placeholder as NSString).draw(at: origin, withAttributes: [
-            .font: font ?? NSFont.systemFont(ofSize: 13),
-            .foregroundColor: NSColor.placeholderTextColor,
-        ])
+        let origin = NSPoint(
+            x: textContainerInset.width + (textContainer?.lineFragmentPadding ?? 0), y: textContainerInset.height)
+        (placeholder as NSString).draw(
+            at: origin,
+            withAttributes: [
+                .font: font ?? NSFont.systemFont(ofSize: 13),
+                .foregroundColor: NSColor.placeholderTextColor,
+            ])
     }
 
     override func didChangeText() {

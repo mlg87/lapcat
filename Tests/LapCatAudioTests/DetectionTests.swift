@@ -78,15 +78,26 @@ struct StateDebouncerTests {
 struct InputActivityMatchingTests {
     @Test func matchesExactOrDottedPrefixCaseInsensitively() {
         let configured = ["us.zoom.xos", "com.google.Chrome", "company.thebrowser.Browser"]
-        #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: "us.zoom.xos", configured: configured) == "us.zoom.xos")
-        #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: "com.google.Chrome.helper", configured: configured) == "com.google.Chrome")
-        #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: "company.thebrowser.browser.helper", configured: configured) == "company.thebrowser.Browser")
-        #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: "com.google.ChromeRemoteDesktop", configured: configured) == nil)
+        #expect(
+            AudioInputActivityMonitor.matchedBundleID(processBundleID: "us.zoom.xos", configured: configured)
+                == "us.zoom.xos")
+        #expect(
+            AudioInputActivityMonitor.matchedBundleID(
+                processBundleID: "com.google.Chrome.helper", configured: configured) == "com.google.Chrome")
+        #expect(
+            AudioInputActivityMonitor.matchedBundleID(
+                processBundleID: "company.thebrowser.browser.helper", configured: configured)
+                == "company.thebrowser.Browser")
+        #expect(
+            AudioInputActivityMonitor.matchedBundleID(
+                processBundleID: "com.google.ChromeRemoteDesktop", configured: configured) == nil)
         #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: nil, configured: configured) == nil)
     }
 
     @Test func wildcardMatchesEverythingIncludingBareExecutables() {
-        #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: "com.apple.QuickTimePlayerX", configured: ["*"]) == "com.apple.QuickTimePlayerX")
+        #expect(
+            AudioInputActivityMonitor.matchedBundleID(processBundleID: "com.apple.QuickTimePlayerX", configured: ["*"])
+                == "com.apple.QuickTimePlayerX")
         #expect(AudioInputActivityMonitor.matchedBundleID(processBundleID: nil, configured: ["*"]) == "")
     }
 }

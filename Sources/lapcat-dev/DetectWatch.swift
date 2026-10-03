@@ -23,7 +23,9 @@ enum DetectWatch {
         for await activity in monitor.activities {
             let state = activity.isRunningInput ? "INPUT ON " : "INPUT OFF"
             let process = activity.processBundleID ?? "-"
-            print("\(formatter.string(from: Date())) \(state) \(activity.bundleID) pid=\(activity.pid) name=\(activity.name) process=\(process)")
+            print(
+                "\(formatter.string(from: Date())) \(state) \(activity.bundleID) pid=\(activity.pid) name=\(activity.name) process=\(process)"
+            )
         }
         sigint.cancel()
         return 0

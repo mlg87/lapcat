@@ -125,12 +125,15 @@ public actor LiveTranscriber {
     private func dropOldestBeyondCap() {
         var dropped = 0
         while queuedSeconds > maxQueuedSeconds,
-              let index = queue.firstIndex(where: { if case .utterance = $0 { true } else { false } }) {
+            let index = queue.firstIndex(where: { if case .utterance = $0 { true } else { false } })
+        {
             queue.remove(at: index)
             dropped += 1
         }
         if dropped > 0 {
-            Self.logger.warning("live \(self.channel.rawValue, privacy: .public): dropped \(dropped) queued utterance(s); final pass will cover them")
+            Self.logger.warning(
+                "live \(self.channel.rawValue, privacy: .public): dropped \(dropped) queued utterance(s); final pass will cover them"
+            )
         }
     }
 
@@ -168,7 +171,9 @@ public actor LiveTranscriber {
             return engine
         } catch {
             engineFailed = true
-            Self.logger.error("live engine unavailable for \(self.channel.rawValue, privacy: .public): \(String(describing: error), privacy: .public)")
+            Self.logger.error(
+                "live engine unavailable for \(self.channel.rawValue, privacy: .public): \(String(describing: error), privacy: .public)"
+            )
             continuation.yield(.unavailable(channel, reason: String(describing: error)))
             return nil
         }
@@ -214,9 +219,10 @@ public actor LiveTranscriber {
             let start = min(max(item.tStartMs, cursor), utterance.upperBound)
             let end = min(max(item.tEndMs, start), utterance.upperBound)
             guard end > start else { continue }
-            result.append(Segment(
-                meetingID: meetingID, channel: channel, tStartMs: start, tEndMs: end, text: text,
-                confidence: item.confidence.map(Double.init), pass: .live))
+            result.append(
+                Segment(
+                    meetingID: meetingID, channel: channel, tStartMs: start, tEndMs: end, text: text,
+                    confidence: item.confidence.map(Double.init), pass: .live))
             cursor = end
         }
         return result

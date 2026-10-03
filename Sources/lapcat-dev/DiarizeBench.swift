@@ -27,14 +27,17 @@ enum DiarizeBench {
             let start = ContinuousClock.now
             let turns = try await engine.diarize(fileURL: url)
             let wall = seconds(start.duration(to: .now))
-            print(String(
-                format: "diarize: wall %.2f s, %.1f s per 10 min of audio, RTF %.2f",
-                wall, wall / audioSeconds * 600, audioSeconds / wall
-            ))
+            print(
+                String(
+                    format: "diarize: wall %.2f s, %.1f s per 10 min of audio, RTF %.2f",
+                    wall, wall / audioSeconds * 600, audioSeconds / wall
+                ))
             var totals: [String: Int] = [:]
             for turn in turns {
                 totals[turn.cluster, default: 0] += turn.endMs - turn.startMs
-                print(String(format: "[%7.2f – %7.2f] ", Double(turn.startMs) / 1000, Double(turn.endMs) / 1000) + turn.cluster)
+                print(
+                    String(format: "[%7.2f – %7.2f] ", Double(turn.startMs) / 1000, Double(turn.endMs) / 1000)
+                        + turn.cluster)
             }
             print("\nturns: \(turns.count)")
             for (cluster, ms) in totals.sorted(by: { $0.key < $1.key }) {

@@ -12,12 +12,15 @@ extension Store {
         observeValues { db in
             try String.fetchAll(
                 db,
-                sql: "SELECT tag.name FROM tag JOIN meeting_tag ON meeting_tag.tag_id = tag.id WHERE meeting_tag.meeting_id = ? ORDER BY tag.name",
+                sql:
+                    "SELECT tag.name FROM tag JOIN meeting_tag ON meeting_tag.tag_id = tag.id WHERE meeting_tag.meeting_id = ? ORDER BY tag.name",
                 arguments: [meetingID])
         }
     }
 
-    private func observeValues<Value: Sendable & Equatable>(_ fetch: @escaping @Sendable (Database) throws -> Value) -> AsyncStream<Value> {
+    private func observeValues<Value: Sendable & Equatable>(_ fetch: @escaping @Sendable (Database) throws -> Value)
+        -> AsyncStream<Value>
+    {
         AsyncStream { continuation in
             let task = Task {
                 do {

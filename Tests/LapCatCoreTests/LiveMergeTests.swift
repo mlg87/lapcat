@@ -3,22 +3,26 @@ import Testing
 @testable import LapCatCore
 
 struct LiveMergeTests {
-    private func seg(_ id: Int64, _ channel: Channel, _ start: Int, _ end: Int, _ text: String, pass: SegmentPass,
-                     edited: Bool = false, participant: Int64? = nil) -> Segment {
-        Segment(id: id, meetingID: "m", channel: channel, tStartMs: start, tEndMs: end, text: text,
-                participantID: participant, pass: pass, editedAt: edited ? Date() : nil)
+    private func seg(
+        _ id: Int64, _ channel: Channel, _ start: Int, _ end: Int, _ text: String, pass: SegmentPass,
+        edited: Bool = false, participant: Int64? = nil
+    ) -> Segment {
+        Segment(
+            id: id, meetingID: "m", channel: channel, tStartMs: start, tEndMs: end, text: text,
+            participantID: participant, pass: pass, editedAt: edited ? Date() : nil)
     }
 
     @Test func editGoesToTheSameChannelFinalSegmentWithTheLargestOverlap() {
         let live = [seg(1, .system, 1_000, 4_000, "fixed text", pass: .live, edited: true)]
         let final = [
-            seg(10, .system, 0, 1_500, "a", pass: .final),      // 500 ms overlap
+            seg(10, .system, 0, 1_500, "a", pass: .final),  // 500 ms overlap
             seg(11, .system, 1_500, 3_800, "b", pass: .final),  // 2300 ms overlap
-            seg(12, .mic, 1_000, 4_000, "c", pass: .final),     // other channel: ignored
+            seg(12, .mic, 1_000, 4_000, "c", pass: .final),  // other channel: ignored
         ]
-        #expect(LiveMerge.plan(live: live, final: final) == [
-            .init(finalID: 11, text: "fixed text", textOriginal: "b", participantID: nil),
-        ])
+        #expect(
+            LiveMerge.plan(live: live, final: final) == [
+                .init(finalID: 11, text: "fixed text", textOriginal: "b", participantID: nil)
+            ])
     }
 
     @Test func untouchedLiveSegmentsAndNonOverlappingOnesProduceNoUpdates() {
@@ -34,7 +38,10 @@ struct LiveMergeTests {
     @Test func speakerAssignmentCarriesOverWithoutTouchingText() {
         let live = [seg(1, .system, 0, 2_000, "hi", pass: .live, participant: 7)]
         let final = [seg(10, .system, 100, 2_100, "hi there", pass: .final)]
-        #expect(LiveMerge.plan(live: live, final: final) == [.init(finalID: 10, text: nil, textOriginal: nil, participantID: 7)])
+        #expect(
+            LiveMerge.plan(live: live, final: final) == [
+                .init(finalID: 10, text: nil, textOriginal: nil, participantID: 7)
+            ])
     }
 
     @Test func whenTwoLiveSegmentsMapToOneFinalTheStrongerEditWinsAndAssignmentsCombine() {
@@ -43,9 +50,10 @@ struct LiveMergeTests {
             seg(2, .system, 500, 3_000, "strong edit", pass: .live, edited: true),
         ]
         let final = [seg(10, .system, 0, 3_000, "orig", pass: .final)]
-        #expect(LiveMerge.plan(live: live, final: final) == [
-            .init(finalID: 10, text: "strong edit", textOriginal: "orig", participantID: 3),
-        ])
+        #expect(
+            LiveMerge.plan(live: live, final: final) == [
+                .init(finalID: 10, text: "strong edit", textOriginal: "orig", participantID: 3)
+            ])
     }
 
     @Test func mergeIntoFinalAppliesEditsThenDropsLiveRows() async throws {
@@ -54,12 +62,15 @@ struct LiveMergeTests {
         let store = try Store(databaseURL: dir.appendingPathComponent("lapcat.sqlite"))
         let meeting = try await store.createMeeting(title: "t", startedBy: .manual)
         let live = try await store.appendSegments([
-            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 2_000, text: "teh plan", pass: .live),
+            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 2_000, text: "teh plan", pass: .live)
         ])
         try await store.updateSegmentText(id: live[0].id!, text: "the plan")
-        try await store.replaceFinalSegments(meetingID: meeting.id, channel: .mic, with: [
-            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 100, tEndMs: 1_900, text: "the plain", pass: .final),
-        ])
+        try await store.replaceFinalSegments(
+            meetingID: meeting.id, channel: .mic,
+            with: [
+                Segment(
+                    meetingID: meeting.id, channel: .mic, tStartMs: 100, tEndMs: 1_900, text: "the plain", pass: .final)
+            ])
         try await store.mergeLiveIntoFinal(meetingID: meeting.id)
 
         let rows = try await store.segments(meetingID: meeting.id)
@@ -76,7 +87,7 @@ struct LiveMergeTests {
         let store = try Store(databaseURL: dir.appendingPathComponent("lapcat.sqlite"))
         let meeting = try await store.createMeeting(title: "t", startedBy: .manual)
         try await store.appendSegments([
-            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 2_000, text: "only live", pass: .live),
+            Segment(meetingID: meeting.id, channel: .mic, tStartMs: 0, tEndMs: 2_000, text: "only live", pass: .live)
         ])
         try await store.mergeLiveIntoFinal(meetingID: meeting.id)
         #expect(try await store.segments(meetingID: meeting.id).map(\.text) == ["only live"])

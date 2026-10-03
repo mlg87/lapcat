@@ -52,7 +52,9 @@ public enum RecipeLibrary {
     /// (it checks the app root and the build directory), so the bundled location is tried first.
     static func resourceURL(_ name: String, ext: String) throws -> URL {
         let bundleName = "LapCat_LapCatCore.bundle"
-        let candidates = [Bundle.main.resourceURL, Bundle.main.bundleURL].compactMap { $0?.appendingPathComponent(bundleName) }
+        let candidates = [Bundle.main.resourceURL, Bundle.main.bundleURL].compactMap {
+            $0?.appendingPathComponent(bundleName)
+        }
         for candidate in candidates {
             if let url = Bundle(url: candidate)?.url(forResource: name, withExtension: ext) { return url }
         }
@@ -89,7 +91,8 @@ extension Store {
             if let existing = try Recipe.fetchOne(db, key: id), existing.isBuiltin {
                 throw RecipeError.builtinNotEditable(existing.name)
             }
-            if let clash = try Recipe
+            if let clash =
+                try Recipe
                 .filter(Column("slash_command") == command && Column("id") != id)
                 .fetchOne(db)
             {

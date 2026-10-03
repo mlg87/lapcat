@@ -149,7 +149,9 @@ struct ChatView: View {
         let (scope, scopeRef, dateRange) = (scope, scopeRef, dateRange)
         streaming = Task {
             do {
-                for try await delta in service.ask(scope: scope, scopeRef: scopeRef, question: question, dateRange: dateRange) {
+                for try await delta in service.ask(
+                    scope: scope, scopeRef: scopeRef, question: question, dateRange: dateRange)
+                {
                     pending?.answer += delta
                 }
             } catch is CancellationError {

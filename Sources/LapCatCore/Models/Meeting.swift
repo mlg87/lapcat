@@ -3,8 +3,12 @@ import GRDB
 
 public struct Meeting: LapCatRecord, PersistableRecord, Identifiable, Hashable {
     public static let databaseTableName = "meeting"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var id: String
     public var title: String
@@ -98,8 +102,12 @@ public struct Meeting: LapCatRecord, PersistableRecord, Identifiable, Hashable {
 
 public struct CalendarSnapshot: LapCatRecord, PersistableRecord, Hashable {
     public static let databaseTableName = "calendar_snapshot"
-    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy { .timeIntervalSince1970 }
-    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy { .timeIntervalSince1970 }
+    public static func databaseDateDecodingStrategy(for column: String) -> DatabaseDateDecodingStrategy {
+        .timeIntervalSince1970
+    }
+    public static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
+        .timeIntervalSince1970
+    }
 
     public var meetingID: String
     public var eventTitle: String?

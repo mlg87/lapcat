@@ -26,13 +26,17 @@ struct MainWindow: View {
             if let id = navigation.selectedMeetingID {
                 MeetingView(meetingID: id).id(id)
             } else {
-                ContentUnavailableView("No meeting selected", systemImage: "cat", description: Text("Pick a meeting, or start a new note."))
+                ContentUnavailableView(
+                    "No meeting selected", systemImage: "cat", description: Text("Pick a meeting, or start a new note.")
+                )
             }
         }
         .environment(navigation)
         .environment(organizer)
         .task { await organizer.observeFolders(store: appState.store) }
-        .frame(minWidth: 820, idealWidth: 1000, maxWidth: .infinity, minHeight: 520, idealHeight: 680, maxHeight: .infinity)
+        .frame(
+            minWidth: 820, idealWidth: 1000, maxWidth: .infinity, minHeight: 520, idealHeight: 680, maxHeight: .infinity
+        )
         .onChange(of: appState.session.meetingID, initial: true) { _, id in
             // A recording that starts shows itself.
             if let id { navigation.selectedMeetingID = id }

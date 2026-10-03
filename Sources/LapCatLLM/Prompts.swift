@@ -35,13 +35,17 @@ public enum Prompts {
         }
     }
 
-    public static func enhanceUser(meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String, transcript: String) -> String {
+    public static func enhanceUser(
+        meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String, transcript: String
+    ) -> String {
         notesPrompt(meeting: meeting, templateName: templateName, templateBody: templateBody, rawNotes: rawNotes)
             + "\n\n# Transcript\n\(transcript)"
     }
 
     /// `enhanceUser` with the transcript replaced by per-window summaries (which carry their citations).
-    public static func reduceUser(meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String, summaries: String) -> String {
+    public static func reduceUser(
+        meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String, summaries: String
+    ) -> String {
         notesPrompt(meeting: meeting, templateName: templateName, templateBody: templateBody, rawNotes: rawNotes)
             + "\n\n# Transcript summaries (by 10-minute window, with segment citations)\n\(summaries)"
     }
@@ -69,7 +73,9 @@ public enum Prompts {
         return formatter.string(from: date)
     }
 
-    private static func notesPrompt(meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String) -> String {
+    private static func notesPrompt(
+        meeting: MeetingContext, templateName: String, templateBody: String, rawNotes: String
+    ) -> String {
         let notes = rawNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "(none)" : rawNotes
         return """
             # Meeting

@@ -31,12 +31,15 @@ enum LLMProbe {
             FileHandle.standardError.write(Data(usage.utf8))
             return 64
         }
-        let request = LLMRequest(task: .classify, system: "You are a terse assistant.", messages: [.user(positional[1])], maxTokens: 256)
+        let request = LLMRequest(
+            task: .classify, system: "You are a terse assistant.", messages: [.user(positional[1])], maxTokens: 256)
 
         let provider: any LLMProvider
         switch positional[0] {
         case "claude-cli":
-            let cli = ClaudeCLIProvider(models: Dictionary(uniqueKeysWithValues: LLMTask.allCases.map { ($0, model ?? "haiku") }), claudePath: nil)
+            let cli = ClaudeCLIProvider(
+                models: Dictionary(uniqueKeysWithValues: LLMTask.allCases.map { ($0, model ?? "haiku") }),
+                claudePath: nil)
             guard !streaming else { provider = cli; break }
             print("binary: \(cli.binaryURL?.path ?? "not found")")
             do {
@@ -91,7 +94,9 @@ enum LLMProbe {
 
     private static func printResponse(_ response: LLMResponse) {
         print("provider: \(response.provider)  model: \(response.model)")
-        print("tokens in/out: \(response.inputTokens.map(String.init) ?? "-")/\(response.outputTokens.map(String.init) ?? "-")  cost: \(response.costUSD.map { String(format: "$%.4f", $0) } ?? "-")")
+        print(
+            "tokens in/out: \(response.inputTokens.map(String.init) ?? "-")/\(response.outputTokens.map(String.init) ?? "-")  cost: \(response.costUSD.map { String(format: "$%.4f", $0) } ?? "-")"
+        )
         print("text: \(response.text)")
     }
 

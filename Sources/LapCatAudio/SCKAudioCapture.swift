@@ -63,9 +63,9 @@ final class SCKAudioCapture: NSObject, SCStreamOutput, SCStreamDelegate, @unchec
 
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .audio, sampleBuffer.isValid,
-              let description = sampleBuffer.formatDescription,
-              var asbd = description.audioStreamBasicDescription,
-              let format = AVAudioFormat(streamDescription: &asbd)
+            let description = sampleBuffer.formatDescription,
+            var asbd = description.audioStreamBasicDescription,
+            let format = AVAudioFormat(streamDescription: &asbd)
         else { return }
         let frames = AVAudioFrameCount(sampleBuffer.numSamples)
         guard frames > 0, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else { return }

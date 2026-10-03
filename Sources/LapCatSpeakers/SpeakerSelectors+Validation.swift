@@ -53,7 +53,8 @@ extension SpeakerSelectors {
         }
         switch error {
         case .keyNotFound(let key, let context): return "missing key “\(key.stringValue)”\(path(context))"
-        case .typeMismatch(_, let context), .valueNotFound(_, let context): return "\(context.debugDescription)\(path(context))"
+        case .typeMismatch(_, let context), .valueNotFound(_, let context):
+            return "\(context.debugDescription)\(path(context))"
         case .dataCorrupted(let context):
             return (context.underlyingError as NSError?)?.userInfo[NSDebugDescriptionErrorKey] as? String
                 ?? context.debugDescription

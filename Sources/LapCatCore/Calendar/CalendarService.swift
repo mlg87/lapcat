@@ -81,7 +81,8 @@ public final class CalendarService: @unchecked Sendable {
             title: event.title ?? "",
             organizer: event.organizer.flatMap(displayName(of:)),
             attendees: attendees,
-            conferenceURL: MeetingURLMatcher.conferenceURL(url: event.url, notes: event.notes, location: event.location),
+            conferenceURL: MeetingURLMatcher.conferenceURL(
+                url: event.url, notes: event.notes, location: event.location),
             start: event.startDate,
             end: event.endDate,
             isAllDay: event.isAllDay

@@ -42,11 +42,17 @@ struct DetectionSettingsView: View {
                 }
             }
             Section("Other signals") {
-                Toggle("Prompt when a calendar event with a Zoom/Meet link starts", isOn: $settings.detectUseCalendarSignal)
-                Toggle("Prompt when the browser’s current tab is a Google Meet call", isOn: $settings.detectUseBrowserTabSignal)
+                Toggle(
+                    "Prompt when a calendar event with a Zoom/Meet link starts", isOn: $settings.detectUseCalendarSignal
+                )
+                Toggle(
+                    "Prompt when the browser’s current tab is a Google Meet call",
+                    isOn: $settings.detectUseBrowserTabSignal)
                 if settings.detectUseBrowserTabSignal && status(.automation) != .granted {
-                    Text("Needs Automation permission for your browser; macOS asks the first time LapCat checks the tab.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(
+                        "Needs Automation permission for your browser; macOS asks the first time LapCat checks the tab."
+                    )
+                    .font(.caption).foregroundStyle(.secondary)
                 }
             }
             Section("Calendar") {
@@ -75,7 +81,9 @@ struct DetectionSettingsView: View {
 
     private var normalizedNewID: String? {
         let id = newBundleID.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !id.isEmpty, !id.contains(where: \.isWhitespace), !appState.settings.detectBundleIDs.contains(id) else { return nil }
+        guard !id.isEmpty, !id.contains(where: \.isWhitespace), !appState.settings.detectBundleIDs.contains(id) else {
+            return nil
+        }
         return id
     }
 

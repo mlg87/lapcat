@@ -33,8 +33,8 @@ public enum AutoExporter {
 
         try Data(MarkdownExporter.bundle(export, timeZone: timeZone).utf8).write(to: target, options: .atomic)
         if let previous, previous != target,
-           previous.deletingLastPathComponent() == target.deletingLastPathComponent(),
-           fm.fileExists(atPath: previous.path)
+            previous.deletingLastPathComponent() == target.deletingLastPathComponent(),
+            fm.fileExists(atPath: previous.path)
         {
             try? fm.removeItem(at: previous)
         }

@@ -28,7 +28,9 @@ struct RecipesSettingsView: View {
                         RecipeRow(recipe: recipe)
                         Spacer()
                         Button("Edit") {
-                            editor = Draft(id: recipe.id, name: recipe.name, slashCommand: recipe.slashCommand, prompt: recipe.prompt)
+                            editor = Draft(
+                                id: recipe.id, name: recipe.name, slashCommand: recipe.slashCommand,
+                                prompt: recipe.prompt)
                         }
                         Button("Delete", role: .destructive) { Task { await delete(recipe) } }
                     }
@@ -48,7 +50,11 @@ struct RecipesSettingsView: View {
 
     @ViewBuilder
     private var editorFields: some View {
-        let draft = Binding { editor ?? Draft() } set: { editor = $0 }
+        let draft = Binding {
+            editor ?? Draft()
+        } set: {
+            editor = $0
+        }
         TextField("Name", text: draft.name)
         TextField("Slash command", text: draft.slashCommand, prompt: Text("/summary"))
         VStack(alignment: .leading) {
@@ -71,9 +77,11 @@ struct RecipesSettingsView: View {
         guard var draft = editor else { return }
         do {
             if let id = draft.id {
-                try await appState.store.saveCustomRecipe(id: id, name: draft.name, slashCommand: draft.slashCommand, prompt: draft.prompt)
+                try await appState.store.saveCustomRecipe(
+                    id: id, name: draft.name, slashCommand: draft.slashCommand, prompt: draft.prompt)
             } else {
-                try await appState.store.saveCustomRecipe(name: draft.name, slashCommand: draft.slashCommand, prompt: draft.prompt)
+                try await appState.store.saveCustomRecipe(
+                    name: draft.name, slashCommand: draft.slashCommand, prompt: draft.prompt)
             }
             editor = nil
             await load(seed: false)

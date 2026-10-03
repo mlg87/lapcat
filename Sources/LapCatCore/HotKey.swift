@@ -55,10 +55,10 @@ public enum HotKeyAction: String, CaseIterable, Sendable, Identifiable {
     public var defaultHotKey: HotKey {
         let mods = HotKey.control | HotKey.option
         return switch self {
-        case .newNote: HotKey(keyCode: 0x2D, modifiers: mods)     // ⌃⌥N
-        case .end: HotKey(keyCode: 0x0E, modifiers: mods)         // ⌃⌥E
-        case .pauseResume: HotKey(keyCode: 0x23, modifiers: mods) // ⌃⌥P
-        case .open: HotKey(keyCode: 0x25, modifiers: mods)        // ⌃⌥L
+        case .newNote: HotKey(keyCode: 0x2D, modifiers: mods)  // ⌃⌥N
+        case .end: HotKey(keyCode: 0x0E, modifiers: mods)  // ⌃⌥E
+        case .pauseResume: HotKey(keyCode: 0x23, modifiers: mods)  // ⌃⌥P
+        case .open: HotKey(keyCode: 0x25, modifiers: mods)  // ⌃⌥L
         }
     }
 }
@@ -73,7 +73,8 @@ public struct HotKeyBindings: Equatable, Sendable {
         var keys: [HotKeyAction: HotKey] = [:]
         for action in HotKeyAction.allCases {
             if let data = defaults.data(forKey: action.defaultsKey),
-               let key = try? JSONDecoder().decode(HotKey.self, from: data) {
+                let key = try? JSONDecoder().decode(HotKey.self, from: data)
+            {
                 keys[action] = key
             } else {
                 keys[action] = action.defaultHotKey

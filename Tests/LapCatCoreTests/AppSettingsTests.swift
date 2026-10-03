@@ -24,9 +24,9 @@ struct AppSettingsTests {
         #expect(s.sttWhisperLiveModel == "ggml-small.en.bin")
         #expect(s.sttParakeetVersion == "v2")
         #if arch(arm64)
-        #expect(s.sttLiveHypothesis)
+            #expect(s.sttLiveHypothesis)
         #else
-        #expect(!s.sttLiveHypothesis)
+            #expect(!s.sttLiveHypothesis)
         #endif
         #expect(s.audioTapScope == "app")
         #expect(s.audioInputDeviceUID == nil)

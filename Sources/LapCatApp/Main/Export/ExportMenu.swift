@@ -10,11 +10,19 @@ struct ExportMenu: View {
 
     var body: some View {
         Menu("Export") {
-            Button("Copy Notes as Markdown") { run { await MeetingExportActions.copyNotes(meetingID: meetingID, as: .markdown, store: $0) } }
-            Button("Copy as Plain Text") { run { await MeetingExportActions.copyNotes(meetingID: meetingID, as: .plainText, store: $0) } }
+            Button("Copy Notes as Markdown") {
+                run { await MeetingExportActions.copyNotes(meetingID: meetingID, as: .markdown, store: $0) }
+            }
+            Button("Copy as Plain Text") {
+                run { await MeetingExportActions.copyNotes(meetingID: meetingID, as: .plainText, store: $0) }
+            }
             Divider()
-            Button("Export Meeting (.md)…") { run { await MeetingExportActions.exportMeeting(meetingID: meetingID, store: $0) } }
-            Button("Export Transcript…") { run { await MeetingExportActions.exportTranscript(meetingID: meetingID, store: $0) } }
+            Button("Export Meeting (.md)…") {
+                run { await MeetingExportActions.exportMeeting(meetingID: meetingID, store: $0) }
+            }
+            Button("Export Transcript…") {
+                run { await MeetingExportActions.exportTranscript(meetingID: meetingID, store: $0) }
+            }
         }
         .fixedSize()
         .exportErrorAlert($error)

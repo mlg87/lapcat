@@ -39,8 +39,8 @@ public enum SpeakerSuggester {
     }
 
     public static let system = """
-    Given a transcript where some speakers are labeled Speaker N, and a list of candidate names, suggest which candidate each Speaker N most likely is, based only on how people address each other. Reply with only {"suggestions":[{"cluster":"Speaker 1","name":"…","evidence_segment_id":123}]}; omit clusters you cannot support.
-    """
+        Given a transcript where some speakers are labeled Speaker N, and a list of candidate names, suggest which candidate each Speaker N most likely is, based only on how people address each other. Reply with only {"suggestions":[{"cluster":"Speaker 1","name":"…","evidence_segment_id":123}]}; omit clusters you cannot support.
+        """
 
     /// - Parameters:
     ///   - transcript: `TranscriptFormatter.forLLM` output (segment ids in brackets).
@@ -54,13 +54,14 @@ public enum SpeakerSuggester {
     ) async throws -> [Suggestion] {
         guard !clusters.isEmpty, !candidates.isEmpty else { return [] }
         let user = """
-        Unlabeled speakers: \(clusters.joined(separator: ", "))
-        Candidate names: \(candidates.joined(separator: ", "))
+            Unlabeled speakers: \(clusters.joined(separator: ", "))
+            Candidate names: \(candidates.joined(separator: ", "))
 
-        # Transcript
-        \(transcript)
-        """
-        let request = LLMRequest(task: .classify, system: system, messages: [.user(user)], maxTokens: 1024, expectJSON: true)
+            # Transcript
+            \(transcript)
+            """
+        let request = LLMRequest(
+            task: .classify, system: system, messages: [.user(user)], maxTokens: 1024, expectJSON: true)
         let reply = try await router.completeJSON(request, as: Reply.self).value
         return validated(reply.suggestions, clusters: clusters, candidates: candidates)
     }
@@ -80,8 +81,8 @@ public enum SpeakerSuggester {
         for var suggestion in suggestions {
             let cluster = suggestion.cluster.trimmingCharacters(in: .whitespacesAndNewlines)
             guard wantedClusters.contains(cluster),
-                  let name = canonical[suggestion.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()],
-                  !usedClusters.contains(cluster), !usedNames.contains(name)
+                let name = canonical[suggestion.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()],
+                !usedClusters.contains(cluster), !usedNames.contains(name)
             else { continue }
             usedClusters.insert(cluster)
             usedNames.insert(name)

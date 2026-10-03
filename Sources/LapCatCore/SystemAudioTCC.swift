@@ -11,7 +11,8 @@ enum SystemAudioTCC {
     private static var service: CFString { "kTCCServiceAudioCapture" as CFString }
 
     private typealias PreflightFn = @convention(c) (CFString, CFDictionary?) -> Int32
-    private typealias RequestFn = @convention(c) (CFString, CFDictionary?, @escaping @convention(block) (Bool) -> Void) -> Void
+    private typealias RequestFn =
+        @convention(c) (CFString, CFDictionary?, @escaping @convention(block) (Bool) -> Void) -> Void
 
     private nonisolated(unsafe) static let handle = dlopen(
         "/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC", RTLD_NOW

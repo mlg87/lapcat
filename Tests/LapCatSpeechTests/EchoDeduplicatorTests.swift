@@ -15,18 +15,28 @@ import Testing
     @Test func windowBoundaryIsOnePointFiveSeconds() {
         let mic = [segment(1, .mic, 10_000, 14_000, text)]
         // System segment ends exactly 1.5 s before the mic segment starts: still a duplicate.
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 4_000, 8_500, text)]) == [1])
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 4_000, 8_499, text)]).isEmpty)
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 4_000, 8_500, text)]) == [1])
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 4_000, 8_499, text)]).isEmpty)
         // System segment starts exactly 1.5 s after the mic segment ends.
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 15_500, 18_000, text)]) == [1])
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 15_501, 18_000, text)]).isEmpty)
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 15_500, 18_000, text)]) == [1])
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 15_501, 18_000, text)]).isEmpty
+        )
     }
 
     @Test func similarityBoundaryIsPointEight() {
         // 10 characters; 2 substitutions → similarity exactly 0.8; 3 → 0.7.
         let mic = [segment(1, .mic, 0, 2_000, "abcdefghij")]
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 0, 2_000, "abcdefghXY")]) == [1])
-        #expect(EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 0, 2_000, "abcdefgXYZ")]).isEmpty)
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 0, 2_000, "abcdefghXY")]) == [
+                1
+            ])
+        #expect(
+            EchoDeduplicator.flag(micSegments: mic, systemSegments: [segment(9, .system, 0, 2_000, "abcdefgXYZ")])
+                .isEmpty)
     }
 
     @Test func differentSpeechAtTheSameTimeIsKept() {

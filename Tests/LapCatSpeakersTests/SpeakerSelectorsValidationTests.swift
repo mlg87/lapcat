@@ -10,7 +10,9 @@ import Testing
     }
 
     @Test func malformedJSONIsRejected() {
-        #expect(throws: SpeakerSelectorsValidationError.self) { try SpeakerSelectors.validate(json: "{ \"maxDepth\": ") }
+        #expect(throws: SpeakerSelectorsValidationError.self) {
+            try SpeakerSelectors.validate(json: "{ \"maxDepth\": ")
+        }
     }
 
     @Test func missingKeyNamesTheKey() {

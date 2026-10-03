@@ -39,7 +39,8 @@ struct AXSpeakerPoller: Sendable {
     static let emptyLogAfter: TimeInterval = 30
 
     func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {
-        let (stream, continuation) = AsyncStream.makeStream(of: SpeakerObservation.self, bufferingPolicy: .bufferingNewest(8))
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: SpeakerObservation.self, bufferingPolicy: .bufferingNewest(8))
         let selectors = selectors
         let enableWeb = enableWebAccessibility
         let queue = queue
@@ -60,7 +61,9 @@ struct AXSpeakerPoller: Sendable {
                     emptySince = since
                     if !loggedEmpty, since.duration(to: .now) >= .seconds(Self.emptyLogAfter) {
                         loggedEmpty = true
-                        Self.logger.notice("\(name, privacy: .public): no speaker elements found for \(Int(Self.emptyLogAfter)) s (pid \(pid))")
+                        Self.logger.notice(
+                            "\(name, privacy: .public): no speaker elements found for \(Int(Self.emptyLogAfter)) s (pid \(pid))"
+                        )
                     }
                 } else {
                     emptySince = nil
@@ -92,7 +95,8 @@ struct AXSpeakerPoller: Sendable {
             // No matching web area: fall through to title-matched windows only.
             guard titleRegex != nil else { return [] }
         }
-        return windows
+        return
+            windows
             .filter { window in
                 guard let titleRegex else { return true }
                 let title = window.title ?? ""
@@ -110,7 +114,8 @@ public struct ZoomAXAdapter: SpeakerSource {
     private let poller: AXSpeakerPoller
 
     public init(selectors: SpeakerSelectors = .zoomDefault, queue: AXQueue = .shared) {
-        poller = AXSpeakerPoller(name: "ZoomAXAdapter", selectors: selectors, enableWebAccessibility: false, queue: queue)
+        poller = AXSpeakerPoller(
+            name: "ZoomAXAdapter", selectors: selectors, enableWebAccessibility: false, queue: queue)
     }
 
     public func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {
@@ -123,13 +128,15 @@ public struct ZoomAXAdapter: SpeakerSource {
 /// defaults are unverified until the axdump spike (lc-6bq).
 public struct MeetAXAdapter: SpeakerSource {
     public static let bundleIDs = [
-        "com.google.Chrome", "company.thebrowser.Browser", "com.microsoft.edgemac", "com.brave.Browser", "com.apple.Safari",
+        "com.google.Chrome", "company.thebrowser.Browser", "com.microsoft.edgemac", "com.brave.Browser",
+        "com.apple.Safari",
     ]
 
     private let poller: AXSpeakerPoller
 
     public init(selectors: SpeakerSelectors = .meetDefault, queue: AXQueue = .shared) {
-        poller = AXSpeakerPoller(name: "MeetAXAdapter", selectors: selectors, enableWebAccessibility: true, queue: queue)
+        poller = AXSpeakerPoller(
+            name: "MeetAXAdapter", selectors: selectors, enableWebAccessibility: true, queue: queue)
     }
 
     public func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {

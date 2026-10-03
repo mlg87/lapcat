@@ -47,8 +47,10 @@ struct MeetingListView: View {
                 .disabled(meeting.folderID == nil)
             Divider()
             ForEach(organizer.folders) { folder in
-                Button(folder.name) { organizer.move(meetingIDs: [meeting.id], toFolder: folder.id, store: appState.store) }
-                    .disabled(meeting.folderID == folder.id)
+                Button(folder.name) {
+                    organizer.move(meetingIDs: [meeting.id], toFolder: folder.id, store: appState.store)
+                }
+                .disabled(meeting.folderID == folder.id)
             }
         }
     }

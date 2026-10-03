@@ -28,7 +28,8 @@ import Testing
     }
 
     @Test func errorEnvelopeIsUnavailable() {
-        let envelope = #"{"type":"result","subtype":"success","is_error":true,"result":"Not logged in · Please run /login"}"#
+        let envelope =
+            #"{"type":"result","subtype":"success","is_error":true,"result":"Not logged in · Please run /login"}"#
         #expect(throws: LLMError.unavailable("Not logged in · Please run /login")) {
             try ClaudeCLIProvider.parseEnvelope(Data(envelope.utf8), requestedModel: "haiku")
         }
@@ -142,7 +143,8 @@ private func collect(_ lines: String, _ step: (String) -> SSEStep) throws -> Str
 
 @Suite struct HTTPResponseTests {
     @Test func anthropicMessageIsParsed() throws {
-        let body = #"{"model":"claude-haiku-4-5-20251001","content":[{"type":"text","text":"Hi"},{"type":"text","text":"!"}],"usage":{"input_tokens":4,"output_tokens":2}}"#
+        let body =
+            #"{"model":"claude-haiku-4-5-20251001","content":[{"type":"text","text":"Hi"},{"type":"text","text":"!"}],"usage":{"input_tokens":4,"output_tokens":2}}"#
         let response = try AnthropicAPIProvider.parseMessage(Data(body.utf8), fallbackModel: "x")
         #expect(response.text == "Hi!")
         #expect(response.model == "claude-haiku-4-5-20251001")
@@ -156,14 +158,21 @@ private func collect(_ lines: String, _ step: (String) -> SSEStep) throws -> Str
         }
         let body = Data(#"{"type":"error","error":{"type":"x","message":"msg"}}"#.utf8)
         try AnthropicAPIProvider.check(status(200), body: body)
-        #expect(throws: LLMError.unavailable("invalid API key")) { try AnthropicAPIProvider.check(status(401), body: body) }
+        #expect(throws: LLMError.unavailable("invalid API key")) {
+            try AnthropicAPIProvider.check(status(401), body: body)
+        }
         #expect(throws: LLMError.rateLimited) { try AnthropicAPIProvider.check(status(429), body: body) }
-        #expect(throws: LLMError.unavailable("Anthropic API HTTP 529: msg")) { try AnthropicAPIProvider.check(status(529), body: body) }
-        #expect(throws: LLMError.invalidResponse("Anthropic API HTTP 400: msg")) { try AnthropicAPIProvider.check(status(400), body: body) }
+        #expect(throws: LLMError.unavailable("Anthropic API HTTP 529: msg")) {
+            try AnthropicAPIProvider.check(status(529), body: body)
+        }
+        #expect(throws: LLMError.invalidResponse("Anthropic API HTTP 400: msg")) {
+            try AnthropicAPIProvider.check(status(400), body: body)
+        }
     }
 
     @Test func openAICompletionIsParsed() throws {
-        let body = #"{"choices":[{"index":0,"message":{"role":"assistant","content":"OK"}}],"usage":{"prompt_tokens":20,"completion_tokens":1}}"#
+        let body =
+            #"{"choices":[{"index":0,"message":{"role":"assistant","content":"OK"}}],"usage":{"prompt_tokens":20,"completion_tokens":1}}"#
         let response = try LlamaServerProvider.parseCompletion(Data(body.utf8), model: "Qwen3-4B-Q4_K_M.gguf")
         #expect(response.text == "OK")
         #expect(response.provider == "local")
@@ -193,7 +202,9 @@ private struct StubProvider: LLMProvider {
 
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         if let failure { throw failure }
-        let reply = request.messages.last?.content.hasSuffix("Return only the JSON object.") == true ? replies.last! : replies[0]
+        let reply =
+            request.messages.last?.content.hasSuffix("Return only the JSON object.") == true
+            ? replies.last! : replies[0]
         return LLMResponse(text: reply, provider: id, model: "\(id)-model")
     }
 
@@ -213,18 +224,21 @@ private let request = LLMRequest(task: .chat, system: "s", messages: [.user("q")
 
 @Suite struct RouterTests {
     @Test func skipsUnavailableProviderWithoutFailoverEvent() async throws {
-        let router = LLMRouter(providers: [StubProvider("claude-cli", available: false), StubProvider("anthropic-api")], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [StubProvider("claude-cli", available: false), StubProvider("anthropic-api")], offlineOnly: false
+        )
         let (response, providerID) = try await router.complete(request)
         #expect(providerID == "anthropic-api")
         #expect(response.text == "from anthropic-api")
     }
 
     @Test func failsOverOnUnavailableAndReportsEvent() async throws {
-        let router = LLMRouter(providers: [
-            StubProvider("claude-cli", failure: .unavailable("timeout")),
-            StubProvider("anthropic-api", failure: .rateLimited),
-            StubProvider("local"),
-        ], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [
+                StubProvider("claude-cli", failure: .unavailable("timeout")),
+                StubProvider("anthropic-api", failure: .rateLimited),
+                StubProvider("local"),
+            ], offlineOnly: false)
         let (_, providerID) = try await router.complete(request)
         #expect(providerID == "local")
 
@@ -233,42 +247,54 @@ private let request = LLMRequest(task: .chat, system: "s", messages: [.user("q")
             events.append(event)
             if events.count == 2 { break }
         }
-        #expect(events == [
-            .failedOver(from: "claude-cli", to: "anthropic-api", reason: LLMError.unavailable("timeout").localizedDescription),
-            .failedOver(from: "anthropic-api", to: "local", reason: LLMError.rateLimited.localizedDescription),
-        ])
+        #expect(
+            events == [
+                .failedOver(
+                    from: "claude-cli", to: "anthropic-api",
+                    reason: LLMError.unavailable("timeout").localizedDescription),
+                .failedOver(from: "anthropic-api", to: "local", reason: LLMError.rateLimited.localizedDescription),
+            ])
     }
 
     @Test func invalidResponseDoesNotFailOver() async {
-        let router = LLMRouter(providers: [StubProvider("claude-cli", failure: .invalidResponse("bad")), StubProvider("local")], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [StubProvider("claude-cli", failure: .invalidResponse("bad")), StubProvider("local")],
+            offlineOnly: false)
         await #expect(throws: LLMError.invalidResponse("bad")) { try await router.complete(request) }
     }
 
     @Test func allProvidersFailingThrowsLastError() async {
-        let router = LLMRouter(providers: [
-            StubProvider("claude-cli", failure: .unavailable("a")),
-            StubProvider("local", failure: .unavailable("b")),
-        ], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [
+                StubProvider("claude-cli", failure: .unavailable("a")),
+                StubProvider("local", failure: .unavailable("b")),
+            ], offlineOnly: false)
         await #expect(throws: LLMError.unavailable("b")) { try await router.complete(request) }
     }
 
     @Test func offlineOnlyRestrictsToLocal() async throws {
-        let router = LLMRouter(providers: [StubProvider("claude-cli"), StubProvider("anthropic-api"), StubProvider("local")], offlineOnly: true)
+        let router = LLMRouter(
+            providers: [StubProvider("claude-cli"), StubProvider("anthropic-api"), StubProvider("local")],
+            offlineOnly: true)
         #expect(await router.providers(for: .enhance).map(\.id) == ["local"])
         let (_, providerID) = try await router.complete(request)
         #expect(providerID == "local")
     }
 
     @Test func offlineOnlyWithoutLocalModelIsUnavailable() async {
-        let router = LLMRouter(providers: [StubProvider("claude-cli"), StubProvider("local", available: false)], offlineOnly: true)
-        await #expect(throws: LLMError.unavailable("local model not available (offline only)")) { try await router.complete(request) }
+        let router = LLMRouter(
+            providers: [StubProvider("claude-cli"), StubProvider("local", available: false)], offlineOnly: true)
+        await #expect(throws: LLMError.unavailable("local model not available (offline only)")) {
+            try await router.complete(request)
+        }
     }
 
     @Test func streamFailsOverBeforeFirstDeltaAndNamesProvider() async throws {
-        let router = LLMRouter(providers: [
-            StubProvider("claude-cli", failure: .unavailable("down")),
-            StubProvider("local", replies: ["a b c"]),
-        ], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [
+                StubProvider("claude-cli", failure: .unavailable("down")),
+                StubProvider("local", replies: ["a b c"]),
+            ], offlineOnly: false)
         var elements: [LLMRouter.StreamElement] = []
         for try await element in router.stream(request) { elements.append(element) }
         #expect(elements == [.provider(id: "local"), .delta("a"), .delta("b"), .delta("c")])
@@ -276,7 +302,9 @@ private let request = LLMRequest(task: .chat, system: "s", messages: [.user("q")
 
     @Test func completeJSONRetriesOnceWithReminder() async throws {
         struct Choice: Decodable, Sendable { var template_id: String }
-        let router = LLMRouter(providers: [StubProvider("local", replies: ["Sure! I'd pick general.", #"{"template_id":"standup"}"#])], offlineOnly: false)
+        let router = LLMRouter(
+            providers: [StubProvider("local", replies: ["Sure! I'd pick general.", #"{"template_id":"standup"}"#])],
+            offlineOnly: false)
         let (value, _, providerID) = try await router.completeJSON(request, as: Choice.self)
         #expect(value.template_id == "standup")
         #expect(providerID == "local")
@@ -309,7 +337,8 @@ private let request = LLMRequest(task: .chat, system: "s", messages: [.user("q")
     }
 
     @Test func nestedBracesAndBracesInsideStrings() {
-        let text = #"Result: {"suggestions":[{"cluster":"Speaker 1","name":"Priya {PM}","evidence_segment_id":12}],"note":"a \"}\" b"} trailing }"#
+        let text =
+            #"Result: {"suggestions":[{"cluster":"Speaker 1","name":"Priya {PM}","evidence_segment_id":12}],"note":"a \"}\" b"} trailing }"#
         let json = object(text)
         let suggestions = json?["suggestions"] as? [[String: Any]]
         #expect(suggestions?.first?["name"] as? String == "Priya {PM}")

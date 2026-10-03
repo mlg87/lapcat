@@ -24,7 +24,9 @@ extension Store {
 
     /// Records which template and `<provider>:<model>` produced the meeting's newest enhanced note.
     /// Touches only those columns so a concurrent processing-step update is not overwritten.
-    public func recordEnhancement(meetingID: String, templateID: String, providerUsed: String, now: Date = Date()) async throws {
+    public func recordEnhancement(meetingID: String, templateID: String, providerUsed: String, now: Date = Date())
+        async throws
+    {
         try await pool.write { db in
             try db.execute(
                 sql: "UPDATE meeting SET template_id = ?, llm_provider_used = ?, updated_at = ? WHERE id = ?",
@@ -35,7 +37,9 @@ extension Store {
     /// Sets the title only while it still equals `expected`, so a user rename made while the LLM
     /// was writing a title wins. Returns whether the title changed.
     @discardableResult
-    public func replaceMeetingTitle(id: String, expected: String, with title: String, now: Date = Date()) async throws -> Bool {
+    public func replaceMeetingTitle(id: String, expected: String, with title: String, now: Date = Date()) async throws
+        -> Bool
+    {
         try await pool.write { db in
             try db.execute(
                 sql: "UPDATE meeting SET title = ?, updated_at = ? WHERE id = ? AND title = ?",

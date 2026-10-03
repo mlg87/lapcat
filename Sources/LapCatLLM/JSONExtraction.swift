@@ -38,9 +38,13 @@ public enum JSONExtraction {
         while index < text.endIndex {
             let character = text[index]
             if inString {
-                if escaped { escaped = false }
-                else if character == "\\" { escaped = true }
-                else if character == "\"" { inString = false }
+                if escaped {
+                    escaped = false
+                } else if character == "\\" {
+                    escaped = true
+                } else if character == "\"" {
+                    inString = false
+                }
             } else if character == "\"" {
                 inString = true
             } else if character == "{" {
