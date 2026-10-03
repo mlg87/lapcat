@@ -15,7 +15,7 @@ struct LapCatApp: App {
     }
 }
 
-/// Cat when idle; record glyph plus elapsed mm:ss while recording.
+/// LapCat glyph when idle; record glyph plus elapsed mm:ss while recording.
 ///
 /// The time comes from `SessionController.clock` (a 1 Hz observable tick), not a `TimelineView`:
 /// a TimelineView in a MenuBarExtra label re-lays out the status item in a tight loop and
@@ -23,10 +23,20 @@ struct LapCatApp: App {
 struct MenuBarLabel: View {
     let session: SessionController
 
+    /// `MenuBarIcon(@2x).png` from the app bundle as a template image, so macOS tints it for
+    /// light/dark menu bars. Nil only when running outside the bundle.
+    private static let glyph: NSImage? = {
+        guard let image = NSImage(named: "MenuBarIcon") else { return nil }
+        image.isTemplate = true
+        return image
+    }()
+
     var body: some View {
         if case .recording(_, _, let paused) = session.state {
             Image(systemName: paused ? "pause.circle.fill" : "record.circle.fill")
             Text(Self.format(session.elapsed(at: session.clock)))
+        } else if let glyph = Self.glyph {
+            Image(nsImage: glyph)
         } else {
             Image(systemName: "cat")
         }

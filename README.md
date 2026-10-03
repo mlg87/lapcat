@@ -34,6 +34,7 @@ scripts/dev.sh               # build build/LapCat.app (debug), sign it, run it i
 scripts/test.sh              # run the test suites (use this, not bare `swift test`)
 scripts/bundle-app.sh release  # Universal 2 (arm64 + x86_64) app bundle
 swift run lapcat-dev --help  # developer CLI (probes and benchmarks)
+swift scripts/make-icons.swift  # regenerate AppIcon.icns + menu-bar glyph from docs/design/app-icon/
 ```
 
 `lapcat-dev` commands: `tap-probe` (capture check), `stt-bench` (transcription speed),
