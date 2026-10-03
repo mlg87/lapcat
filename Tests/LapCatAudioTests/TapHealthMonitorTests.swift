@@ -1,4 +1,5 @@
 import Testing
+
 @testable import LapCatAudio
 
 @Test func healthMonitorFiresAfterTenSilentSecondsOnlyWhileSourceActive() {

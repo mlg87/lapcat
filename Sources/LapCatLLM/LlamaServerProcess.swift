@@ -72,8 +72,8 @@ final class LlamaServerProcess: Sendable {
         var cArgv = argv.map { strdup($0) } + [nil]
         var cEnvp = envp.map { strdup($0) } + [nil]
         defer {
-            cArgv.forEach { free($0) }
-            cEnvp.forEach { free($0) }
+            for pointer in cArgv { free(pointer) }
+            for pointer in cEnvp { free(pointer) }
         }
         var spawned: pid_t = 0
         let status = posix_spawn(&spawned, "/bin/sh", &actions, &attr, &cArgv, &cEnvp)

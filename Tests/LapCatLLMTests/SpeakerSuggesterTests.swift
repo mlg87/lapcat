@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import LapCatLLM
 
 /// Replies with a fixed text and records the request it received.

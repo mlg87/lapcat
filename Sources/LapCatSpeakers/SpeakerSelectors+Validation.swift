@@ -32,7 +32,7 @@ extension SpeakerSelectors {
             + selectors.participants.map { ("participants", $0.pattern) }
             + selectors.activeSpeaker.map { ("activeSpeaker", $0.pattern) }
             + selectors.selfName.map { ("selfName", $0.pattern) }
-        for case let (field, pattern?) in patterns where (try? NSRegularExpression(pattern: pattern)) == nil {
+        for case (let field, let pattern?) in patterns where (try? NSRegularExpression(pattern: pattern)) == nil {
             throw .invalidPattern(field: field, pattern: pattern)
         }
         return selectors

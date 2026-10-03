@@ -224,7 +224,11 @@ actor PostMeetingPipeline {
         Paths.standard.audio(meetingID: meetingID).appendingPathComponent("diarization.json")
     }
 
-    private struct CachedTurn: Codable { var startMs: Int; var endMs: Int; var cluster: String }
+    private struct CachedTurn: Codable {
+        var startMs: Int
+        var endMs: Int
+        var cluster: String
+    }
 
     private func diarize(meetingID: String) async throws {
         let cache = diarizationCache(meetingID)

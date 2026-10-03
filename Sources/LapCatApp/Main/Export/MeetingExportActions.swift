@@ -1,7 +1,7 @@
 import AppKit
 import LapCatCore
-import os
 import UniformTypeIdentifiers
+import os
 
 /// The Export menu's actions: copy notes to the pasteboard, or save the meeting document or its
 /// transcript through a save panel. Failures are returned as a message for the caller to show.

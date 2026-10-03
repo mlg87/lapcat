@@ -1,6 +1,7 @@
 import Foundation
 import LapCatCore
 import Testing
+
 @testable import LapCatLLM
 
 /// Scripted provider: answers by system prompt, records every request.
