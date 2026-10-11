@@ -170,7 +170,7 @@ public final class DetectionCoordinator: NSObject, UNUserNotificationCenterDeleg
         dependencies.notifier.removeDelivered(ids: [prompt.id])
         Task {
             do {
-                try await session.startNewNote(
+                _ = try await session.startNewNote(
                     title: prompt.calendarEvent?.title, source: prompt.source,
                     startedBy: .prompt, calendarEvent: prompt.calendarEvent)
                 autoStop = AutoStopTracker()

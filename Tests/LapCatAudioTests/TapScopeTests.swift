@@ -51,4 +51,14 @@ import Testing
         #expect(TapScope.forApp(bundleID: "us.zoom.xos", pid: 4242, in: arcSilent) == nil)
         #expect(TapScope.forApp(bundleID: nil, pid: nil, in: arcSilent) == nil)
     }
+
+    @Test func zoomMainAndHelpersAreTapped() {
+        let processes = [
+            process(1001, pid: 500, bundleID: "us.zoom.xos", output: true),
+            process(1002, pid: 501, bundleID: "us.zoom.xos.helper", output: true),
+            process(1003, pid: 700, bundleID: "com.spotify.client", output: true),
+        ]
+        let scope = TapScope.forApp(bundleID: "us.zoom.xos", pid: 500, in: processes)
+        #expect(scope == .app(objectIDs: [1001, 1002], appPID: 500))
+    }
 }

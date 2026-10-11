@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import LapCatSpeakers
 
-/// `lapcat-dev axdump <bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--observe [selectors.json]]`
+/// `lapcat-dev axdump <bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--json <dir>] [--observe [selectors.json]]`
 ///
 /// Prints the AX tree (role, subrole, title, description, value, identifier, URL, frame) of the app's
 /// windows. With an interval it re-dumps until interrupted (or N dumps), prefixing lines that are new
@@ -10,11 +10,14 @@ import LapCatSpeakers
 /// when someone speaks stands out. Chromium browsers get `AXEnhancedUserInterface` /
 /// `AXManualAccessibility` set first so web content is exposed.
 ///
+/// `--json <dir>` also writes each dump as `<dir>/NNN.json` (`[AXNodeSnapshot]`, one per window, frames
+/// removed): the fixture format the speaker replay tests load (#60).
+///
 /// `--observe` instead runs the Zoom/Meet adapter for the bundle id (compiled selectors, or the JSON
 /// file given) and prints each `SpeakerObservation`, to check selectors against a live call.
 enum AXDump {
     static let usage =
-        "usage: lapcat-dev axdump <bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--observe [selectors.json]]"
+        "usage: lapcat-dev axdump <bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--json <dir>] [--observe [selectors.json]]"
 
     static func run(_ arguments: [String]) async -> Int32 {
         var bundleID: String?
@@ -24,6 +27,7 @@ enum AXDump {
         var timeout: Float = 0.5
         var observe = false
         var selectorsFile: String?
+        var jsonDirectory: URL?
         var iterator = arguments.makeIterator()
         while let argument = iterator.next() {
             switch argument {
@@ -32,6 +36,7 @@ enum AXDump {
             case "--count": count = iterator.next().flatMap(Int.init) ?? count
             case "--timeout": timeout = iterator.next().flatMap(Float.init) ?? timeout
             case "--observe": observe = true
+            case "--json": jsonDirectory = iterator.next().map { URL(fileURLWithPath: $0, isDirectory: true) }
             default:
                 if argument.hasSuffix(".json") { selectorsFile = argument } else { bundleID = argument }
             }
@@ -39,6 +44,10 @@ enum AXDump {
         guard let bundleID else {
             FileHandle.standardError.write(Data((usage + "\n").utf8))
             return 64
+        }
+        if let jsonDirectory, !isWritableDirectory(jsonDirectory) {
+            FileHandle.standardError.write(Data("cannot write \(jsonDirectory.path)\n".utf8))
+            return 1
         }
 
         print("AXIsProcessTrusted: \(AXElement.isProcessTrusted)")
@@ -75,8 +84,20 @@ enum AXDump {
         while iteration < count {
             iteration += 1
             let start = ContinuousClock.now
-            let lines = await queue.run { [depth] in dumpLines(pid: pid, depth: depth) }
+            let trees = await queue.run { [depth] in captureWindows(pid: pid, depth: depth) }
             let elapsed = start.duration(to: .now)
+            let lines = dumpLines(trees)
+            if let jsonDirectory {
+                let file = jsonDirectory.appendingPathComponent(String(format: "%03d.json", iteration))
+                do {
+                    let encoder = JSONEncoder()
+                    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                    try encoder.encode(trees.map(withoutFrames)).write(to: file, options: .atomic)
+                } catch {
+                    FileHandle.standardError.write(Data("cannot write \(jsonDirectory.path)\n".utf8))
+                    return 1
+                }
+            }
             print(
                 "\n=== dump \(iteration) · \(lines.count) elements · \(elapsed.formatted(.units(allowed: [.milliseconds]))) ==="
             )
@@ -123,10 +144,27 @@ enum AXDump {
         return 0
     }
 
-    private static func dumpLines(pid: pid_t, depth: Int) -> [String] {
+    private static func captureWindows(pid: pid_t, depth: Int) -> [AXNodeSnapshot] {
+        AXElement.application(pid: pid).allWindows.map { AXNodeSnapshot.capture($0, depth: depth, maxNodes: 20_000) }
+    }
+
+    /// Frames change with window placement and bloat fixtures; selectors never read them.
+    private static func withoutFrames(_ node: AXNodeSnapshot) -> AXNodeSnapshot {
+        var copy = node
+        copy.frame = nil
+        copy.children = node.children.map(withoutFrames)
+        return copy
+    }
+
+    private static func isWritableDirectory(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+            && FileManager.default.isWritableFile(atPath: url.path)
+    }
+
+    private static func dumpLines(_ trees: [AXNodeSnapshot]) -> [String] {
         var lines: [String] = []
-        for (index, window) in AXElement.application(pid: pid).allWindows.enumerated() {
-            let tree = AXNodeSnapshot.capture(window, depth: depth, maxNodes: 20_000)
+        for (index, tree) in trees.enumerated() {
             func visit(_ node: AXNodeSnapshot, path: String, level: Int) {
                 lines.append(String(repeating: "  ", count: level) + "\(path) " + describe(node))
                 for (childIndex, child) in node.children.enumerated() {
