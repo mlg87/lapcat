@@ -303,6 +303,8 @@ LapCat tries the providers in this order. If a provider is not available, LapCat
 
 - LapCat can read speaker names from Zoom and Google Meet through the Accessibility permission. Keep the Meet tab visible for the best result.
 - Zoom marks the person who speaks only when three or more people are in the call. In a call with one other person, LapCat gives all of the other side's speech that person's name.
+- For this 1:1 naming, your **Display name** in **Settings → General** must be the same as your name in Zoom. LapCat uses the display name to find you among the participants that Zoom shows. If the two names are different, LapCat counts you as a second person, and the other side's speech keeps a "Speaker N" label.
+- The built-in Zoom selectors match the labels of Zoom 7.1.9. If a newer Zoom version changes its labels, compare its tree with `swift run lapcat-dev axdump us.zoom.xos`.
 - Without names, LapCat labels speakers "Speaker 1", "Speaker 2" and so on. You can rename them.
 - **Settings → Speakers** has editable selector JSON for Zoom and Meet, with **Save**, **Revert** and **Restore built-in**.
 
@@ -320,7 +322,7 @@ Each tab has a table. Click a summary line to show the table.
 
 | Control | Default | Effect |
 | --- | --- | --- |
-| `Display name` | Your macOS full name | The name for your own ("Me") lines in transcripts and notes. |
+| `Display name` | Your macOS full name | The name for your own ("Me") lines in transcripts and notes. LapCat also uses it to find you among the participants that Zoom shows. Use the same name as in Zoom (see [Speakers](#speakers)). |
 | Global shortcuts | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>N</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>P</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>E</kbd>, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>L</kbd> | Click a shortcut. Then type a new key combination with one modifier or more. <kbd>Esc</kbd> cancels. |
 | Remind me to tell participants when a recording starts | On | Shows the consent banner during a recording. |
 | Disclosure message | "Heads up: I'm taking AI notes for this meeting with a local app on my Mac. Tell me if you'd rather I didn't." | The text that **Copy disclosure** copies. |
@@ -557,6 +559,9 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 ### Zoom end-to-end run
 
 `scripts/zoom-e2e.sh` checks the Zoom path with a real call and no other person. The script opens your meeting in the Zoom desktop client. Two Zoom Meeting SDK bots join in headless Chromium. Each bot then speaks one half of a script that `say` generates, one after the other. The run needs two bots because Zoom marks the person who speaks only when three or more people are in the call. The script then quits Zoom and waits for auto-stop and the post-meeting pipeline. It writes a report to `/tmp/lapcat-zoom-e2e/<time>/` and exits 1 when a check fails.
+
+> [!NOTE]
+> The harness has not run against a real Zoom call yet, because the first run needs Meeting SDK credentials (issue #61). The Zoom fixtures in `Tests/` come from a manual call with three people in Zoom 7.1.9, not from this harness.
 
 | Check | Passes when |
 | --- | --- |
