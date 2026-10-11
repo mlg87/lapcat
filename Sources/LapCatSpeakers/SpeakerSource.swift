@@ -27,59 +27,14 @@ public protocol SpeakerSource: Sendable {
     func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation>
 }
 
-/// Shared polling loop for selector-driven adapters.
-struct AXSpeakerPoller: Sendable {
-    let name: String
-    let selectors: SpeakerSelectors
-    let enableWebAccessibility: Bool
-    let queue: AXQueue
+/// Reads the accessibility subtrees an adapter applies its selectors to. Runs on the `AXQueue`.
+/// Tests and fixture replays pass recorded trees instead of the live app's (#60).
+public typealias AXTreeProvider = @Sendable (_ pid: pid_t, _ selectors: SpeakerSelectors) -> [AXNodeSnapshot]
 
-    private static let logger = Logger(subsystem: "com.lapcat.app", category: "SpeakerSource")
-    /// Consecutive empty observations after which one "nothing found" line is logged.
-    static let emptyLogAfter: TimeInterval = 30
-
-    func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {
-        let (stream, continuation) = AsyncStream.makeStream(
-            of: SpeakerObservation.self, bufferingPolicy: .bufferingNewest(8))
-        let selectors = selectors
-        let enableWeb = enableWebAccessibility
-        let queue = queue
-        let name = name
-        let task = Task {
-            if enableWeb {
-                _ = await queue.run { AXElement.application(pid: pid).enableWebAccessibility() }
-            }
-            var emptySince: ContinuousClock.Instant?
-            var loggedEmpty = false
-            while !Task.isCancelled {
-                let observation = await queue.run {
-                    selectors.observation(from: Self.roots(pid: pid, selectors: selectors))
-                }
-                continuation.yield(observation)
-                if observation.participants.isEmpty, observation.activeNames.isEmpty {
-                    let since = emptySince ?? .now
-                    emptySince = since
-                    if !loggedEmpty, since.duration(to: .now) >= .seconds(Self.emptyLogAfter) {
-                        loggedEmpty = true
-                        Self.logger.notice(
-                            "\(name, privacy: .public): no speaker elements found for \(Int(Self.emptyLogAfter)) s (pid \(pid))"
-                        )
-                    }
-                } else {
-                    emptySince = nil
-                    loggedEmpty = false
-                }
-                try? await Task.sleep(for: .seconds(interval))
-            }
-            continuation.finish()
-        }
-        continuation.onTermination = { _ in task.cancel() }
-        return stream
-    }
-
+public enum AXTreeCapture {
     /// Captured subtrees the selectors apply to: matching web areas if configured and found,
     /// else the windows whose title matches (all windows when no title pattern is set).
-    static func roots(pid: pid_t, selectors: SpeakerSelectors) -> [AXNodeSnapshot] {
+    public static func roots(pid: pid_t, selectors: SpeakerSelectors) -> [AXNodeSnapshot] {
         let windows = AXElement.application(pid: pid).allWindows
         let titleRegex = selectors.windowTitlePattern.flatMap { try? NSRegularExpression(pattern: $0) }
         if let pattern = selectors.webAreaURLPattern, let urlRegex = try? NSRegularExpression(pattern: pattern) {
@@ -106,6 +61,59 @@ struct AXSpeakerPoller: Sendable {
     }
 }
 
+/// Shared polling loop for selector-driven adapters.
+struct AXSpeakerPoller: Sendable {
+    let name: String
+    let selectors: SpeakerSelectors
+    let enableWebAccessibility: Bool
+    let queue: AXQueue
+    let trees: AXTreeProvider
+
+    private static let logger = Logger(subsystem: "com.lapcat.app", category: "SpeakerSource")
+    /// Consecutive empty observations after which one "nothing found" line is logged.
+    static let emptyLogAfter: TimeInterval = 30
+
+    func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {
+        let (stream, continuation) = AsyncStream.makeStream(
+            of: SpeakerObservation.self, bufferingPolicy: .bufferingNewest(8))
+        let selectors = selectors
+        let enableWeb = enableWebAccessibility
+        let queue = queue
+        let name = name
+        let trees = trees
+        let task = Task {
+            if enableWeb {
+                _ = await queue.run { AXElement.application(pid: pid).enableWebAccessibility() }
+            }
+            var emptySince: ContinuousClock.Instant?
+            var loggedEmpty = false
+            while !Task.isCancelled {
+                let observation = await queue.run {
+                    selectors.observation(from: trees(pid, selectors))
+                }
+                continuation.yield(observation)
+                if observation.participants.isEmpty, observation.activeNames.isEmpty {
+                    let since = emptySince ?? .now
+                    emptySince = since
+                    if !loggedEmpty, since.duration(to: .now) >= .seconds(Self.emptyLogAfter) {
+                        loggedEmpty = true
+                        Self.logger.notice(
+                            "\(name, privacy: .public): no speaker elements found for \(Int(Self.emptyLogAfter)) s (pid \(pid))"
+                        )
+                    }
+                } else {
+                    emptySince = nil
+                    loggedEmpty = false
+                }
+                try? await Task.sleep(for: .seconds(interval))
+            }
+            continuation.finish()
+        }
+        continuation.onTermination = { _ in task.cancel() }
+        return stream
+    }
+}
+
 /// Zoom desktop client. Selector defaults are unverified until the axdump spike (lc-6bq) records a
 /// live call; pass `SpeakerSelectors.decode(json:fallback:)` output to override them.
 public struct ZoomAXAdapter: SpeakerSource {
@@ -113,9 +121,12 @@ public struct ZoomAXAdapter: SpeakerSource {
 
     private let poller: AXSpeakerPoller
 
-    public init(selectors: SpeakerSelectors = .zoomDefault, queue: AXQueue = .shared) {
+    public init(
+        selectors: SpeakerSelectors = .zoomDefault, queue: AXQueue = .shared,
+        trees: @escaping AXTreeProvider = AXTreeCapture.roots
+    ) {
         poller = AXSpeakerPoller(
-            name: "ZoomAXAdapter", selectors: selectors, enableWebAccessibility: false, queue: queue)
+            name: "ZoomAXAdapter", selectors: selectors, enableWebAccessibility: false, queue: queue, trees: trees)
     }
 
     public func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {
@@ -134,9 +145,12 @@ public struct MeetAXAdapter: SpeakerSource {
 
     private let poller: AXSpeakerPoller
 
-    public init(selectors: SpeakerSelectors = .meetDefault, queue: AXQueue = .shared) {
+    public init(
+        selectors: SpeakerSelectors = .meetDefault, queue: AXQueue = .shared,
+        trees: @escaping AXTreeProvider = AXTreeCapture.roots
+    ) {
         poller = AXSpeakerPoller(
-            name: "MeetAXAdapter", selectors: selectors, enableWebAccessibility: true, queue: queue)
+            name: "MeetAXAdapter", selectors: selectors, enableWebAccessibility: true, queue: queue, trees: trees)
     }
 
     public func observe(pid: pid_t, interval: TimeInterval) -> AsyncStream<SpeakerObservation> {

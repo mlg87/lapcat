@@ -121,6 +121,12 @@ public struct AXElement: @unchecked Sendable, Hashable {
         return enhanced == .success || manual == .success
     }
 
+    /// Performs `AXPress` (clicks a button); `lapcat-dev zoom-e2e` uses it to answer Zoom's join dialogs.
+    @discardableResult
+    public func press() -> Bool {
+        AXUIElementPerformAction(ref, kAXPressAction as CFString) == .success
+    }
+
     /// Snapshot of this element's text attributes, used by selectors and dumps.
     public func snapshot() -> AXNodeSnapshot {
         AXNodeSnapshot(

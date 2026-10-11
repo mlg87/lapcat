@@ -543,7 +543,7 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 | `tap-probe` | `<bundle-id>\|--system <seconds> <out-dir> [--voice-processing]` | Records the microphone and system audio. Prints the RMS for each second and the file formats. |
 | `llm-probe` | `claude-cli\|anthropic-api\|local [--model M] [--gguf PATH] [--stream] "prompt"` | Sends one request to an LLM provider. Prints the raw and parsed reply. |
 | `diarize-bench` | `<audio-file>` | Prints the diarization time and the speaker turns. |
-| `axdump` | `<bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--observe [selectors.json]]` | Prints the accessibility tree of an app. `--observe` prints the speaker observations of the Zoom or Meet adapter. |
+| `axdump` | `<bundle-id> [--depth 12] [--interval 0.5] [--count N] [--timeout 0.5] [--json <dir>] [--observe [selectors.json]]` | Prints the accessibility tree of an app. `--json` also writes each dump to `<dir>/NNN.json` (the fixture format of the speaker replay tests). The directory must exist. `--observe` prints the speaker observations of the Zoom or Meet adapter. |
 | `enhance-demo` | `[--template ID] [--model M]` | Enhances a sample meeting through the Claude CLI. |
 | `templates` | — | Lists the built-in templates and their resource bundle. |
 | `detect-watch` | `[bundle-id…\|*]` | Prints microphone activity of meeting apps until you press <kbd>Ctrl</kbd><kbd>C</kbd>. Without arguments, it watches the default app list. `*` watches all processes. |
