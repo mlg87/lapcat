@@ -66,4 +66,23 @@ import os
         #expect(PostMeetingPipeline.namedSource(forBundleID: "com.google.Chrome") == .meetAX)
         #expect(PostMeetingPipeline.namedSource(forBundleID: nil) == .meetAX)
     }
+
+    private func participant(_ name: String, _ source: ParticipantSource, isMe: Bool = false) -> Participant {
+        Participant(meetingID: "m1", displayName: name, source: source, isMe: isMe)
+    }
+
+    @Test func oneOnOneIsExactlyOneOtherPersonFromTheMeetingApp() {
+        let me = participant("Mason", .manual, isMe: true)
+        let priya = participant("Priya Shah", .zoomAX)
+        func sole(_ others: [Participant]) -> String? {
+            PostMeetingPipeline.soleRemoteName(participants: [me] + others, meName: "Mason", source: .zoomAX)
+        }
+        #expect(sole([priya]) == "Priya Shah")
+        // The user's own tile, read while they were alone, is not a second person.
+        #expect(sole([priya, participant("Mason", .zoomAX)]) == "Priya Shah")
+        // Calendar attendees and diarization clusters are not people the meeting app showed.
+        #expect(sole([priya, participant("Tom Lee", .calendar), participant("Speaker 1", .cluster)]) == "Priya Shah")
+        #expect(sole([priya, participant("Tom Lee", .zoomAX)]) == nil)
+        #expect(sole([]) == nil)
+    }
 }

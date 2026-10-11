@@ -1,0 +1,1683 @@
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "role": "AXImage"
+          },
+          {
+            "children": [],
+            "description": "Priya Shah",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Priya Shah, Computer audio unmuted, Video off",
+        "role": "AXTabGroup"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "role": "AXImage"
+          },
+          {
+            "children": [],
+            "description": "Tom Lee",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Tom Lee, Computer audio unmuted, Video off, active speaker",
+        "role": "AXTabGroup"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Unmute my audio",
+                                                                                    "identifier": "audio",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Audio options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "Unmute my audio",
+                                                                                "identifier": "audio",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "Audio options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "Unmute my audio",
+                                                                            "identifier": "audio",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "Audio options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "Unmute my audio",
+                                                                        "identifier": "audio",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "Audio options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "Unmute my audio",
+                                                                    "identifier": "audio",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "Audio options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "Unmute my audio",
+                                                                "identifier": "audio",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "Audio options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "Unmute my audio",
+                                                            "identifier": "audio",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "Audio options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "Unmute my audio",
+                                                        "identifier": "audio",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "Audio options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "Unmute my audio",
+                                                    "identifier": "audio",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "Audio options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "Unmute my audio",
+                                                "identifier": "audio",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "Audio options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "Unmute my audio",
+                                            "identifier": "audio",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "Audio options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "Unmute my audio",
+                                        "identifier": "audio",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "Audio options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "Unmute my audio",
+                                    "identifier": "audio",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Audio options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "Unmute my audio",
+                                "identifier": "audio",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Audio options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "Unmute my audio",
+                            "identifier": "audio",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Audio options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "Unmute my audio",
+                        "identifier": "audio",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Audio options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "Unmute my audio",
+                    "identifier": "audio",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "Audio options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "Unmute my audio",
+                "identifier": "audio",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "Audio options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "Unmute my audio",
+            "identifier": "audio",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "Audio options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Unmute my audio",
+        "identifier": "audio",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Audio options",
+        "role": "AXButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Start video",
+                                                                                    "identifier": "video",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Video options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "Start video",
+                                                                                "identifier": "video",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "Video options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "Start video",
+                                                                            "identifier": "video",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "Video options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "Start video",
+                                                                        "identifier": "video",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "Video options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "Start video",
+                                                                    "identifier": "video",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "Video options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "Start video",
+                                                                "identifier": "video",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "Video options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "Start video",
+                                                            "identifier": "video",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "Video options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "Start video",
+                                                        "identifier": "video",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "Video options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "Start video",
+                                                    "identifier": "video",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "Video options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "Start video",
+                                                "identifier": "video",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "Video options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "Start video",
+                                            "identifier": "video",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "Video options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "Start video",
+                                        "identifier": "video",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "Video options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "Start video",
+                                    "identifier": "video",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Video options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "Start video",
+                                "identifier": "video",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Video options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "Start video",
+                            "identifier": "video",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Video options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "Start video",
+                        "identifier": "video",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Video options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "Start video",
+                    "identifier": "video",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "Video options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "Start video",
+                "identifier": "video",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "Video options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "Start video",
+            "identifier": "video",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "Video options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Start video",
+        "identifier": "video",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Video options",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "End",
+        "identifier": "leave",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Host tools, open panel",
+        "identifier": "hosttools",
+        "role": "AXButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Close participants panel, opened, 3 participants",
+                                                                                    "identifier": "participant",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Participants options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "Close participants panel, opened, 3 participants",
+                                                                                "identifier": "participant",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "Participants options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "Close participants panel, opened, 3 participants",
+                                                                            "identifier": "participant",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "Participants options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "Close participants panel, opened, 3 participants",
+                                                                        "identifier": "participant",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "Participants options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "Close participants panel, opened, 3 participants",
+                                                                    "identifier": "participant",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "Participants options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "Close participants panel, opened, 3 participants",
+                                                                "identifier": "participant",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "Participants options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "Close participants panel, opened, 3 participants",
+                                                            "identifier": "participant",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "Participants options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "Close participants panel, opened, 3 participants",
+                                                        "identifier": "participant",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "Participants options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "Close participants panel, opened, 3 participants",
+                                                    "identifier": "participant",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "Participants options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "Close participants panel, opened, 3 participants",
+                                                "identifier": "participant",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "Participants options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "Close participants panel, opened, 3 participants",
+                                            "identifier": "participant",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "Participants options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "Close participants panel, opened, 3 participants",
+                                        "identifier": "participant",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "Participants options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "Close participants panel, opened, 3 participants",
+                                    "identifier": "participant",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Participants options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "Close participants panel, opened, 3 participants",
+                                "identifier": "participant",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Participants options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "Close participants panel, opened, 3 participants",
+                            "identifier": "participant",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Participants options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "Close participants panel, opened, 3 participants",
+                        "identifier": "participant",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Participants options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "Close participants panel, opened, 3 participants",
+                    "identifier": "participant",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "Participants options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "Close participants panel, opened, 3 participants",
+                "identifier": "participant",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "Participants options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "Close participants panel, opened, 3 participants",
+            "identifier": "participant",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "Participants options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Close participants panel, opened, 3 participants",
+        "identifier": "participant",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Participants options",
+        "role": "AXButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Open chat panel ",
+                                                                                    "identifier": "chat",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Chat options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "Open chat panel ",
+                                                                                "identifier": "chat",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "Chat options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "Open chat panel ",
+                                                                            "identifier": "chat",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "Chat options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "Open chat panel ",
+                                                                        "identifier": "chat",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "Chat options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "Open chat panel ",
+                                                                    "identifier": "chat",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "Chat options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "Open chat panel ",
+                                                                "identifier": "chat",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "Chat options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "Open chat panel ",
+                                                            "identifier": "chat",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "Chat options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "Open chat panel ",
+                                                        "identifier": "chat",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "Chat options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "Open chat panel ",
+                                                    "identifier": "chat",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "Chat options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "Open chat panel ",
+                                                "identifier": "chat",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "Chat options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "Open chat panel ",
+                                            "identifier": "chat",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "Chat options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "Open chat panel ",
+                                        "identifier": "chat",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "Chat options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "Open chat panel ",
+                                    "identifier": "chat",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Chat options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "Open chat panel ",
+                                "identifier": "chat",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Chat options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "Open chat panel ",
+                            "identifier": "chat",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Chat options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "Open chat panel ",
+                        "identifier": "chat",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Chat options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "Open chat panel ",
+                    "identifier": "chat",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "Chat options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "Open chat panel ",
+                "identifier": "chat",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "Chat options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "Open chat panel ",
+            "identifier": "chat",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "Chat options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Open chat panel ",
+        "identifier": "chat",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Chat options",
+        "role": "AXButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Share",
+                                                                                    "identifier": "share",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "Share options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "Share",
+                                                                                "identifier": "share",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "Share options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "Share",
+                                                                            "identifier": "share",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "Share options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "Share",
+                                                                        "identifier": "share",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "Share options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "Share",
+                                                                    "identifier": "share",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "Share options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "Share",
+                                                                "identifier": "share",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "Share options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "Share",
+                                                            "identifier": "share",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "Share options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "Share",
+                                                        "identifier": "share",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "Share options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "Share",
+                                                    "identifier": "share",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "Share options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "Share",
+                                                "identifier": "share",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "Share options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "Share",
+                                            "identifier": "share",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "Share options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "Share",
+                                        "identifier": "share",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "Share options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "Share",
+                                    "identifier": "share",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Share options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "Share",
+                                "identifier": "share",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Share options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "Share",
+                            "identifier": "share",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Share options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "Share",
+                        "identifier": "share",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Share options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "Share",
+                    "identifier": "share",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "Share options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "Share",
+                "identifier": "share",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "Share options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "Share",
+            "identifier": "share",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "Share options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "Share",
+        "identifier": "share",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Share options",
+        "role": "AXButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "children": [
+                                          {
+                                            "children": [
+                                              {
+                                                "children": [
+                                                  {
+                                                    "children": [
+                                                      {
+                                                        "children": [
+                                                          {
+                                                            "children": [
+                                                              {
+                                                                "children": [
+                                                                  {
+                                                                    "children": [
+                                                                      {
+                                                                        "children": [
+                                                                          {
+                                                                            "children": [
+                                                                              {
+                                                                                "children": [
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "React",
+                                                                                    "identifier": "react",
+                                                                                    "role": "AXButton"
+                                                                                  },
+                                                                                  {
+                                                                                    "children": [],
+                                                                                    "description": "React options",
+                                                                                    "role": "AXButton"
+                                                                                  }
+                                                                                ],
+                                                                                "description": "React",
+                                                                                "identifier": "react",
+                                                                                "role": "AXButton"
+                                                                              },
+                                                                              {
+                                                                                "children": [],
+                                                                                "description": "React options",
+                                                                                "role": "AXButton"
+                                                                              }
+                                                                            ],
+                                                                            "description": "React",
+                                                                            "identifier": "react",
+                                                                            "role": "AXButton"
+                                                                          },
+                                                                          {
+                                                                            "children": [],
+                                                                            "description": "React options",
+                                                                            "role": "AXButton"
+                                                                          }
+                                                                        ],
+                                                                        "description": "React",
+                                                                        "identifier": "react",
+                                                                        "role": "AXButton"
+                                                                      },
+                                                                      {
+                                                                        "children": [],
+                                                                        "description": "React options",
+                                                                        "role": "AXButton"
+                                                                      }
+                                                                    ],
+                                                                    "description": "React",
+                                                                    "identifier": "react",
+                                                                    "role": "AXButton"
+                                                                  },
+                                                                  {
+                                                                    "children": [],
+                                                                    "description": "React options",
+                                                                    "role": "AXButton"
+                                                                  }
+                                                                ],
+                                                                "description": "React",
+                                                                "identifier": "react",
+                                                                "role": "AXButton"
+                                                              },
+                                                              {
+                                                                "children": [],
+                                                                "description": "React options",
+                                                                "role": "AXButton"
+                                                              }
+                                                            ],
+                                                            "description": "React",
+                                                            "identifier": "react",
+                                                            "role": "AXButton"
+                                                          },
+                                                          {
+                                                            "children": [],
+                                                            "description": "React options",
+                                                            "role": "AXButton"
+                                                          }
+                                                        ],
+                                                        "description": "React",
+                                                        "identifier": "react",
+                                                        "role": "AXButton"
+                                                      },
+                                                      {
+                                                        "children": [],
+                                                        "description": "React options",
+                                                        "role": "AXButton"
+                                                      }
+                                                    ],
+                                                    "description": "React",
+                                                    "identifier": "react",
+                                                    "role": "AXButton"
+                                                  },
+                                                  {
+                                                    "children": [],
+                                                    "description": "React options",
+                                                    "role": "AXButton"
+                                                  }
+                                                ],
+                                                "description": "React",
+                                                "identifier": "react",
+                                                "role": "AXButton"
+                                              },
+                                              {
+                                                "children": [],
+                                                "description": "React options",
+                                                "role": "AXButton"
+                                              }
+                                            ],
+                                            "description": "React",
+                                            "identifier": "react",
+                                            "role": "AXButton"
+                                          },
+                                          {
+                                            "children": [],
+                                            "description": "React options",
+                                            "role": "AXButton"
+                                          }
+                                        ],
+                                        "description": "React",
+                                        "identifier": "react",
+                                        "role": "AXButton"
+                                      },
+                                      {
+                                        "children": [],
+                                        "description": "React options",
+                                        "role": "AXButton"
+                                      }
+                                    ],
+                                    "description": "React",
+                                    "identifier": "react",
+                                    "role": "AXButton"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "React options",
+                                    "role": "AXButton"
+                                  }
+                                ],
+                                "description": "React",
+                                "identifier": "react",
+                                "role": "AXButton"
+                              },
+                              {
+                                "children": [],
+                                "description": "React options",
+                                "role": "AXButton"
+                              }
+                            ],
+                            "description": "React",
+                            "identifier": "react",
+                            "role": "AXButton"
+                          },
+                          {
+                            "children": [],
+                            "description": "React options",
+                            "role": "AXButton"
+                          }
+                        ],
+                        "description": "React",
+                        "identifier": "react",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "React options",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "description": "React",
+                    "identifier": "react",
+                    "role": "AXButton"
+                  },
+                  {
+                    "children": [],
+                    "description": "React options",
+                    "role": "AXButton"
+                  }
+                ],
+                "description": "React",
+                "identifier": "react",
+                "role": "AXButton"
+              },
+              {
+                "children": [],
+                "description": "React options",
+                "role": "AXButton"
+              }
+            ],
+            "description": "React",
+            "identifier": "react",
+            "role": "AXButton"
+          },
+          {
+            "children": [],
+            "description": "React options",
+            "role": "AXButton"
+          }
+        ],
+        "description": "React",
+        "identifier": "react",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "React options",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "More meeting controls, collapsed",
+        "identifier": "more",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Meeting  40-minutes",
+        "identifier": "MeetingTopBarInfoButton",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Open Notes pop-up; My Notes is off",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Open Zoom AI pop-up; Zoom AI is off",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "View options, Gallery",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Open meeting security popup",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Upgrade Zoom",
+        "identifier": "upgrade button",
+        "role": "AXButton"
+      }
+    ],
+    "identifier": "zm.meeting.window.main",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "title": "Zoom Meeting  40-minutes"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "role": "AXStaticText",
+                        "value": "Alex Rivera (Host, me)"
+                      },
+                      {
+                        "children": [],
+                        "description": "More options for Alex Rivera, collapsed",
+                        "role": "AXMenuButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Start video",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Unmute",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "identifier": "ZMHCTableItemType_PANELIST",
+                    "role": "AXCell"
+                  }
+                ],
+                "role": "AXRow",
+                "subrole": "AXTableRow"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "role": "AXStaticText",
+                        "value": "Priya Shah"
+                      },
+                      {
+                        "children": [],
+                        "description": "More options for Priya Shah, collapsed",
+                        "role": "AXMenuButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Ask to start video",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Mute",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "identifier": "ZMHCTableItemType_PANELIST",
+                    "role": "AXCell"
+                  }
+                ],
+                "role": "AXRow",
+                "subrole": "AXTableRow"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "role": "AXStaticText",
+                        "value": "Tom Lee (he/him)"
+                      },
+                      {
+                        "children": [],
+                        "description": "More options for Tom Lee, collapsed",
+                        "role": "AXMenuButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Ask to start video",
+                        "role": "AXButton"
+                      },
+                      {
+                        "children": [],
+                        "description": "Mute",
+                        "role": "AXButton"
+                      }
+                    ],
+                    "identifier": "ZMHCTableItemType_PANELIST",
+                    "role": "AXCell"
+                  }
+                ],
+                "role": "AXRow",
+                "subrole": "AXTableRow"
+              }
+            ],
+            "description": "Participants list",
+            "role": "AXOutline"
+          }
+        ],
+        "role": "AXScrollArea"
+      },
+      {
+        "children": [],
+        "description": "Invite",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "Mute all",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "description": "More options to manage all participants",
+        "role": "AXButton"
+      },
+      {
+        "children": [],
+        "role": "AXButton",
+        "subrole": "AXCloseButton"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "role": "AXGroup"
+              }
+            ],
+            "role": "AXGroup"
+          }
+        ],
+        "role": "AXButton",
+        "subrole": "AXZoomButton"
+      },
+      {
+        "children": [],
+        "role": "AXButton",
+        "subrole": "AXMinimizeButton"
+      },
+      {
+        "children": [],
+        "role": "AXStaticText",
+        "value": "Participants (3)"
+      }
+    ],
+    "role": "AXWindow",
+    "subrole": "AXSystemDialog",
+    "title": "Participants (3)"
+  }
+]

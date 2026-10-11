@@ -282,25 +282,41 @@ public actor PostMeetingPipeline {
             .map { DiarizedTurn(startMs: $0.startMs, endMs: $0.endMs, cluster: $0.cluster) }
         let segments = try await store.segments(meetingID: meetingID, pass: .final)
         let events = try await store.speakerEvents(meetingID: meetingID)
-        let me = try await store.participants(meetingID: meetingID).first(where: \.isMe)?.displayName ?? config.meName
-        let rows = NameMapper.assign(segments: segments, turns: turns, events: events, meName: me).map { assignment in
+        let participants = try await store.participants(meetingID: meetingID)
+        let me = participants.first(where: \.isMe)?.displayName ?? config.meName
+        let namedSource = Self.namedSource(forBundleID: meeting.sourceBundleID)
+        let soleRemote = Self.soleRemoteName(participants: participants, meName: me, source: namedSource)
+        let rows = NameMapper.assign(
+            segments: segments, turns: turns, events: events, meName: me, soleRemoteName: soleRemote
+        ).map { assignment in
             let kind: SpeakerAssignmentRow.Kind =
                 switch assignment.basis {
                 case .me: .me
-                case .speakerEvents, .clusterVote: assignment.participantName.map { .named($0) } ?? .unassigned
+                case .speakerEvents, .clusterVote, .soleRemote:
+                    assignment.participantName.map { .named($0) } ?? .unassigned
                 case .cluster: assignment.participantName.map { .cluster($0) } ?? .unassigned
                 case .unassigned: .unassigned
                 }
             return SpeakerAssignmentRow(segmentID: assignment.segmentID, kind: kind, cluster: assignment.cluster)
         }
-        try await store.applySpeakerAssignments(
-            meetingID: meetingID, rows: rows, namedSource: Self.namedSource(forBundleID: meeting.sourceBundleID))
+        try await store.applySpeakerAssignments(meetingID: meetingID, rows: rows, namedSource: namedSource)
     }
 
     /// The participant source for names read from the meeting app's UI: Zoom for any `us.zoom*` app,
     /// else Meet (the only other adapter).
     public static func namedSource(forBundleID bundleID: String?) -> ParticipantSource {
         bundleID?.lowercased().hasPrefix("us.zoom") == true ? .zoomAX : .meetAX
+    }
+
+    /// The one person other than the user that the meeting app showed, when there was exactly one: the
+    /// 1:1 case, where Zoom labels no active speaker (#61). Names equal to the user's are not counted,
+    /// since the user's own tile is read as a participant while they are alone in the call.
+    public static func soleRemoteName(participants: [Participant], meName: String, source: ParticipantSource)
+        -> String?
+    {
+        let remote = Set(
+            participants.filter { !$0.isMe && $0.source == source && $0.displayName != meName }.map(\.displayName))
+        return remote.count == 1 ? remote.first : nil
     }
 
     private func suggestSpeakers(meetingID: String, config: PipelineConfig) async throws {

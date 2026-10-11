@@ -1,0 +1,168 @@
+[
+  {
+    "bundleID": "com.apple.AirPlayXPCHelper",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "com.apple.AirPlayXPCHelper",
+    "objectID": 107,
+    "pid": 160
+  },
+  {
+    "bundleID": "com.apple.mediaremoted",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "com.apple.mediaremoted",
+    "objectID": 108,
+    "pid": 98
+  },
+  {
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "pid 149",
+    "objectID": 109,
+    "pid": 149
+  },
+  {
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "pid 367",
+    "objectID": 110,
+    "pid": 367
+  },
+  {
+    "bundleID": "com.apple.controlcenter",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "ControlCenter",
+    "objectID": 111,
+    "pid": 410
+  },
+  {
+    "bundleID": "com.apple.cmio.ContinuityCaptureAgent",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "ContinuityCaptureAgent",
+    "objectID": 112,
+    "pid": 392
+  },
+  {
+    "bundleID": "com.apple.controlstrip",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "ControlStrip",
+    "objectID": 113,
+    "pid": 443
+  },
+  {
+    "bundleID": "com.apple.universalaccessd",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "universalaccessd",
+    "objectID": 114,
+    "pid": 395
+  },
+  {
+    "bundleID": "com.apple.assistantd",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "assistantd",
+    "objectID": 115,
+    "pid": 432
+  },
+  {
+    "bundleID": "com.apple.CoreSpeech",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "corespeechd",
+    "objectID": 116,
+    "pid": 898
+  },
+  {
+    "bundleID": "us.zoom.caphost",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "caphost",
+    "objectID": 117,
+    "pid": 911
+  },
+  {
+    "bundleID": "us.zoom.xos",
+    "isRunningInput": true,
+    "isRunningOutput": true,
+    "name": "zoom.us",
+    "objectID": 118,
+    "pid": 454
+  },
+  {
+    "bundleID": "com.apple.accessibility.heard",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "heard",
+    "objectID": 122,
+    "pid": 986
+  },
+  {
+    "bundleID": "com.apple.WebKit.GPU",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "com.apple.WebKit.GPU",
+    "objectID": 125,
+    "pid": 1282
+  },
+  {
+    "bundleID": "com.apple.cloudpaird",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "audioaccessoryd",
+    "objectID": 126,
+    "pid": 479
+  },
+  {
+    "bundleID": "com.apple.TelephonyUtilities",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "callservicesd",
+    "objectID": 127,
+    "pid": 449
+  },
+  {
+    "bundleID": "com.apple.avconferenced",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "avconferenced",
+    "objectID": 128,
+    "pid": 1599
+  },
+  {
+    "bundleID": "company.thebrowser.browser.helper",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "Browser Helper",
+    "objectID": 129,
+    "pid": 3315
+  },
+  {
+    "bundleID": "company.thebrowser.browser.helper",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "Browser Helper",
+    "objectID": 130,
+    "pid": 3319
+  },
+  {
+    "bundleID": "com.apple.WebKit.GPU",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "com.apple.WebKit.GPU",
+    "objectID": 132,
+    "pid": 5088
+  },
+  {
+    "bundleID": "com.apple.loginwindow",
+    "isRunningInput": false,
+    "isRunningOutput": false,
+    "name": "loginwindow",
+    "objectID": 133,
+    "pid": 170
+  }
+]
