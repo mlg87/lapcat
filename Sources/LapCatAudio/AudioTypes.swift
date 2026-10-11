@@ -112,4 +112,28 @@ public struct CaptureSummary: Sendable {
     public let usedFallback: Bool
     public let micFile: URL
     public let systemFile: URL
+
+    public init(
+        micDuration: TimeInterval, systemDuration: TimeInterval, usedFallback: Bool, micFile: URL, systemFile: URL
+    ) {
+        self.micDuration = micDuration
+        self.systemDuration = systemDuration
+        self.usedFallback = usedFallback
+        self.micFile = micFile
+        self.systemFile = systemFile
+    }
 }
+
+/// What `SessionController` needs from a capture session; a seam so tests run the session without
+/// Core Audio (#59).
+public protocol AudioCapturing: Sendable {
+    var chunks: AsyncStream<AudioChunk> { get }
+    var levels: AsyncStream<(mic: Float, system: Float)> { get }
+    var events: AsyncStream<CaptureEvent> { get }
+    func start(scope: TapScope, directory: URL, micDeviceUID: String?, voiceProcessing: Bool) async throws
+    func pause() async
+    func resume() async
+    func stop() async -> CaptureSummary
+}
+
+extension CaptureSession: AudioCapturing {}

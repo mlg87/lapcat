@@ -36,10 +36,11 @@ let package = Package(
         .target(name: "LapCatAudio"),
         .target(name: "LapCatLLM", dependencies: ["LapCatCore"]),
         .target(name: "LapCatSpeakers", dependencies: ["LapCatCore"]),
-        .executableTarget(name: "LapCatApp", dependencies: libraries, linkerSettings: rpath),
+        .target(name: "LapCatSession", dependencies: libraries),
+        .executableTarget(name: "LapCatApp", dependencies: libraries + ["LapCatSession"], linkerSettings: rpath),
         .executableTarget(
             name: "lapcat-dev",
-            dependencies: libraries,
+            dependencies: libraries + ["LapCatSession"],
             linkerSettings: rpath + [
                 .unsafeFlags([
                     "-Xlinker", "-sectcreate", "-Xlinker", "__TEXT", "-Xlinker", "__info_plist", "-Xlinker",

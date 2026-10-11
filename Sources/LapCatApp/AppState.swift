@@ -1,4 +1,5 @@
 import LapCatCore
+import LapCatSession
 import LapCatSpeech
 import Observation
 import SwiftUI

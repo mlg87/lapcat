@@ -1,5 +1,6 @@
 import AppKit
 import LapCatCore
+import LapCatSession
 import SwiftUI
 
 /// One meeting: header (title, status, provider, recording controls, Enhance) and either the

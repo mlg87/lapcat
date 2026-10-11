@@ -22,6 +22,16 @@ public struct InputActivity: Sendable, Equatable {
     }
 }
 
+/// What `DetectionCoordinator` needs from the monitor; a seam so tests feed scripted activity (#59).
+public protocol InputActivitySource: AnyObject, Sendable {
+    var activities: AsyncStream<InputActivity> { get }
+    func start()
+    func stop()
+    func setBundleIDs(_ bundleIDs: [String])
+}
+
+extension AudioInputActivityMonitor: InputActivitySource {}
+
 /// Detects meeting apps taking the microphone (Step 9.2) with Core Audio property listeners only
 /// (no polling): one on the system object's process list, and one per process whose bundle id
 /// matches. The HAL does not notify `kAudioProcessPropertyIsRunningInput` itself (observed on

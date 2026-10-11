@@ -1,7 +1,7 @@
 import CoreAudio
 import Foundation
 
-public struct AudioProcessInfo: Sendable, Equatable {
+public struct AudioProcessInfo: Sendable, Equatable, Codable {
     public let objectID: AudioObjectID
     public let pid: pid_t
     public let bundleID: String?

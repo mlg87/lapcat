@@ -6,76 +6,88 @@ import Observation
 import os
 
 /// Where a recording was started from: the detected meeting app, if any.
-struct SessionSource: Sendable {
-    var appName: String
-    var bundleID: String?
-    var pid: pid_t?
+public struct SessionSource: Sendable, Equatable {
+    public var appName: String
+    public var bundleID: String?
+    public var pid: pid_t?
+
+    public init(appName: String, bundleID: String? = nil, pid: pid_t? = nil) {
+        self.appName = appName
+        self.bundleID = bundleID
+        self.pid = pid
+    }
 }
 
 /// Runs one recording at a time: meeting row, dual-channel capture, live transcription,
 /// and hand-off to post-meeting processing when it ends.
 @Observable @MainActor
-final class SessionController {
-    enum State: Equatable {
+public final class SessionController {
+    public enum State: Equatable, Sendable {
         case idle
         case starting
         case recording(meetingID: String, startedAt: Date, paused: Bool)
         case ending(meetingID: String)
     }
 
-    private(set) var state: State = .idle
-    private(set) var levels: (mic: Float, system: Float) = (0, 0)
+    public private(set) var state: State = .idle
+    public private(set) var levels: (mic: Float, system: Float) = (0, 0)
     /// Latest problem worth showing (system audio unavailable, live transcript lagging, …).
-    private(set) var warning: String?
+    public private(set) var warning: String?
     /// Advances once a second while recording, so views showing the elapsed time refresh.
-    private(set) var clock = Date()
+    public private(set) var clock = Date()
+    /// The system channel's tap scope while recording; nil otherwise. The zoom-e2e harness checks it.
+    public private(set) var captureScope: TapScope?
 
     @ObservationIgnored private let store: Store
     @ObservationIgnored private let settings: AppSettings
     @ObservationIgnored private let speech: SpeechServices
     /// Called with the meeting id once the session's rows are written; the post-meeting pipeline.
-    @ObservationIgnored var onEnded: (@MainActor (String) -> Void)?
-    @ObservationIgnored private var capture: CaptureSession?
+    @ObservationIgnored public var onEnded: (@MainActor (String) -> Void)?
+    @ObservationIgnored private let dependencies: SessionDependencies
+    @ObservationIgnored private var capture: (any AudioCapturing)?
     @ObservationIgnored private var transcribers: [Channel: LiveTranscriber] = [:]
     @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     @ObservationIgnored private var pausedTotal: TimeInterval = 0
     @ObservationIgnored private var pausedSince: Date?
     private static let logger = Logger(subsystem: "com.lapcat.app", category: "SessionController")
 
-    init(store: Store, settings: AppSettings, speech: SpeechServices) {
+    public init(
+        store: Store, settings: AppSettings, speech: SpeechServices, dependencies: SessionDependencies = .live
+    ) {
         self.store = store
         self.settings = settings
         self.speech = speech
+        self.dependencies = dependencies
     }
 
-    var meetingID: String? {
+    public var meetingID: String? {
         switch state {
         case .recording(let id, _, _), .ending(let id): id
         case .idle, .starting: nil
         }
     }
 
-    var isPaused: Bool { if case .recording(_, _, true) = state { true } else { false } }
+    public var isPaused: Bool { if case .recording(_, _, true) = state { true } else { false } }
 
     /// Recording time excluding pauses.
-    func elapsed(at now: Date = Date()) -> TimeInterval {
+    public func elapsed(at now: Date = Date()) -> TimeInterval {
         guard case .recording(_, let startedAt, _) = state else { return 0 }
         let pausedNow = pausedSince.map { now.timeIntervalSince($0) } ?? 0
         return max(0, now.timeIntervalSince(startedAt) - pausedTotal - pausedNow)
     }
 
-    var speechConfig: SpeechConfig {
+    public var speechConfig: SpeechConfig {
         SpeechConfig(
             engine: SpeechConfig.EngineChoice(rawValue: settings.sttEngine) ?? .auto,
             whisperLiveModel: settings.sttWhisperLiveModel,
             whisperFinalModel: settings.sttWhisperFinalModel,
             parakeetVersion: settings.sttParakeetVersion,
-            modelsDirectory: Paths.standard.models)
+            modelsDirectory: dependencies.paths.models)
     }
 
     /// Starts a new recording. Returns the meeting id, or nil when one is already running.
     @discardableResult
-    func startNewNote(
+    public func startNewNote(
         title: String? = nil, source: SessionSource? = nil, startedBy: MeetingStartedBy = .manual,
         calendarEvent: CalendarEventInfo? = nil
     ) async throws -> String? {
@@ -112,13 +124,13 @@ final class SessionController {
         try await store.upsertParticipant(
             meetingID: meeting.id, name: settings.userDisplayName, source: .manual, isMe: true)
         // Title and attendees from the overlapping calendar event (nil without Calendar access).
-        if let event = calendarEvent ?? CalendarService().currentOrUpcomingEvent(now: now) {
+        if let event = calendarEvent ?? dependencies.calendarEvent(now) {
             try await store.applyCalendarEvent(event, toMeeting: meeting.id, now: now)
         }
-        let directory = Paths.standard.audio(meetingID: meeting.id)
+        let directory = dependencies.paths.audio(meetingID: meeting.id)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let capture = CaptureSession()
+        let capture = dependencies.makeCapture()
         self.capture = capture
         let hypothesis: TimeInterval? = settings.sttLiveHypothesis ? 2.0 : nil
         let config = speechConfig
@@ -145,12 +157,14 @@ final class SessionController {
                 }
             })
 
+        let scope = tapScope(for: source)
         try await capture.start(
-            scope: tapScope(for: source), directory: directory,
+            scope: scope, directory: directory,
             micDeviceUID: settings.audioInputDeviceUID, voiceProcessing: settings.audioVoiceProcessing)
         pausedTotal = 0
         pausedSince = nil
         warning = nil
+        captureScope = scope
         state = .recording(meetingID: meeting.id, startedAt: now, paused: false)
         startingMeetingID = nil
         startSpeakerRecorder(meetingID: meeting.id, source: source)
@@ -162,11 +176,10 @@ final class SessionController {
         let elapsed: @Sendable () async -> Int = { [weak self] in
             await MainActor.run { Int((self?.elapsed() ?? 0) * 1000) }
         }
-        guard
-            let (recorder, adapter, pid) = SpeakerEventRecorder.make(
-                store: store, meetingID: meetingID, bundleID: source?.bundleID, pid: source?.pid,
-                settings: settings, elapsedMs: elapsed)
+        guard let bundleID = source?.bundleID, let pid = source?.pid,
+            let (adapter, eventSource) = dependencies.speakerSource(bundleID, settings)
         else { return }
+        let recorder = SpeakerEventRecorder(store: store, meetingID: meetingID, source: eventSource, elapsedMs: elapsed)
         speakerRecorder = recorder
         Task { await recorder.start(adapter: adapter, pid: pid) }
     }
@@ -175,11 +188,11 @@ final class SessionController {
 
     private func tapScope(for source: SessionSource?) -> TapScope {
         guard settings.audioTapScope == "app", let source else { return .systemExcludingSelf }
-        return TapScope.forApp(bundleID: source.bundleID, pid: source.pid, in: AudioProcessRegistry.processes())
+        return TapScope.forApp(bundleID: source.bundleID, pid: source.pid, in: dependencies.audioProcesses())
             ?? .systemExcludingSelf
     }
 
-    private func observe(_ capture: CaptureSession) {
+    private func observe(_ capture: any AudioCapturing) {
         let transcribers = transcribers
         tasks.append(
             Task.detached {
@@ -232,7 +245,7 @@ final class SessionController {
         }
     }
 
-    func togglePause() async {
+    public func togglePause() async {
         guard case .recording(let id, let startedAt, let paused) = state, let capture else { return }
         if paused {
             await capture.resume()
@@ -247,7 +260,7 @@ final class SessionController {
 
     /// Stops capture, drains live transcription, records the audio files, and hands the
     /// meeting to post-meeting processing.
-    func end() async {
+    public func end() async {
         guard case .recording(let meetingID, _, _) = state, let capture else { return }
         // Close speaker events while the session clock is still running.
         await speakerRecorder?.stop()
@@ -264,6 +277,7 @@ final class SessionController {
         tasks.removeAll()
         transcribers.removeAll()
         self.capture = nil
+        captureScope = nil
         levels = (0, 0)
 
         do {
@@ -292,3 +306,14 @@ final class SessionController {
         onEnded?(meetingID)
     }
 }
+
+/// What `DetectionCoordinator` drives; a seam so detection tests run without a real recording (#59).
+@MainActor public protocol RecordingSession: AnyObject {
+    var state: SessionController.State { get }
+    func startNewNote(
+        title: String?, source: SessionSource?, startedBy: MeetingStartedBy, calendarEvent: CalendarEventInfo?
+    ) async throws -> String?
+    func end() async
+}
+
+extension SessionController: RecordingSession {}
