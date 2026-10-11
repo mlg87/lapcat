@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/mlg87/lapcat/compare/v0.1.4...v0.1.5) (2026-10-11)
+
+
+### Documentation
+
+* note zoom display-name matching, tested version and harness status ([#65](https://github.com/mlg87/lapcat/issues/65)) ([d9432ce](https://github.com/mlg87/lapcat/commit/d9432cec07c1f61222dd1be17db9bd3956837bb5)), closes [#61](https://github.com/mlg87/lapcat/issues/61)
+
 ## [0.1.4](https://github.com/mlg87/lapcat/compare/v0.1.3...v0.1.4) (2026-10-11)
 
 
