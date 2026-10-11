@@ -11,15 +11,18 @@ import os
         AXNodeSnapshot(role: "AXWindow", title: "Zoom Meeting", children: children)
     }
 
+    // Tile shapes from the Zoom 7.1.9 recordings (Fixtures/zoom-7.1.9-*.json), with the panel's self row.
     private static let talkingTree = window([
-        AXNodeSnapshot(role: "AXRow", description: "Mason Goetz, (Host, me), Computer audio unmuted, Video on"),
-        AXNodeSnapshot(role: "AXRow", description: "Priya Shah, Computer audio unmuted, Video off"),
-        AXNodeSnapshot(role: "AXGroup", description: "Priya Shah is talking"),
+        AXNodeSnapshot(role: "AXStaticText", value: "Mason Goetz (Host, me)"),
+        AXNodeSnapshot(role: "AXTabGroup", description: "Tom Lee, Computer audio unmuted, Video off"),
+        AXNodeSnapshot(
+            role: "AXTabGroup", description: "Priya Shah, Computer audio unmuted, Video off, active speaker"),
     ])
 
     private static let silentTree = window([
-        AXNodeSnapshot(role: "AXRow", description: "Mason Goetz, (Host, me), Computer audio unmuted, Video on"),
-        AXNodeSnapshot(role: "AXRow", description: "Priya Shah, Computer audio muted, Video off"),
+        AXNodeSnapshot(role: "AXStaticText", value: "Mason Goetz (Host, me)"),
+        AXNodeSnapshot(role: "AXTabGroup", description: "Tom Lee, Computer audio unmuted, Video off"),
+        AXNodeSnapshot(role: "AXTabGroup", description: "Priya Shah, Computer audio unmuted, Video off"),
     ])
 
     /// Pops one scripted tree per poll (then empty trees) and counts the polls.
@@ -47,9 +50,10 @@ import os
             if observations.count == 3 { break }
         }
         let talking = SpeakerObservation(
-            activeNames: ["Priya Shah"], participants: ["Mason Goetz", "Priya Shah"], selfName: "Mason Goetz")
+            activeNames: ["Priya Shah"], participants: ["Tom Lee", "Priya Shah", "Mason Goetz"], selfName: "Mason Goetz"
+        )
         let silent = SpeakerObservation(
-            activeNames: [], participants: ["Mason Goetz", "Priya Shah"], selfName: "Mason Goetz")
+            activeNames: [], participants: ["Tom Lee", "Priya Shah", "Mason Goetz"], selfName: "Mason Goetz")
         #expect(observations == [talking, silent, .empty])
     }
 

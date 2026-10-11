@@ -10,6 +10,8 @@ public struct SegmentAssignment: Sendable, Hashable {
         case speakerEvents
         /// The name that won most directly-named segments of the same diarization cluster.
         case clusterVote
+        /// The meeting app showed exactly one other participant: every unnamed "Them" segment is theirs.
+        case soleRemote
         /// No name evidence: the `Speaker N` cluster participant (`source='cluster'`).
         case cluster
         /// System segment that no diarized turn overlaps: left unassigned.
@@ -41,9 +43,13 @@ public enum NameMapper {
     ///   - turns: system-channel diarization.
     ///   - events: platform speaker events (an open event, `tEndMs == nil`, extends indefinitely).
     ///   - meName: display name of the meeting's `is_me` participant (`userDisplayName`).
+    ///   - soleRemoteName: the only participant other than the user that the meeting app showed, if
+    ///     exactly one. Zoom marks no active speaker in a call of two (#61), so in a 1:1 the system
+    ///     channel is attributed to that person wherever events and cluster votes name nobody.
     /// - Returns: one assignment per assigned segment, in input order.
     public static func assign(
-        segments: [Segment], turns: [DiarizedTurn], events: [SpeakerEvent], meName: String
+        segments: [Segment], turns: [DiarizedTurn], events: [SpeakerEvent], meName: String,
+        soleRemoteName: String? = nil
     ) -> [SegmentAssignment] {
         struct Pending {
             var id: Int64
@@ -88,12 +94,16 @@ public enum NameMapper {
                 return SegmentAssignment(
                     segmentID: item.id, participantName: name, cluster: item.cluster, basis: .speakerEvents)
             }
-            guard let cluster = item.cluster else {
-                return SegmentAssignment(segmentID: item.id, participantName: nil, cluster: nil, basis: .unassigned)
-            }
-            if let name = clusterNames[cluster] {
+            if let cluster = item.cluster, let name = clusterNames[cluster] {
                 return SegmentAssignment(
                     segmentID: item.id, participantName: name, cluster: cluster, basis: .clusterVote)
+            }
+            if let soleRemoteName {
+                return SegmentAssignment(
+                    segmentID: item.id, participantName: soleRemoteName, cluster: item.cluster, basis: .soleRemote)
+            }
+            guard let cluster = item.cluster else {
+                return SegmentAssignment(segmentID: item.id, participantName: nil, cluster: nil, basis: .unassigned)
             }
             return SegmentAssignment(segmentID: item.id, participantName: cluster, cluster: cluster, basis: .cluster)
         }

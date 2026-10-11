@@ -57,17 +57,4 @@ import Testing
         #expect(SpeakerSelectors.decode(json: "{\"participants\": 3}", fallback: .zoomDefault) == .zoomDefault)
         #expect(SpeakerSelectors.decode(json: nil, fallback: .meetDefault) == .meetDefault)
     }
-
-    @Test func zoomDefaultsReadTheDocumentedRowShape() {
-        // Shape assumed by the unverified defaults; update together with them after the axdump spike.
-        let root = tree([
-            AXNodeSnapshot(role: "AXRow", description: "Mason Goetz, (Host, me), Computer audio unmuted, Video on"),
-            AXNodeSnapshot(role: "AXRow", description: "Priya Shah, Computer audio muted, Video off"),
-            AXNodeSnapshot(role: "AXGroup", description: "Priya Shah is talking"),
-        ])
-        let observation = SpeakerSelectors.zoomDefault.observation(from: [root])
-        #expect(observation.selfName == "Mason Goetz")
-        #expect(observation.participants == ["Mason Goetz", "Priya Shah"])
-        #expect(observation.activeNames == ["Priya Shah"])
-    }
 }

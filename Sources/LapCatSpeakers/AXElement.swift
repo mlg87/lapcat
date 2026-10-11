@@ -238,4 +238,13 @@ public struct AXNodeSnapshot: Sendable, Hashable, Codable {
         visit(self)
         return result
     }
+
+    /// This tree with every frame removed. Frames follow window placement and bloat fixtures, and
+    /// selectors never read them; `axdump --json` and `zoom-e2e` write trees in this form.
+    public var withoutFrames: AXNodeSnapshot {
+        var copy = self
+        copy.frame = nil
+        copy.children = children.map(\.withoutFrames)
+        return copy
+    }
 }

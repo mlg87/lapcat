@@ -1,4 +1,5 @@
 import CoreAudio
+import Foundation
 import Testing
 
 @testable import LapCatAudio
@@ -52,13 +53,15 @@ import Testing
         #expect(TapScope.forApp(bundleID: nil, pid: nil, in: arcSilent) == nil)
     }
 
-    @Test func zoomMainAndHelpersAreTapped() {
-        let processes = [
-            process(1001, pid: 500, bundleID: "us.zoom.xos", output: true),
-            process(1002, pid: 501, bundleID: "us.zoom.xos.helper", output: true),
-            process(1003, pid: 700, bundleID: "com.spotify.client", output: true),
-        ]
-        let scope = TapScope.forApp(bundleID: "us.zoom.xos", pid: 500, in: processes)
-        #expect(scope == .app(objectIDs: [1001, 1002], appPID: 500))
+    /// Core Audio's process list during a Zoom 7.1.9 call (#61): the call plays from `us.zoom.xos` itself.
+    /// Its other audio process, `us.zoom.caphost`, is outside the bundle family and produced no audio.
+    @Test func recordedZoomCallTapsOnlyTheZoomApp() throws {
+        let url = try #require(
+            Bundle.module.url(forResource: "zoom-processes", withExtension: "json", subdirectory: "Fixtures"))
+        let processes = try JSONDecoder().decode([AudioProcessInfo].self, from: Data(contentsOf: url))
+        let zoom = try #require(processes.first { $0.bundleID == "us.zoom.xos" })
+        #expect(zoom.isRunningInput && zoom.isRunningOutput)
+        let scope = TapScope.forApp(bundleID: "us.zoom.xos", pid: zoom.pid, in: processes)
+        #expect(scope == .app(objectIDs: [zoom.objectID], appPID: zoom.pid))
     }
 }

@@ -3,10 +3,10 @@
     "strict": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "target": "es2022",
+    "target": "es2024",
     "noEmit": true,
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["scripts/beads-reconcile.ts", ".omp/extensions/beads.ts"]
+  "files": ["scripts/beads-reconcile.ts", ".omp/extensions/beads.ts", "scripts/zoom-e2e/bot.ts"]
 }

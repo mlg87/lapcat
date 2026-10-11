@@ -114,8 +114,8 @@ struct AXSpeakerPoller: Sendable {
     }
 }
 
-/// Zoom desktop client. Selector defaults are unverified until the axdump spike (lc-6bq) records a
-/// live call; pass `SpeakerSelectors.decode(json:fallback:)` output to override them.
+/// Zoom desktop client. Selector defaults match Zoom 7.1.9 as recorded in a live call (#61); pass
+/// `SpeakerSelectors.decode(json:fallback:)` output to override them.
 public struct ZoomAXAdapter: SpeakerSource {
     public static let bundleIDs = ["us.zoom.xos"]
 

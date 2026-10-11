@@ -50,9 +50,9 @@ let package = Package(
         ),
         .testTarget(name: "LapCatCoreTests", dependencies: ["LapCatCore"]),
         .testTarget(name: "LapCatSpeechTests", dependencies: ["LapCatSpeech"]),
-        .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"]),
+        .testTarget(name: "LapCatAudioTests", dependencies: ["LapCatAudio"], resources: [.copy("Fixtures")]),
         .testTarget(name: "LapCatLLMTests", dependencies: ["LapCatLLM", "LapCatCore"]),
-        .testTarget(name: "LapCatSpeakersTests", dependencies: ["LapCatSpeakers"]),
+        .testTarget(name: "LapCatSpeakersTests", dependencies: ["LapCatSpeakers"], resources: [.copy("Fixtures")]),
         .testTarget(
             name: "LapCatSessionTests",
             dependencies: ["LapCatSession", "LapCatCore", "LapCatAudio", "LapCatSpeakers", "LapCatSpeech"]

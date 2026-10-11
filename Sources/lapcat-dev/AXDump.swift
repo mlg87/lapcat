@@ -92,7 +92,7 @@ enum AXDump {
                 do {
                     let encoder = JSONEncoder()
                     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-                    try encoder.encode(trees.map(withoutFrames)).write(to: file, options: .atomic)
+                    try encoder.encode(trees.map(\.withoutFrames)).write(to: file, options: .atomic)
                 } catch {
                     FileHandle.standardError.write(Data("cannot write \(jsonDirectory.path)\n".utf8))
                     return 1
@@ -146,14 +146,6 @@ enum AXDump {
 
     private static func captureWindows(pid: pid_t, depth: Int) -> [AXNodeSnapshot] {
         AXElement.application(pid: pid).allWindows.map { AXNodeSnapshot.capture($0, depth: depth, maxNodes: 20_000) }
-    }
-
-    /// Frames change with window placement and bloat fixtures; selectors never read them.
-    private static func withoutFrames(_ node: AXNodeSnapshot) -> AXNodeSnapshot {
-        var copy = node
-        copy.frame = nil
-        copy.children = node.children.map(withoutFrames)
-        return copy
     }
 
     private static func isWritableDirectory(_ url: URL) -> Bool {

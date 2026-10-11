@@ -110,26 +110,32 @@ public struct SpeakerSelectors: Codable, Sendable, Hashable {
 }
 
 extension SpeakerSelectors {
-    // UNVERIFIED pending the axdump spike (lc-6bq): these defaults follow Zoom's and Meet's public
-    // accessibility labelling, not a recorded dump of a live call. Override via JSON when they miss.
-
-    /// Zoom desktop (`us.zoom.xos`): participant-list rows describe "Name, (Host, me), Computer audio
-    /// unmuted, …"; the active-speaker tile is announced as "Name is talking"/"speaking".
+    /// Zoom desktop (`us.zoom.xos`), checked against Zoom 7.1.9 trees recorded in a live call (#61,
+    /// `Tests/LapCatSpeakersTests/Fixtures`). Each video tile is an `AXTabGroup` described as "Name,
+    /// Computer audio unmuted, Video off" (or "No audio connected"); in a call of three or more, the
+    /// speaking tile's description ends in ", active speaker". A call of two never gets that suffix.
+    /// The user's own tile is not shown once others join; the participants panel row "Name (Host, me)"
+    /// names them while the panel is open.
     public static let zoomDefault = SpeakerSelectors(
         windowTitlePattern: nil,
         participants: [
             AXNameRule(
-                attribute: .any, pattern: #"^(.+?)(?:,\s*\((?:[^)]*)\))?,\s*(?:Computer audio|Telephone|Audio)\b"#)
+                role: "AXTabGroup", attribute: .description,
+                pattern: #"^(.+?),\s*(?:Computer audio|No audio|Telephone|Audio)\b"#)
         ],
         activeSpeaker: [
-            AXNameRule(attribute: .any, pattern: #"^(.+?)(?:\s*\((?:[^)]*)\))?\s+is\s+(?:talking|speaking)\b"#),
-            AXNameRule(attribute: .any, pattern: #"^Active speaker[:,]?\s*(.+)$"#),
+            AXNameRule(
+                role: "AXTabGroup", attribute: .description,
+                pattern: #"^(.+?),\s*(?:Computer audio|No audio|Telephone|Audio)\b.*,\s*active speaker$"#)
         ],
         selfName: [
             AXNameRule(attribute: .any, pattern: #"^(.+?),?\s*\((?:[^)]*\b)?me\)"#)
         ],
         maxDepth: 20
     )
+
+    // UNVERIFIED pending a recorded Meet call (lc-6bq): these defaults follow Meet's public
+    // accessibility labelling, not a dump of a live call. Override via JSON when they miss.
 
     /// Google Meet in a browser: tiles expose "More options for Name"; the people panel lists
     /// "Name (You)" for the user; speaking tiles are labelled "Name is speaking" when exposed.

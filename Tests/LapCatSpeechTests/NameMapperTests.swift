@@ -5,12 +5,13 @@ import Testing
 @testable import LapCatSpeech
 
 @Suite struct NameMapperTests {
-    private func assignments(_ segments: [Segment], turns: [DiarizedTurn] = [], events: [SpeakerEvent] = []) -> [Int64:
-        SegmentAssignment]
-    {
+    private func assignments(
+        _ segments: [Segment], turns: [DiarizedTurn] = [], events: [SpeakerEvent] = [], soleRemote: String? = nil
+    ) -> [Int64: SegmentAssignment] {
         Dictionary(
-            uniqueKeysWithValues: NameMapper.assign(segments: segments, turns: turns, events: events, meName: "Mason")
-                .map { ($0.segmentID, $0) })
+            uniqueKeysWithValues: NameMapper.assign(
+                segments: segments, turns: turns, events: events, meName: "Mason", soleRemoteName: soleRemote
+            ).map { ($0.segmentID, $0) })
     }
 
     @Test func micSegmentsAlwaysGoToMeEvenWithOtherEvidence() {
@@ -85,6 +86,31 @@ import Testing
             [segment(1, .system, 50_000, 51_000)], turns: [DiarizedTurn(startMs: 0, endMs: 1_000, cluster: "Speaker 1")]
         )
         #expect(result[1] == SegmentAssignment(segmentID: 1, participantName: nil, cluster: nil, basis: .unassigned))
+    }
+
+    @Test func oneOnOneNamesUnattributedThemSpeechAfterTheOtherPerson() {
+        let turns = [DiarizedTurn(startMs: 0, endMs: 10_000, cluster: "Speaker 1")]
+        let result = assignments(
+            [segment(1, .system, 0, 4_000), segment(2, .system, 50_000, 51_000), segment(3, .mic, 0, 4_000)],
+            turns: turns, soleRemote: "Priya")
+        #expect(
+            result[1]
+                == SegmentAssignment(segmentID: 1, participantName: "Priya", cluster: "Speaker 1", basis: .soleRemote))
+        // No diarized turn: still the one other person, not left unassigned.
+        #expect(
+            result[2] == SegmentAssignment(segmentID: 2, participantName: "Priya", cluster: nil, basis: .soleRemote))
+        #expect(result[3]?.basis == .me)
+    }
+
+    @Test func speakerEventsAndClusterVotesOutrankTheOneOnOneFallback() {
+        let turns = [DiarizedTurn(startMs: 0, endMs: 20_000, cluster: "Speaker 1")]
+        let result = assignments(
+            [segment(1, .system, 0, 5_000), segment(2, .system, 10_000, 15_000)],
+            turns: turns, events: [event("Tom", 0, 5_000)], soleRemote: "Priya")
+        #expect(result[1]?.participantName == "Tom")
+        #expect(result[1]?.basis == .speakerEvents)
+        #expect(result[2]?.participantName == "Tom")
+        #expect(result[2]?.basis == .clusterVote)
     }
 
     @Test func liveAndVolatileSegmentsAreIgnored() {

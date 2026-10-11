@@ -13,3 +13,6 @@ vendor/
 # machine-local state synced via the refs/dolt/data git ref, not through PRs;
 # no beads file rides in a PR.
 .beads/
+
+# lapcat-dev zoom-e2e secrets (Meeting SDK credentials, meeting link)
+.env.zoom-e2e
