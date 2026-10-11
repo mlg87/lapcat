@@ -6,14 +6,27 @@ import LapCatSpeech
 import os
 
 /// Everything a pipeline run needs from settings, captured on the main actor when it starts.
-struct PipelineConfig: Sendable {
-    var speech: SpeechConfig
-    var offlineOnly: Bool
-    var retention: AudioRetention
-    var meName: String
-    var defaultTemplateID: String
-    var autoExportFolder: URL?
-    var router: LLMRouter
+public struct PipelineConfig: Sendable {
+    public var speech: SpeechConfig
+    public var offlineOnly: Bool
+    public var retention: AudioRetention
+    public var meName: String
+    public var defaultTemplateID: String
+    public var autoExportFolder: URL?
+    public var router: LLMRouter
+
+    public init(
+        speech: SpeechConfig, offlineOnly: Bool, retention: AudioRetention, meName: String, defaultTemplateID: String,
+        autoExportFolder: URL?, router: LLMRouter
+    ) {
+        self.speech = speech
+        self.offlineOnly = offlineOnly
+        self.retention = retention
+        self.meName = meName
+        self.defaultTemplateID = defaultTemplateID
+        self.autoExportFolder = autoExportFolder
+        self.router = router
+    }
 }
 
 /// Post-meeting processing, one meeting at a time in FIFO order (plan §7.6).
@@ -23,8 +36,8 @@ struct PipelineConfig: Sendable {
 /// Transcription and the final enhance are required: their failure puts the meeting in `error`
 /// with "Retry processing". Diarization, the quick enhance, speaker suggestions and auto-export
 /// are best-effort: their failure is logged and processing continues.
-actor PostMeetingPipeline {
-    enum Step: String, CaseIterable, Sendable {
+public actor PostMeetingPipeline {
+    public enum Step: String, CaseIterable, Sendable {
         case quickEnhance = "quick_enhance"
         case finalSTTMic = "final_stt_mic"
         case finalSTTSystem = "final_stt_system"
@@ -45,7 +58,7 @@ actor PostMeetingPipeline {
             }
         }
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .quickEnhance: "Quick notes"
             case .finalSTTMic: "Transcribing your audio"
@@ -63,31 +76,39 @@ actor PostMeetingPipeline {
         }
     }
 
-    struct Progress: Sendable, Equatable {
-        var meetingID: String
-        var step: Step?
-        var fraction: Double
+    public struct Progress: Sendable, Equatable {
+        public var meetingID: String
+        public var step: Step?
+        public var fraction: Double
     }
 
-    nonisolated let progress: AsyncStream<Progress>
+    public nonisolated let progress: AsyncStream<Progress>
     private nonisolated let progressContinuation: AsyncStream<Progress>.Continuation
     private let store: Store
     private let speech: SpeechServices
     private let config: @Sendable () async -> PipelineConfig
+    private let paths: Paths
+    /// The steps a run performs, in `Step.allCases` order; `lapcat-dev zoom-e2e` drops the LLM steps.
+    private let steps: [Step]
     private let diarizer = FluidDiarizer()
     private var queue: [String] = []
     private var running = false
     private static let logger = Logger(subsystem: "com.lapcat.app", category: "PostMeetingPipeline")
 
-    init(store: Store, speech: SpeechServices, config: @escaping @Sendable () async -> PipelineConfig) {
+    public init(
+        store: Store, speech: SpeechServices, paths: Paths = .standard, steps: [Step] = Step.allCases,
+        config: @escaping @Sendable () async -> PipelineConfig
+    ) {
         self.store = store
         self.speech = speech
+        self.paths = paths
+        self.steps = steps
         self.config = config
         (progress, progressContinuation) = AsyncStream.makeStream(
             of: Progress.self, bufferingPolicy: .bufferingNewest(32))
     }
 
-    func enqueue(_ meetingID: String) {
+    public func enqueue(_ meetingID: String) {
         guard !queue.contains(meetingID) else { return }
         queue.append(meetingID)
         guard !running else { return }
@@ -106,11 +127,15 @@ actor PostMeetingPipeline {
     private func run(_ meetingID: String) async {
         guard let meeting = try? await store.meeting(id: meetingID) else { return }
         let config = await config()
-        let resumeFrom = meeting.processingStep.flatMap(Step.init(rawValue:))
-        let steps = Step.allCases.drop { step in resumeFrom.map { $0 != step } ?? false }
+        // A resume point outside the configured steps restarts from the first configured step.
+        let configured = self.steps
+        let resumeFrom = meeting.processingStep.flatMap(Step.init(rawValue:)).flatMap {
+            configured.contains($0) ? $0 : nil
+        }
+        let remaining = configured.drop { step in resumeFrom.map { $0 != step } ?? false }
         do {
             try await store.setMeetingStatus(meetingID: meetingID, status: .processing)
-            for step in steps {
+            for step in remaining {
                 try await store.setProcessingStep(meetingID: meetingID, step: step.rawValue)
                 progressContinuation.yield(Progress(meetingID: meetingID, step: step, fraction: 0))
                 do {
@@ -168,7 +193,7 @@ actor PostMeetingPipeline {
             }
         case .retention:
             if config.retention == .never {
-                try? FileManager.default.removeItem(at: Paths.standard.audio(meetingID: meetingID))
+                try? FileManager.default.removeItem(at: paths.audio(meetingID: meetingID))
                 try await store.deleteAudioFiles(meetingID: meetingID)
             }
         }
@@ -188,7 +213,7 @@ actor PostMeetingPipeline {
     }
 
     private func audioFile(_ meetingID: String, _ channel: Channel) -> URL {
-        Paths.standard.audio(meetingID: meetingID)
+        paths.audio(meetingID: meetingID)
             .appendingPathComponent(CaptureFiles.fileName(for: channel == .mic ? .mic : .system))
     }
 
@@ -221,7 +246,7 @@ actor PostMeetingPipeline {
 
     /// Turns are cached next to the audio so `name_map` can resume without re-diarizing.
     private func diarizationCache(_ meetingID: String) -> URL {
-        Paths.standard.audio(meetingID: meetingID).appendingPathComponent("diarization.json")
+        paths.audio(meetingID: meetingID).appendingPathComponent("diarization.json")
     }
 
     private struct CachedTurn: Codable {
@@ -268,9 +293,14 @@ actor PostMeetingPipeline {
                 }
             return SpeakerAssignmentRow(segmentID: assignment.segmentID, kind: kind, cluster: assignment.cluster)
         }
-        let namedSource: ParticipantSource =
-            meeting.sourceBundleID?.lowercased().hasPrefix("us.zoom") == true ? .zoomAX : .meetAX
-        try await store.applySpeakerAssignments(meetingID: meetingID, rows: rows, namedSource: namedSource)
+        try await store.applySpeakerAssignments(
+            meetingID: meetingID, rows: rows, namedSource: Self.namedSource(forBundleID: meeting.sourceBundleID))
+    }
+
+    /// The participant source for names read from the meeting app's UI: Zoom for any `us.zoom*` app,
+    /// else Meet (the only other adapter).
+    public static func namedSource(forBundleID bundleID: String?) -> ParticipantSource {
+        bundleID?.lowercased().hasPrefix("us.zoom") == true ? .zoomAX : .meetAX
     }
 
     private func suggestSpeakers(meetingID: String, config: PipelineConfig) async throws {

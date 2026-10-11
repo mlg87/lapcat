@@ -523,6 +523,7 @@ The Command Line Tools keep `Testing.framework` out of the default search path. 
 | `LapCatSpeech` | whisper.cpp, Parakeet, diarization, speaker naming, echo detection, model downloads. |
 | `LapCatLLM` | LLM providers, router, enhancer, chat. |
 | `LapCatSpeakers` | Accessibility adapters for Zoom and Google Meet. |
+| `LapCatSession` | Recording session, meeting detection, speaker events and post-meeting processing. The app and `lapcat-dev` both use it. |
 | `LapCatApp` | The SwiftUI menu-bar app. |
 | `lapcat-dev` | The developer CLI. |
 

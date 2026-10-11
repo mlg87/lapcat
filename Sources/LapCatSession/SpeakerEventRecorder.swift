@@ -5,7 +5,7 @@ import os
 
 /// Records who the meeting app shows as speaking (plan §8.4): one `speaker_event` row per
 /// continuous stretch a name is active, timed on the session clock, plus platform participants.
-actor SpeakerEventRecorder {
+public actor SpeakerEventRecorder {
     private let store: Store
     private let meetingID: String
     private let source: SpeakerEventSource
@@ -16,31 +16,7 @@ actor SpeakerEventRecorder {
     private var task: Task<Void, Never>?
     private static let logger = Logger(subsystem: "com.lapcat.app", category: "SpeakerEventRecorder")
 
-    /// nil when the app has no adapter, adapters are off, or Accessibility is not granted.
-    @MainActor static func make(
-        store: Store, meetingID: String, bundleID: String?, pid: pid_t?, settings: AppSettings,
-        elapsedMs: @escaping @Sendable () async -> Int
-    ) -> (SpeakerEventRecorder, any SpeakerSource, pid_t)? {
-        guard settings.speakersAdaptersEnabled, AXElement.isProcessTrusted,
-            let bundleID, let pid, let type = SpeakerSources.adapterType(for: bundleID)
-        else { return nil }
-        let adapter: any SpeakerSource
-        let source: SpeakerEventSource
-        if type == ZoomAXAdapter.self {
-            adapter = ZoomAXAdapter(
-                selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsZoom, fallback: .zoomDefault))
-            source = .zoomAX
-        } else {
-            adapter = MeetAXAdapter(
-                selectors: SpeakerSelectors.decode(json: settings.speakersSelectorsMeet, fallback: .meetDefault))
-            source = .meetAX
-        }
-        return (
-            SpeakerEventRecorder(store: store, meetingID: meetingID, source: source, elapsedMs: elapsedMs), adapter, pid
-        )
-    }
-
-    private init(
+    public init(
         store: Store, meetingID: String, source: SpeakerEventSource, elapsedMs: @escaping @Sendable () async -> Int
     ) {
         self.store = store
@@ -49,7 +25,7 @@ actor SpeakerEventRecorder {
         self.elapsedMs = elapsedMs
     }
 
-    func start(adapter: any SpeakerSource, pid: pid_t) {
+    public func start(adapter: any SpeakerSource, pid: pid_t) {
         let observations = adapter.observe(pid: pid, interval: 0.25)
         task = Task {
             for await observation in observations {
@@ -59,7 +35,7 @@ actor SpeakerEventRecorder {
     }
 
     /// Stops observing and closes every open event at the current session time.
-    func stop() async {
+    public func stop() async {
         task?.cancel()
         task = nil
         let now = await elapsedMs()

@@ -12,53 +12,42 @@ import os
 /// starts; (opt-in) the frontmost browser tab is a Google Meet call. A prompted session stops on
 /// its own once its app has not used the microphone for 60 s (§9.4); manual sessions never do.
 @Observable @MainActor
-final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
-    struct Prompt: Equatable, Identifiable {
-        var id: String
-        var title: String
-        var appName: String
-        var source: SessionSource?
-        var calendarEvent: CalendarEventInfo?
+public final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
+    public struct Prompt: Equatable, Identifiable, Sendable {
+        public var id: String
+        public var title: String
+        public var appName: String
+        public var source: SessionSource?
+        public var calendarEvent: CalendarEventInfo?
 
-        static func == (a: Prompt, b: Prompt) -> Bool { a.id == b.id }
+        public static func == (a: Prompt, b: Prompt) -> Bool { a.id == b.id }
     }
 
     /// Shown as a "Record '…'?" menu item while pending (for people who turn notifications off).
-    private(set) var pending: Prompt?
+    public private(set) var pending: Prompt?
 
-    @ObservationIgnored private let session: SessionController
+    @ObservationIgnored private let session: any RecordingSession
     @ObservationIgnored private let settings: AppSettings
-    @ObservationIgnored private var monitor: AudioInputActivityMonitor?
+    @ObservationIgnored private let dependencies: DetectionDependencies
+    @ObservationIgnored private var monitor: (any InputActivitySource)?
     @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     @ObservationIgnored private var suppressedUntil: [pid_t: Date] = [:]
     @ObservationIgnored private var promptedEvents: Set<String> = []
     @ObservationIgnored private var promptedTabs: Set<String> = []
     @ObservationIgnored private var autoStop = AutoStopTracker()
-    @ObservationIgnored private var autoStopPID: pid_t?
+    @ObservationIgnored private(set) var autoStopPID: pid_t?
     @ObservationIgnored private var autoStopTimer: Task<Void, Never>?
     private static let logger = Logger(subsystem: "com.lapcat.app", category: "DetectionCoordinator")
-    private static let category = "LAPCAT_DETECT"
-    private static let recordAction = "RECORD"
-    private static let notNowAction = "NOT_NOW"
 
-    init(session: SessionController, settings: AppSettings) {
+    public init(session: any RecordingSession, settings: AppSettings, dependencies: DetectionDependencies = .live) {
         self.session = session
         self.settings = settings
+        self.dependencies = dependencies
         super.init()
     }
 
-    func start() {
-        let center = UNUserNotificationCenter.current()
-        center.delegate = self
-        center.setNotificationCategories([
-            UNNotificationCategory(
-                identifier: Self.category,
-                actions: [
-                    UNNotificationAction(identifier: Self.recordAction, title: "Record", options: [.foreground]),
-                    UNNotificationAction(identifier: Self.notNowAction, title: "Not now"),
-                ],
-                intentIdentifiers: [])
-        ])
+    public func start() {
+        dependencies.notifier.activate(delegate: self)
         reconfigure()
         observeSettings()
         tasks.append(
@@ -90,7 +79,7 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    private func reconfigure() {
+    func reconfigure() {
         // The monitor also feeds auto-stop, so it runs while a prompted session records even
         // if prompts are off.
         guard settings.detectEnabled else {
@@ -102,7 +91,7 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
             monitor.setBundleIDs(settings.detectBundleIDs)
             return
         }
-        let monitor = AudioInputActivityMonitor(bundleIDs: settings.detectBundleIDs)
+        let monitor = dependencies.makeMonitor(settings.detectBundleIDs)
         self.monitor = monitor
         monitor.start()
         tasks.append(
@@ -113,12 +102,14 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: Signals
 
-    private func handle(_ activity: InputActivity) {
+    func handle(_ activity: InputActivity) {
         if activity.pid == autoStopPID { trackAutoStop(isRunningInput: activity.isRunningInput) }
         guard activity.isRunningInput, session.state == .idle else { return }
-        if let until = suppressedUntil[activity.pid], until > Date() { return }
-        let appName = NSRunningApplication(processIdentifier: activity.pid)?.localizedName ?? activity.name
-        let event = settings.detectUseCalendarSignal ? CalendarService().currentOrUpcomingEvent() : nil
+        let now = dependencies.now()
+        if let until = suppressedUntil[activity.pid], until > now { return }
+        let appName = dependencies.appName(activity.pid) ?? activity.name
+        let event =
+            settings.detectUseCalendarSignal ? dependencies.calendarEvent(CalendarService.defaultWindow, now) : nil
         prompt(
             Prompt(
                 id: "pid-\(activity.pid)", title: event?.title ?? appName, appName: appName,
@@ -126,9 +117,9 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
                 calendarEvent: event))
     }
 
-    private func checkCalendar() async {
+    func checkCalendar() async {
         guard settings.detectEnabled, settings.detectUseCalendarSignal, session.state == .idle,
-            let event = CalendarService().currentOrUpcomingEvent(window: 0...60),
+            let event = dependencies.calendarEvent(0...60, dependencies.now()),
             event.conferenceURL != nil, !promptedEvents.contains(event.id)
         else { return }
         promptedEvents.insert(event.id)
@@ -164,24 +155,19 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
     private func prompt(_ prompt: Prompt) {
         guard pending?.id != prompt.id else { return }
         pending = prompt
-        let content = UNMutableNotificationContent()
-        content.title = "Record \"\(prompt.title)\"?"
-        content.body =
-            prompt.source != nil
-            ? "\(prompt.appName) is using your microphone."
-            : "\(prompt.appName) meeting starting now."
-        content.categoryIdentifier = Self.category
-        content.userInfo = ["promptID": prompt.id]
-        UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: prompt.id, content: content, trigger: nil))
+        dependencies.notifier.postPrompt(
+            id: prompt.id, title: "Record \"\(prompt.title)\"?",
+            body: prompt.source != nil
+                ? "\(prompt.appName) is using your microphone."
+                : "\(prompt.appName) meeting starting now.")
         Self.logger.notice("prompted \(prompt.id, privacy: .public)")
     }
 
     /// The menu's "Record '…'?" item and the notification's Record action.
-    func accept() {
+    public func accept() {
         guard let prompt = pending else { return }
         pending = nil
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [prompt.id])
+        dependencies.notifier.removeDelivered(ids: [prompt.id])
         Task {
             do {
                 try await session.startNewNote(
@@ -196,25 +182,26 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// "Not now": no more prompts for that process for 10 minutes.
-    func dismiss() {
+    public func dismiss() {
         guard let prompt = pending else { return }
         pending = nil
-        if let pid = prompt.source?.pid { suppressedUntil[pid] = Date().addingTimeInterval(600) }
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [prompt.id])
+        if let pid = prompt.source?.pid { suppressedUntil[pid] = dependencies.now().addingTimeInterval(600) }
+        dependencies.notifier.removeDelivered(ids: [prompt.id])
     }
 
     // MARK: Auto-stop
 
-    private func trackAutoStop(isRunningInput: Bool) {
+    func trackAutoStop(isRunningInput: Bool) {
         guard case .recording = session.state, autoStopPID != nil else { return }
-        if autoStop.observe(isRunningInput: isRunningInput, now: Date()) == .shouldStop {
+        if autoStop.observe(isRunningInput: isRunningInput, now: dependencies.now()) == .shouldStop {
             stopForInactivity()
             return
         }
         autoStopTimer?.cancel()
         guard let deadline = autoStop.stopDeadline else { return }
+        let dependencies = dependencies
         autoStopTimer = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(max(0, deadline.timeIntervalSinceNow)))
+            await dependencies.sleep(.seconds(max(0, deadline.timeIntervalSince(dependencies.now()))))
             guard !Task.isCancelled else { return }
             self?.trackAutoStop(isRunningInput: false)
         }
@@ -223,29 +210,27 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
     private func stopForInactivity() {
         autoStopPID = nil
         autoStopTimer?.cancel()
-        let content = UNMutableNotificationContent()
-        content.title = "Meeting ended — recording stopped"
-        content.body = "The meeting app stopped using your microphone."
-        UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: "autostop-\(UUID().uuidString)", content: content, trigger: nil))
+        dependencies.notifier.postInfo(
+            id: "autostop-\(UUID().uuidString)", title: "Meeting ended — recording stopped",
+            body: "The meeting app stopped using your microphone.")
         Task { await session.end() }
     }
 
     /// Called when a session ends for any reason: a manual End clears auto-stop tracking.
-    func sessionEnded() {
+    public func sessionEnded() {
         autoStopPID = nil
         autoStopTimer?.cancel()
     }
 
     // MARK: UNUserNotificationCenterDelegate
 
-    nonisolated func userNotificationCenter(
+    public nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
     }
 
-    nonisolated func userNotificationCenter(
+    public nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
         let action = response.actionIdentifier
@@ -253,8 +238,8 @@ final class DetectionCoordinator: NSObject, UNUserNotificationCenterDelegate {
         await MainActor.run {
             guard let promptID, self.pending?.id == promptID else { return }
             switch action {
-            case Self.recordAction, UNNotificationDefaultActionIdentifier: self.accept()
-            case Self.notNowAction, UNNotificationDismissActionIdentifier: self.dismiss()
+            case UserNotificationPromptNotifier.recordAction, UNNotificationDefaultActionIdentifier: self.accept()
+            case UserNotificationPromptNotifier.notNowAction, UNNotificationDismissActionIdentifier: self.dismiss()
             default: break
             }
         }
