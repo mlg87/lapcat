@@ -13,30 +13,37 @@ import os
 /// `lapcat-dev zoom-e2e [--skip-stt] [--keep] [--record-fixtures <dir>] [--pipeline-timeout 900]`
 ///
 /// Runs the real Zoom path end to end (#61): opens the user's meeting in the Zoom desktop client,
-/// accepts LapCat's detection prompt, lets a Meeting SDK bot (`scripts/zoom-e2e/bot.ts`) speak a
-/// `say`-generated script, quits Zoom, waits for auto-stop and the post-meeting pipeline, then checks
-/// the speaker events, participants, named segments, transcript and audio files. Along the way it
-/// records the accessibility trees and Core Audio process list the deterministic suite replays.
+/// accepts LapCat's detection prompt, has two Meeting SDK bots (`scripts/zoom-e2e/bot.ts`) join and
+/// speak one half each of a `say`-generated script in turn, quits Zoom, waits for auto-stop and the
+/// post-meeting pipeline, then checks the speaker events, participants, named segments, transcript and
+/// audio files. Two bots, because Zoom labels the active speaker only in calls of three or more. Along
+/// the way it records the accessibility trees and Core Audio process list the deterministic suite replays.
 /// Everything is real except the notifier (a CLI has no `UNUserNotificationCenter`) and the data
 /// directory (a fresh one under /tmp).
 enum ZoomE2E {
     static let usage =
         "usage: lapcat-dev zoom-e2e [--skip-stt] [--keep] [--record-fixtures <dir>] [--pipeline-timeout 900]"
 
-    static let script = """
-        Hello from the LapCat test bot. The quarterly budget review is scheduled for Thursday afternoon. \
-        Please remember to upload the final spreadsheet before the deadline. Our customer in Lisbon confirmed \
-        the renewal for another twelve months. The new onboarding checklist reduced support tickets by half. \
-        That concludes the automated transcription check.
+    /// One half per bot, spoken in order.
+    static let scripts = [
         """
+        Hello from the first LapCat test bot. The quarterly budget review is scheduled for Thursday afternoon. \
+        Please remember to upload the final spreadsheet before the deadline.
+        """,
+        """
+        This is the second test bot. Our customer in Lisbon confirmed the renewal for another twelve months. \
+        The new onboarding checklist reduced support tickets by half.
+        """,
+    ]
 
     static let zoomBundleID = "us.zoom.xos"
     static let zoomApp = URL(fileURLWithPath: "/Applications/zoom.us.app")
     static let hostName = "LapCat Host"
-    /// Zoom's join dialogs, answered when the README's Zoom settings are not applied. Titles unverified:
-    /// check them against `failure-ax.json` when a dialog stays open.
+    /// Zoom's join dialogs, answered when the README's Zoom settings are not applied. "Start" is the video
+    /// preview's button as recorded in Zoom 7.1.9 for the host; the other titles are unverified, so check
+    /// them against `failure-ax.json` when a dialog stays open.
     static let joinButtonPattern =
-        #"^(Join with Computer Audio|Join Audio by Computer|Join without Video|Join with Video)$"#
+        #"^(Start|Join|Join with Computer Audio|Join Audio by Computer|Join without Video|Join with Video)$"#
 
     struct Options {
         var skipSTT = false
@@ -51,7 +58,10 @@ enum ZoomE2E {
         var passcode: String
         var clientID: String
         var clientSecret: String
-        var botName: String
+        /// Bots are named "<base> 1" and "<base> 2".
+        var botBaseName: String
+
+        var botNames: [String] { ZoomE2E.scripts.indices.map { "\(botBaseName) \($0 + 1)" } }
     }
 
     struct Failure: Error {
@@ -65,15 +75,21 @@ enum ZoomE2E {
         var detail: String
     }
 
+    /// When one bot's speech played, as reported by the bot (wall clock).
+    struct SpeechWindow: Codable {
+        var bot: String
+        var start: Date
+        var end: Date
+    }
+
     struct Report: Codable {
         var runDirectory: String
         var zoomVersion: String
-        var botName: String
-        var speechSeconds: Double
+        var botNames: [String]
         var detectSeconds: Double?
         var autoStopSeconds: Double?
-        var nameExposedBy: String?
-        var talkingObservation: String?
+        var speech: [SpeechWindow] = []
+        var observations: [String] = []
         var failure: String?
         var checks: [Check] = []
     }
@@ -170,8 +186,7 @@ enum ZoomE2E {
         return Environment(
             meetingNumber: String(number), passwordToken: token, passcode: passcode, clientID: clientID,
             clientSecret: clientSecret,
-            botName: env["LAPCAT_ZOOM_E2E_BOT_NAME"].flatMap { $0.isEmpty ? nil : $0 }
-                ?? "LapCat Bot")
+            botBaseName: env["LAPCAT_ZOOM_E2E_BOT_NAME"].flatMap { $0.isEmpty ? nil : $0 } ?? "LapCat Bot")
     }
 }
 
@@ -204,10 +219,14 @@ struct LoggingNotifier: PromptNotifier {
     func removeDelivered(ids: [String]) {}
 }
 
-/// The bot's stdout events, collected off its pipe.
+/// One bot's stdout events, collected off its pipe.
 final class BotEvents: @unchecked Sendable {
     // JSON objects are `[String: Any]`; every access goes through the lock.
     private let state = OSAllocatedUnfairLock(uncheckedState: (buffer: Data(), events: [[String: Any]]()))
+
+    private let label: String
+
+    init(label: String) { self.label = label }
 
     func append(_ data: Data, log: RunLog) {
         let lines: [Data] = state.withLockUnchecked { state in
@@ -221,7 +240,7 @@ final class BotEvents: @unchecked Sendable {
         }
         for line in lines {
             guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
-            log("bot: \(String(decoding: line, as: UTF8.self))")
+            log("\(label): \(String(decoding: line, as: UTF8.self))")
             state.withLockUnchecked { $0.events.append(object) }
         }
     }
@@ -249,9 +268,16 @@ final class BotEvents: @unchecked Sendable {
     private let session: SessionController
     private let pipeline: PostMeetingPipeline
     private let detection: DetectionCoordinator
-    private var bot: Process?
-    private var botInput: Pipe?
-    private let botEvents = BotEvents()
+    private var bots: [Bot] = []
+
+    /// A running `bot.ts` process and its event stream.
+    private struct Bot {
+        var name: String
+        var process: Process
+        var input: Pipe
+        var events: BotEvents
+        var speech: (file: URL, seconds: Double)
+    }
 
     init(options: ZoomE2E.Options, environment: ZoomE2E.Environment) throws {
         self.options = options
@@ -275,7 +301,7 @@ final class BotEvents: @unchecked Sendable {
         let version = Bundle(url: ZoomE2E.zoomApp)?.infoDictionary?["CFBundleShortVersionString"] as? String
         zoomVersion = version?.split(separator: " ").first.map(String.init) ?? "unknown"
         report = ZoomE2E.Report(
-            runDirectory: runDirectory.path, zoomVersion: zoomVersion, botName: environment.botName, speechSeconds: 0)
+            runDirectory: runDirectory.path, zoomVersion: zoomVersion, botNames: environment.botNames)
 
         let defaults = UserDefaults(suiteName: Self.settingsSuite)!
         defaults.removePersistentDomain(forName: Self.settingsSuite)
@@ -328,7 +354,7 @@ final class BotEvents: @unchecked Sendable {
     }
 
     func execute() async -> Int32 {
-        log("run directory \(runDirectory.path) · Zoom \(zoomVersion) · bot \"\(environment.botName)\"")
+        log("run directory \(runDirectory.path) · Zoom \(zoomVersion) · bots \(environment.botNames)")
         let exitCode: Int32
         do {
             try await steps()
@@ -340,7 +366,7 @@ final class BotEvents: @unchecked Sendable {
             await writeFailureTree()
             exitCode = 1
         }
-        await stopBot()
+        await stopBots()
         await quitZoom()
         writeReport()
         printTable()
@@ -353,8 +379,7 @@ final class BotEvents: @unchecked Sendable {
     // MARK: Steps
 
     private func steps() async throws {
-        let speech = try makeSpeech()
-        report.speechSeconds = speech.seconds
+        let speeches = try ZoomE2E.scripts.indices.map(makeSpeech)
 
         let session = session
         let store = store
@@ -404,45 +429,50 @@ final class BotEvents: @unchecked Sendable {
         let captureWarning = warning.map { $0.hasPrefix("System audio") || $0.hasPrefix("LapCat lacks") } ?? false
         check("S2", "no capture warning after 10 s", !captureWarning, warning ?? "none")
 
-        // 3. The bot joins and speaks.
-        try startBot(audio: speech.file)
-        try await waitFor("the bot to join audio", timeout: .seconds(90)) {
-            if let error = self.botEvents.first("error") {
-                throw ZoomE2E.Failure(message: "bot: \(error["message"] as? String ?? "unknown error")")
+        // 3. Both bots join; Zoom labels an active speaker only with three or more people in the call.
+        for (index, name) in environment.botNames.enumerated() {
+            try startBot(name: name, speech: speeches[index])
+        }
+        try await waitFor("both bots to join audio", timeout: .seconds(120)) {
+            for bot in self.bots {
+                if let error = bot.events.first("error") {
+                    throw ZoomE2E.Failure(message: "\(bot.name): \(error["message"] as? String ?? "unknown error")")
+                }
             }
-            return self.botEvents.first("audio-joined") != nil
+            return self.bots.allSatisfy { $0.events.first("audio-joined") != nil }
         }
-        let audioAt =
-            (botEvents.first("audio-joined")?["at"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
-            ?? Date()
-
-        // 4. Accessibility trees while the bot talks and after it stops.
         guard let zoomPID = zoomApplication?.processIdentifier else { throw ZoomE2E.Failure(message: "Zoom quit") }
-        try await sleep(until: audioAt.addingTimeInterval(6))
-        let talking = await AXQueue.shared.run { AXTreeCapture.roots(pid: zoomPID, selectors: .zoomDefault) }
-        try writeJSON(talking.map(\.withoutFrames), to: fixture("talking"))
-        let observation = SpeakerSelectors.zoomDefault.observation(from: talking)
-        report.talkingObservation = "\(observation)"
-        log("zoomDefault on the talking tree: \(observation)")
-        if contains(environment.botName, in: talking) {
-            report.nameExposedBy = "meeting window"
-        } else {
-            log("bot name not in the meeting window tree; opening the Participants panel")
-            await pressButton(in: zoomPID, matching: #"^Participants"#)
-            try await Task.sleep(for: .seconds(3))
-            let panel = await AXQueue.shared.run { AXTreeCapture.roots(pid: zoomPID, selectors: .zoomDefault) }
-            try writeJSON(panel.map(\.withoutFrames), to: fixture("talking-panel"))
-            report.nameExposedBy = contains(environment.botName, in: panel) ? "participants panel" : "nothing"
-            log("participants panel exposes the bot name: \(report.nameExposedBy ?? "nothing")")
-        }
-        try await sleep(until: audioAt.addingTimeInterval(report.speechSeconds + 8))
-        let silent = await AXQueue.shared.run { AXTreeCapture.roots(pid: zoomPID, selectors: .zoomDefault) }
-        try writeJSON(silent.map(\.withoutFrames), to: fixture("silent"))
-        log("zoomDefault on the silent tree: \(SpeakerSelectors.zoomDefault.observation(from: silent))")
+        try await Task.sleep(for: .seconds(3))
 
-        // 5. The bot leaves, then Zoom quits: auto-stop starts counting from the mic release.
-        try await sleep(until: audioAt.addingTimeInterval(report.speechSeconds + 15))
-        await stopBot()
+        // 4. Each bot speaks in turn; the accessibility tree is captured mid-speech.
+        for (index, bot) in bots.enumerated() {
+            bot.input.fileHandleForWriting.write(Data("speak\n".utf8))
+            try await waitFor("\(bot.name) to start speaking", timeout: .seconds(15)) {
+                bot.events.first("speech-start") != nil
+            }
+            try await Task.sleep(for: .seconds(min(4, bot.speech.seconds / 2)))
+            let talking = await AXQueue.shared.run { AXTreeCapture.roots(pid: zoomPID, selectors: .zoomDefault) }
+            try writeJSON(talking.map(\.withoutFrames), to: fixture("bot-\(index + 1)-talking"))
+            observe("while \(bot.name) speaks", talking)
+            try await waitFor("\(bot.name) to finish speaking", timeout: .seconds(Int(bot.speech.seconds) + 30)) {
+                if let error = bot.events.first("error") {
+                    throw ZoomE2E.Failure(message: "\(bot.name): \(error["message"] as? String ?? "unknown error")")
+                }
+                return bot.events.first("speech-end") != nil
+            }
+            report.speech.append(
+                ZoomE2E.SpeechWindow(
+                    bot: bot.name, start: date(bot.events.first("speech-start")),
+                    end: date(bot.events.first("speech-end"))))
+            try await Task.sleep(for: .seconds(3))
+        }
+        let silent = await AXQueue.shared.run { AXTreeCapture.roots(pid: zoomPID, selectors: .zoomDefault) }
+        try writeJSON(silent.map(\.withoutFrames), to: fixture("after-speech"))
+        // Zoom keeps the label on the last speaker through silence, so this may still name bot 2.
+        observe("after both bots spoke", silent)
+
+        // 5. The bots leave, then Zoom quits: auto-stop starts counting from the mic release.
+        await stopBots()
         let quitAt = Date()
         await quitZoom()
 
@@ -464,50 +494,84 @@ final class BotEvents: @unchecked Sendable {
         }
 
         // 8. Checks.
-        try await evaluate(store: store, meetingID: meetingID, selfName: observation.selfName)
+        try await evaluate(store: store, meetingID: meetingID)
     }
 
-    private func evaluate(store: Store, meetingID: String, selfName: String?) async throws {
-        let bot = environment.botName
+    private func observe(_ moment: String, _ trees: [AXNodeSnapshot]) {
+        let observation = SpeakerSelectors.zoomDefault.observation(from: trees)
+        report.observations.append("\(moment): \(observation)")
+        log("zoomDefault \(moment): \(observation)")
+    }
+
+    private func date(_ event: [String: Any]?) -> Date {
+        (event?["at"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) } ?? Date()
+    }
+
+    private func evaluate(store: Store, meetingID: String) async throws {
         guard let meeting = try await store.meeting(id: meetingID) else { return }
         let lengthMs = Int(((meeting.endedAt ?? Date()).timeIntervalSince(meeting.startedAt)) * 1000)
-        let events = try await store.speakerEvents(meetingID: meetingID)
-        let botRows = events.filter { $0.displayName == bot && $0.source == .zoomAX }
-        let spokenMs = botRows.reduce(0) { $0 + (($1.tEndMs ?? lengthMs) - $1.tStartMs) }
-        let neededMs = Int(report.speechSeconds * 500)
-        check(
-            "D1", "bot speaker events cover half the speech", !botRows.isEmpty && spokenMs >= neededMs,
-            "\(botRows.count) events, \(spokenMs) ms of \(neededMs) ms needed · talking fixture \(fixture("talking").path)"
-        )
+        // Session time is wall time since the start: the harness never pauses.
+        func sessionMs(_ date: Date) -> Int { Int(date.timeIntervalSince(meeting.startedAt) * 1000) }
+        let windows = report.speech.map { (bot: $0.bot, start: sessionMs($0.start), end: sessionMs($0.end)) }
+        func overlap(_ aStart: Int, _ aEnd: Int, _ bStart: Int, _ bEnd: Int) -> Int {
+            max(0, min(aEnd, bEnd) - max(aStart, bStart))
+        }
 
-        let hostNames = Set([ZoomE2E.hostName] + (selfName.map { [$0] } ?? []))
-        let hostEvents = events.filter { hostNames.contains($0.displayName) }
+        let events = try await store.speakerEvents(meetingID: meetingID)
+        var covered: [String] = []
+        var allCovered = windows.count == environment.botNames.count
+        for window in windows {
+            let spokenMs = events.filter { $0.displayName == window.bot && $0.source == .zoomAX }
+                .reduce(0) { $0 + overlap($1.tStartMs, $1.tEndMs ?? lengthMs, window.start, window.end) }
+            let neededMs = (window.end - window.start) / 2
+            allCovered = allCovered && spokenMs >= neededMs
+            covered.append("\(window.bot) \(spokenMs)/\(neededMs) ms")
+        }
         check(
-            "D2", "no speaker event for the host", hostEvents.isEmpty,
-            "host names \(hostNames.sorted()) · \(hostEvents.count) events")
+            "D1", "each bot's speaker events cover half its speech", allCovered,
+            covered.joined(separator: " · ") + " · fixtures \(fixturesDirectory.path)")
+
+        let botNames = Set(environment.botNames)
+        let others = Set(events.map(\.displayName)).subtracting(botNames)
+        check(
+            "D2", "speaker events name only the bots", others.isEmpty,
+            others.isEmpty ? "\(events.count) events" : "also named: \(others.sorted())")
 
         let participants = try await store.participants(meetingID: meetingID)
-        let botParticipant = participants.first { $0.displayName == bot && $0.source == .zoomAX }
+        let botParticipants = participants.filter { botNames.contains($0.displayName) && $0.source == .zoomAX }
         let me = participants.filter(\.isMe)
         check(
-            "D3", "bot is a zoom_ax participant, exactly one me", botParticipant != nil && me.count == 1,
+            "D3", "both bots are zoom_ax participants, exactly one me",
+            Set(botParticipants.map(\.displayName)) == botNames && me.count == 1,
             participants.map { "\($0.displayName) (\($0.source.rawValue)\($0.isMe ? ", me" : ""))" }
                 .joined(separator: ", "))
 
         if !options.skipSTT {
             let system = try await store.segments(meetingID: meetingID, pass: .final).filter { $0.channel == .system }
-            let named = system.filter { $0.participantID != nil && $0.participantID == botParticipant?.id }
-            let share = system.isEmpty ? 0 : Double(named.count) / Double(system.count)
+            let names = Dictionary(
+                uniqueKeysWithValues: participants.compactMap { p in p.id.map { ($0, p.displayName) } })
+            // Each segment inside a speech window should carry that bot's name.
+            let judged = system.compactMap { segment -> Bool? in
+                guard
+                    let expected = windows.max(by: {
+                        overlap(segment.tStartMs, segment.tEndMs, $0.start, $0.end)
+                            < overlap(segment.tStartMs, segment.tEndMs, $1.start, $1.end)
+                    }), overlap(segment.tStartMs, segment.tEndMs, expected.start, expected.end) > 0
+                else { return nil }
+                return segment.participantID.flatMap { names[$0] } == expected.bot
+            }
+            let correct = judged.filter { $0 }.count
+            let share = judged.isEmpty ? 0 : Double(correct) / Double(judged.count)
             check(
-                "F1", "≥ 85 % of final system segments named the bot", !system.isEmpty && share >= 0.85,
-                "\(named.count)/\(system.count) = \(Int(share * 100)) %")
+                "F1", "≥ 85 % of final system segments named after the bot speaking", !judged.isEmpty && share >= 0.85,
+                "\(correct)/\(judged.count) = \(Int(share * 100)) %")
 
             func words(_ text: String) -> Set<String> {
                 Set(
                     text.lowercased().components(separatedBy: CharacterSet.letters.inverted)
                         .filter { $0.count >= 4 })
             }
-            let expected = words(ZoomE2E.script)
+            let expected = words(ZoomE2E.scripts.joined(separator: " "))
             let heard = words(system.map(\.text).joined(separator: " "))
             let recall = Double(expected.intersection(heard).count) / Double(expected.count)
             check(
@@ -533,10 +597,10 @@ final class BotEvents: @unchecked Sendable {
 
     // MARK: Bot
 
-    private func makeSpeech() throws -> (file: URL, seconds: Double) {
-        let aiff = botDirectory.appendingPathComponent("script.aiff")
-        let wav = botDirectory.appendingPathComponent("script.wav")
-        try runTool("/usr/bin/say", ["-v", "Samantha", "-r", "170", "-o", aiff.path, ZoomE2E.script])
+    private func makeSpeech(_ index: Int) throws -> (file: URL, seconds: Double) {
+        let aiff = botDirectory.appendingPathComponent("script-\(index + 1).aiff")
+        let wav = botDirectory.appendingPathComponent("script-\(index + 1).wav")
+        try runTool("/usr/bin/say", ["-v", "Samantha", "-r", "170", "-o", aiff.path, ZoomE2E.scripts[index]])
         try runTool("/usr/bin/afconvert", ["-f", "WAVE", "-d", "LEI16@48000", "-c", "1", aiff.path, wav.path])
         let file = try AVAudioFile(forReading: wav)
         let seconds = Double(file.length) / file.processingFormat.sampleRate
@@ -555,44 +619,45 @@ final class BotEvents: @unchecked Sendable {
         }
     }
 
-    private func startBot(audio: URL) throws {
+    private func startBot(name: String, speech: (file: URL, seconds: Double)) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = [
             "npx", "tsx", "scripts/zoom-e2e/bot.ts", "--meeting", environment.meetingNumber, "--passcode",
-            environment.passcode, "--name", environment.botName, "--audio", audio.path, "--artifacts",
-            botDirectory.path,
+            environment.passcode, "--name", name, "--audio", speech.file.path, "--artifacts", botDirectory.path,
         ]
         process.currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         let stdout = Pipe()
         let stdin = Pipe()
         process.standardOutput = stdout
         process.standardInput = stdin
-        let stderrURL = botDirectory.appendingPathComponent("bot.log")
+        let stderrURL = botDirectory.appendingPathComponent("\(name).log")
         FileManager.default.createFile(atPath: stderrURL.path, contents: nil)
         process.standardError = try FileHandle(forWritingTo: stderrURL)
-        let events = botEvents
+        let events = BotEvents(label: name)
         let log = log
         stdout.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty { events.append(data, log: log) }
         }
         try process.run()
-        bot = process
-        botInput = stdin
-        log("bot started (pid \(process.processIdentifier)); its log is \(stderrURL.path)")
+        bots.append(Bot(name: name, process: process, input: stdin, events: events, speech: speech))
+        log("\(name) started (pid \(process.processIdentifier)); its log is \(stderrURL.path)")
     }
 
-    private func stopBot() async {
-        guard let bot, bot.isRunning else { return }
-        botInput?.fileHandleForWriting.write(Data("leave\n".utf8))
-        let deadline = Date().addingTimeInterval(15)
-        while bot.isRunning, Date() < deadline { try? await Task.sleep(for: .milliseconds(250)) }
-        if bot.isRunning {
-            log("bot did not leave within 15 s; terminating it")
-            bot.terminate()
+    private func stopBots() async {
+        for bot in bots where bot.process.isRunning {
+            bot.input.fileHandleForWriting.write(Data("leave\n".utf8))
         }
-        self.bot = nil
+        let deadline = Date().addingTimeInterval(15)
+        while bots.contains(where: \.process.isRunning), Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        for bot in bots where bot.process.isRunning {
+            log("\(bot.name) did not leave within 15 s; terminating it")
+            bot.process.terminate()
+        }
+        bots.removeAll()
     }
 
     // MARK: Zoom
@@ -633,18 +698,14 @@ final class BotEvents: @unchecked Sendable {
             for window in AXElement.application(pid: pid).allWindows {
                 let button = window.firstDescendant(depth: 12) { element in
                     guard element.role == "AXButton" else { return false }
-                    let label = element.title ?? element.axDescription ?? ""
-                    return label.firstMatch(of: regex) != nil
+                    // Zoom leaves titles empty and labels its buttons through AXDescription.
+                    return [element.title, element.axDescription].contains { $0?.firstMatch(of: regex) != nil }
                 }
-                if let button, button.press() { return button.title ?? button.axDescription ?? "?" }
+                if let button, button.press() {
+                    return [button.title, button.axDescription].compactMap { $0 }.first { !$0.isEmpty } ?? "?"
+                }
             }
             return nil
-        }
-    }
-
-    private func contains(_ name: String, in trees: [AXNodeSnapshot]) -> Bool {
-        trees.flatMap(\.flattened).contains { node in
-            [node.title, node.description, node.value].contains { $0?.contains(name) == true }
         }
     }
 

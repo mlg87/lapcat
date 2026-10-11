@@ -302,6 +302,7 @@ LapCat tries the providers in this order. If a provider is not available, LapCat
 ### Speakers
 
 - LapCat can read speaker names from Zoom and Google Meet through the Accessibility permission. Keep the Meet tab visible for the best result.
+- Zoom marks the person who speaks only when three or more people are in the call. In a call with one other person, LapCat gives all of the other side's speech that person's name.
 - Without names, LapCat labels speakers "Speaker 1", "Speaker 2" and so on. You can rename them.
 - **Settings → Speakers** has editable selector JSON for Zoom and Meet, with **Save**, **Revert** and **Restore built-in**.
 
@@ -547,7 +548,7 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 | `enhance-demo` | `[--template ID] [--model M]` | Enhances a sample meeting through the Claude CLI. |
 | `templates` | — | Lists the built-in templates and their resource bundle. |
 | `detect-watch` | `[bundle-id…\|*]` | Prints microphone activity of meeting apps until you press <kbd>Ctrl</kbd><kbd>C</kbd>. Without arguments, it watches the default app list. `*` watches all processes. |
-| `zoom-e2e` | `[--skip-stt] [--keep] [--record-fixtures <dir>] [--pipeline-timeout 900]` | Runs a live Zoom call against the real LapCat stack with a test bot as the second person, and checks the results. Use `scripts/zoom-e2e.sh`. See [Zoom end-to-end run](#zoom-end-to-end-run). |
+| `zoom-e2e` | `[--skip-stt] [--keep] [--record-fixtures <dir>] [--pipeline-timeout 900]` | Runs a live Zoom call against the real LapCat stack with two test bots as the other people, and checks the results. Use `scripts/zoom-e2e.sh`. See [Zoom end-to-end run](#zoom-end-to-end-run). |
 
 </details>
 
@@ -555,16 +556,16 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 
 ### Zoom end-to-end run
 
-`scripts/zoom-e2e.sh` checks the Zoom path with a real call and no second person. The script opens your meeting in the Zoom desktop client. A Zoom Meeting SDK bot joins in headless Chromium and speaks a script that `say` generates. The script then quits Zoom and waits for auto-stop and the post-meeting pipeline. It writes a report to `/tmp/lapcat-zoom-e2e/<time>/` and exits 1 when a check fails.
+`scripts/zoom-e2e.sh` checks the Zoom path with a real call and no other person. The script opens your meeting in the Zoom desktop client. Two Zoom Meeting SDK bots join in headless Chromium. Each bot then speaks one half of a script that `say` generates, one after the other. The run needs two bots because Zoom marks the person who speaks only when three or more people are in the call. The script then quits Zoom and waits for auto-stop and the post-meeting pipeline. It writes a report to `/tmp/lapcat-zoom-e2e/<time>/` and exits 1 when a check fails.
 
 | Check | Passes when |
 | --- | --- |
 | S1 | The capture taps the Zoom app, not all system audio. |
 | S2 | No system-audio warning shows 10 s after the recording starts. |
-| D1 | The bot's `zoom_ax` speaker events cover at least half of its speech. |
-| D2 | No speaker event has the host's name. |
-| D3 | The bot is a `zoom_ax` participant, and exactly one participant is you. |
-| F1 | The bot's name is on at least 85 % of the final system segments. |
+| D1 | For each bot, its `zoom_ax` speaker events cover at least half of the time that it speaks. |
+| D2 | Speaker events name only the bots, never you. |
+| D3 | Both bots are `zoom_ax` participants, and exactly one participant is you. |
+| F1 | At least 85 % of the final system segments in a bot's speech have that bot's name. |
 | F2 | The final system transcript contains at least 60 % of the script's words with four or more letters. |
 | F3 | The microphone and system files differ by 2 s or less, and each covers the recording to within 3 s. |
 
@@ -581,7 +582,7 @@ One-time setup:
    LAPCAT_ZOOM_E2E_PASSCODE="…"          # the plain passcode of that meeting, for the bot
    LAPCAT_ZOOM_SDK_CLIENT_ID="…"         # Meeting SDK app client ID
    LAPCAT_ZOOM_SDK_CLIENT_SECRET="…"     # Meeting SDK app client secret
-   LAPCAT_ZOOM_E2E_BOT_NAME="LapCat Bot" # optional
+   LAPCAT_ZOOM_E2E_BOT_NAME="LapCat Bot" # optional; the bots are "<name> 1" and "<name> 2"
    ```
 
 4. In the Zoom web settings, give your personal meeting ID a passcode, turn on "Embed passcode in invite link for one-click join", and turn off the waiting room for it.

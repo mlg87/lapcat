@@ -1,15 +1,17 @@
-// Second participant for `lapcat-dev zoom-e2e` (#61): joins a Zoom meeting through the Meeting SDK for
-// Web (component view) in headless Chromium and speaks a WAV file as its microphone.
+// Participant bot for `lapcat-dev zoom-e2e` (#61): joins a Zoom meeting through the Meeting SDK for
+// Web (component view) in headless Chromium. Its microphone is silent until a `speak` line on stdin;
+// it then plays the WAV file once into the call and reports when the speech starts and ends.
+// The harness runs two bots, because Zoom labels the active speaker only in calls of three or more.
 //
 //   npx tsx scripts/zoom-e2e/bot.ts --meeting <digits> --passcode <p> --name "LapCat Bot" \
 //     --audio <wav> --artifacts <dir>
 //
 // Env: LAPCAT_ZOOM_SDK_CLIENT_ID, LAPCAT_ZOOM_SDK_CLIENT_SECRET (a Marketplace app with the Meeting SDK
-// feature). Stdout carries one JSON event per line for the harness; stderr carries logs. The bot leaves
-// on a `leave` line on stdin or on SIGTERM.
+// feature). Stdout carries one JSON event per line for the harness; stderr carries logs. Stdin lines:
+// `speak` plays the WAV file; `leave` (or SIGTERM) leaves the meeting.
 
 import { createHmac } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
@@ -38,6 +40,8 @@ declare global {
   interface Window {
     __lapcat?: PageConfig;
     __lapcatClient?: EmbeddedClient;
+    /** Plays the speech file into the microphone stream; resolves when it ends. */
+    __lapcatSpeak?: () => Promise<void>;
   }
 }
 
@@ -45,6 +49,8 @@ type Event =
   | { event: "sdk-ready" }
   | { event: "joined" }
   | { event: "audio-joined"; at: number }
+  | { event: "speech-start"; at: number }
+  | { event: "speech-end"; at: number }
   | { event: "left" }
   | { event: "error"; message: string };
 
@@ -167,11 +173,19 @@ async function main(): Promise<void> {
   const clientSecret = process.env.LAPCAT_ZOOM_SDK_CLIENT_SECRET;
   if (!clientId || !clientSecret) fail("LAPCAT_ZOOM_SDK_CLIENT_ID and LAPCAT_ZOOM_SDK_CLIENT_SECRET must be set");
 
-  const server = createServer((_request, response) => {
+  const speech = readFileSync(args.audio);
+  const server = createServer((request, response) => {
+    if (request.url === "/speech.wav") {
+      response.writeHead(200, { "content-type": "audio/wav" });
+      response.end(speech);
+      return;
+    }
     response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     response.end(pageHTML);
   });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const listening = Promise.withResolvers<void>();
+  server.listen(0, "127.0.0.1", listening.resolve);
+  await listening.promise;
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
 
   const browser: Browser = await chromium.launch({
@@ -180,7 +194,6 @@ async function main(): Promise<void> {
     args: [
       "--use-fake-ui-for-media-stream",
       "--use-fake-device-for-media-stream",
-      `--use-file-for-fake-audio-capture=${args.audio}%noloop`,
       "--autoplay-policy=no-user-gesture-required",
     ],
   });
@@ -204,12 +217,45 @@ async function main(): Promise<void> {
   browserPage.on("console", (message) => log(`console.${message.type()}: ${message.text()}`));
   browserPage.on("pageerror", (error) => log(`pageerror: ${error.message}`));
 
-  const joined = new Promise<void>((resolve) => {
-    void browserPage.exposeFunction("__lapcatReport", (event: Event) => {
-      emit(event);
-      if (event.event === "joined") resolve();
-      if (event.event === "error") void leave(1);
-    });
+  const joined = Promise.withResolvers<void>();
+  await browserPage.exposeFunction("__lapcatReport", (event: Event) => {
+    emit(event);
+    if (event.event === "joined") joined.resolve();
+    if (event.event === "error") void leave(1);
+  });
+  // tsx compiles with esbuild's keepNames, which wraps named functions in a `__name(...)` helper that
+  // does not exist in the page; functions passed to addInitScript/evaluate would throw without it.
+  await browserPage.addInitScript({ content: "globalThis.__name = (fn) => fn;" });
+  // The microphone is a Web Audio stream that stays silent until `speak`, so the harness decides when each
+  // bot talks. Chromium's file-backed fake microphone starts playing as soon as capture starts instead.
+  await browserPage.addInitScript(() => {
+    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    let context: AudioContext | undefined;
+    let destination: MediaStreamAudioDestinationNode | undefined;
+    const microphone = (): MediaStreamAudioDestinationNode => {
+      context ??= new AudioContext({ sampleRate: 48_000 });
+      destination ??= context.createMediaStreamDestination();
+      return destination;
+    };
+    navigator.mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraints) => {
+      if (!constraints?.audio) return original(constraints);
+      const tracks = microphone().stream.getAudioTracks().map((track) => track.clone());
+      if (constraints.video) tracks.push(...(await original({ video: constraints.video })).getVideoTracks());
+      return new MediaStream(tracks);
+    };
+    window.__lapcatSpeak = async () => {
+      const output = microphone();
+      const audioContext = context!;
+      await audioContext.resume();
+      const encoded = await (await fetch("/speech.wav")).arrayBuffer();
+      const source = audioContext.createBufferSource();
+      source.buffer = await audioContext.decodeAudioData(encoded);
+      source.connect(output);
+      const ended = Promise.withResolvers<void>();
+      source.onended = () => ended.resolve();
+      source.start();
+      await ended.promise;
+    };
   });
   await browserPage.addInitScript((config: PageConfig) => {
     window.__lapcat = config;
@@ -221,12 +267,25 @@ async function main(): Promise<void> {
   });
 
   process.on("SIGTERM", () => void leave(0));
+  let speaking = false;
   createInterface({ input: process.stdin }).on("line", (line) => {
-    if (line.trim() === "leave") void leave(0);
+    const command = line.trim();
+    if (command === "leave") void leave(0);
+    if (command === "speak" && !speaking) {
+      speaking = true;
+      emit({ event: "speech-start", at: Date.now() });
+      void browserPage
+        .evaluate(() => window.__lapcatSpeak?.())
+        .then(() => emit({ event: "speech-end", at: Date.now() }))
+        .catch((error: unknown) => emit({ event: "error", message: `speak failed: ${String(error)}` }))
+        .finally(() => {
+          speaking = false;
+        });
+    }
   });
 
   await browserPage.goto(url);
-  await joined;
+  await joined.promise;
   await joinAudio(browserPage, args.artifacts);
 }
 
