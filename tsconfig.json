@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "files": ["scripts/beads-reconcile.ts", ".omp/extensions/beads.ts"]
+  "files": ["scripts/beads-reconcile.ts", ".omp/extensions/beads.ts", "scripts/zoom-e2e/bot.ts"]
 }

@@ -547,10 +547,48 @@ Run `swift run lapcat-dev <command>`. Without a command, the CLI prints the comm
 | `enhance-demo` | `[--template ID] [--model M]` | Enhances a sample meeting through the Claude CLI. |
 | `templates` | — | Lists the built-in templates and their resource bundle. |
 | `detect-watch` | `[bundle-id…\|*]` | Prints microphone activity of meeting apps until you press <kbd>Ctrl</kbd><kbd>C</kbd>. Without arguments, it watches the default app list. `*` watches all processes. |
+| `zoom-e2e` | `[--skip-stt] [--keep] [--record-fixtures <dir>] [--pipeline-timeout 900]` | Runs a live Zoom call against the real LapCat stack with a test bot as the second person, and checks the results. Use `scripts/zoom-e2e.sh`. See [Zoom end-to-end run](#zoom-end-to-end-run). |
 
 </details>
 
 `llm-probe anthropic-api` reads the key from the `ANTHROPIC_API_KEY` environment variable.
+
+### Zoom end-to-end run
+
+`scripts/zoom-e2e.sh` checks the Zoom path with a real call and no second person. The script opens your meeting in the Zoom desktop client. A Zoom Meeting SDK bot joins in headless Chromium and speaks a script that `say` generates. The script then quits Zoom and waits for auto-stop and the post-meeting pipeline. It writes a report to `/tmp/lapcat-zoom-e2e/<time>/` and exits 1 when a check fails.
+
+| Check | Passes when |
+| --- | --- |
+| S1 | The capture taps the Zoom app, not all system audio. |
+| S2 | No system-audio warning shows 10 s after the recording starts. |
+| D1 | The bot's `zoom_ax` speaker events cover at least half of its speech. |
+| D2 | No speaker event has the host's name. |
+| D3 | The bot is a `zoom_ax` participant, and exactly one participant is you. |
+| F1 | The bot's name is on at least 85 % of the final system segments. |
+| F2 | The final system transcript contains at least 60 % of the script's words with four or more letters. |
+| F3 | The microphone and system files differ by 2 s or less, and each covers the recording to within 3 s. |
+
+`--skip-stt` skips the final transcription, so F1 and F2 do not run. `--record-fixtures <dir>` copies the recorded accessibility trees and the Core Audio process list to `<dir>`. The replay tests in `Tests/` use these files. `--keep` keeps the run's audio and database.
+
+One-time setup:
+
+1. Run `npm install && npx playwright install chromium`.
+2. In the [Zoom App Marketplace](https://marketplace.zoom.us/), create a General app with the Meeting SDK feature. Use the same Zoom account as the desktop client.
+3. Create `.env.zoom-e2e` in the repository root. Git ignores this file.
+
+   ```bash
+   LAPCAT_ZOOM_E2E_JOIN_URL="https://us02web.zoom.us/j/1234567890?pwd=…"  # your personal meeting invite link
+   LAPCAT_ZOOM_E2E_PASSCODE="…"          # the plain passcode of that meeting, for the bot
+   LAPCAT_ZOOM_SDK_CLIENT_ID="…"         # Meeting SDK app client ID
+   LAPCAT_ZOOM_SDK_CLIENT_SECRET="…"     # Meeting SDK app client secret
+   LAPCAT_ZOOM_E2E_BOT_NAME="LapCat Bot" # optional
+   ```
+
+4. In the Zoom web settings, give your personal meeting ID a passcode, turn on "Embed passcode in invite link for one-click join", and turn off the waiting room for it.
+5. In the Zoom desktop client, sign in. Turn on Settings → Audio → "Automatically join audio by computer when joining a meeting". Turn off Settings → Video → "Always show video preview dialog when joining a video meeting". Turn off Settings → General → "Ask me to confirm when I leave a meeting".
+6. Grant Accessibility, Microphone and System Audio Recording to your terminal app.
+
+Before each run, quit Zoom. Then run `scripts/zoom-e2e.sh` from the repository root.
 
 ### Environment variables
 
