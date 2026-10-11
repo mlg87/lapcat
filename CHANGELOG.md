@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.4](https://github.com/mlg87/lapcat/compare/v0.1.3...v0.1.4) (2026-10-11)
+
+
+### Bug fixes
+
+* **speakers:** name the speaker in zoom 1:1 calls after the other ([9a808a2](https://github.com/mlg87/lapcat/commit/9a808a24def893e954ca61fc04f9608b69bf77f0))
+* **speakers:** read zoom's active-speaker labels ([#64](https://github.com/mlg87/lapcat/issues/64)) ([9a808a2](https://github.com/mlg87/lapcat/commit/9a808a24def893e954ca61fc04f9608b69bf77f0))
+
+
+### Documentation
+
+* add app icon source psd and scaled png exports ([#57](https://github.com/mlg87/lapcat/issues/57)) ([db25af4](https://github.com/mlg87/lapcat/commit/db25af4912740581754eb85fc0c612664277abea))
+
 ## [0.1.3](https://github.com/mlg87/lapcat/compare/v0.1.2...v0.1.3) (2026-10-03)
 
 
