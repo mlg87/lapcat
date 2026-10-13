@@ -70,13 +70,42 @@ The product requirements are in [docs/product-requirements/lapcat-mvp-prd.md](do
 2. Download `LapCat-vX.Y.Z-universal.zip` from the latest release.
 3. Unzip the file.
 4. Move `LapCat.app` to `/Applications`.
-5. Right-click `LapCat.app`.
-6. Select **Open**.
-7. In the dialog, select **Open** again.
-8. Grant the permissions that LapCat asks for.
+5. Open the app. Use the steps for your macOS version in [Open LapCat the first time](#open-lapcat-the-first-time).
+6. Grant the permissions that LapCat asks for.
+
+### Open LapCat the first time
+
+The app has a signature from a self-signed development certificate ("LapCat Dev"). Apple did not notarize the app. Thus Gatekeeper blocks the app when you open it the first time.
+
+**macOS 15 (Sequoia) and later**
+
+On these versions, right-click → **Open** does not open a blocked app. macOS shows "“LapCat” Not Opened" with only **Done** and **Move to Trash**. Do these steps:
+
+1. Double-click `LapCat.app`.
+2. In the "“LapCat” Not Opened" dialog, select **Done**. Do not select **Move to Trash**.
+3. Open **System Settings → Privacy & Security**.
+4. Scroll to **Security**. Find the message "“LapCat” was blocked to protect your Mac."
+5. Select **Open Anyway**. macOS shows this button for approximately one hour after step 1.
+6. Enter your password or use Touch ID.
+7. In the dialog, select **Open Anyway** again.
+
+**macOS 14 (Sonoma)**
+
+1. Right-click `LapCat.app`.
+2. Select **Open**.
+3. In the dialog, select **Open** again.
+
+**Terminal (all versions)**
+
+As an alternative, remove the quarantine attribute that the browser added to the download. Then open the app:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/LapCat.app
+open /Applications/LapCat.app
+```
 
 > [!IMPORTANT]
-> The app has a signature from a self-signed development certificate ("LapCat Dev"). Apple did not notarize the app. Thus macOS blocks a double-click when you open the app the first time. Steps 5 to 7 are necessary one time only.
+> macOS can block each new version that you download. If macOS blocks an update, do these steps again.
 
 ## Permissions
 
