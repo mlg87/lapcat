@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/mlg87/lapcat/compare/v0.1.5...v0.1.6) (2026-10-13)
+
+
+### Documentation
+
+* explain how to open lapcat on macos 15 and later ([#68](https://github.com/mlg87/lapcat/issues/68)) ([c04d018](https://github.com/mlg87/lapcat/commit/c04d0180e16cc0d075151b1fad41695fee7ca659))
+
 ## [0.1.5](https://github.com/mlg87/lapcat/compare/v0.1.4...v0.1.5) (2026-10-11)
 
 
