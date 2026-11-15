@@ -92,6 +92,11 @@ public actor LlamaServerProvider: LLMProvider {
         do {
             (data, response) = try await session.data(for: urlRequest)
         } catch {
+            // A timed-out or cancelled request leaves llama-server generating its reply, and with one slot (-np 1)
+            // the next request would queue behind that generation for minutes. Terminating the server frees the
+            // slot; the next request starts a fresh one. `shutdown()` leaves `activeRequests` alone, so `endRequest`
+            // stays balanced.
+            shutdown()
             throw normalize(error)
         }
         try Self.check(response, body: data)

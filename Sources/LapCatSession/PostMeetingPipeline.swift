@@ -159,7 +159,13 @@ public actor PostMeetingPipeline {
     private func perform(_ step: Step, meetingID: String, config: PipelineConfig) async throws {
         switch step {
         case .quickEnhance:
-            // A first note from the live transcript, so something readable exists within a minute.
+            // A first note from the live transcript, so something readable exists within a minute. On the
+            // local model that note takes minutes on CPU (prompt 44 tok/s, generation 5.7 tok/s), blocks final
+            // transcription, and the final enhance replaces it anyway, so it is skipped (GH #13, lc-buc.4).
+            guard await config.router.head(for: .enhance)?.id != LLMRouter.localProviderID else {
+                Self.logger.info("quick_enhance skipped for \(meetingID, privacy: .public): local model")
+                return
+            }
             try await enhanceIfPossible(meetingID: meetingID, config: config)
         case .finalSTTMic:
             try await finalTranscription(meetingID: meetingID, channel: .mic, step: step, config: config)
