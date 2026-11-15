@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import LapCatAudio
 import LapCatCore
@@ -15,6 +16,10 @@ public struct SessionDependencies: Sendable {
         @MainActor @Sendable (_ bundleID: String, _ settings: AppSettings) -> (
             source: any SpeakerSource, eventSource: SpeakerEventSource
         )?
+    /// The process the speaker adapter reads the accessibility tree of. Detection reports the pid that
+    /// holds the microphone; for Chromium browsers (Arc, Chrome, Edge, Brave) that is the audio-service
+    /// helper, which has no windows. The AX tree belongs to the main app (#51).
+    public var speakerPID: @Sendable (_ bundleID: String, _ detectedPID: pid_t) -> pid_t
 
     public init(
         paths: Paths,
@@ -24,13 +29,24 @@ public struct SessionDependencies: Sendable {
         speakerSource:
             @escaping @MainActor @Sendable (_ bundleID: String, _ settings: AppSettings) -> (
                 source: any SpeakerSource, eventSource: SpeakerEventSource
-            )?
+            )?,
+        speakerPID:
+            @escaping @Sendable (_ bundleID: String, _ detectedPID: pid_t) -> pid_t = SessionDependencies.liveSpeakerPID
     ) {
         self.paths = paths
         self.makeCapture = makeCapture
         self.audioProcesses = audioProcesses
         self.calendarEvent = calendarEvent
         self.speakerSource = speakerSource
+        self.speakerPID = speakerPID
+    }
+
+    /// Main app's pid when it is running, else the detected pid. `runningApplications` lists apps
+    /// only, so the audio-service helper is excluded (#51).
+    public static let liveSpeakerPID: @Sendable (_ bundleID: String, _ detectedPID: pid_t) -> pid_t = {
+        bundleID, detectedPID in
+        NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first?.processIdentifier
+            ?? detectedPID
     }
 
     public static let live = SessionDependencies(

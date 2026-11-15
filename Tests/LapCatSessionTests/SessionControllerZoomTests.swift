@@ -26,7 +26,9 @@ import Testing
     private func harness(
         processes: [AudioProcessInfo] = zoomProcesses(),
         speakers: ScriptedSpeakerSource? = ScriptedSpeakerSource([priyaTalking]),
-        configure: (AppSettings) -> Void = { _ in }
+        configure: (AppSettings) -> Void = { _ in },
+        speakerPID: @escaping @Sendable (_ bundleID: String, _ detectedPID: pid_t) -> pid_t = { _, pid in pid },
+        speakerBundleID: String = "us.zoom.xos"
     ) throws -> Harness {
         let (store, dir) = try makeTempStore()
         let paths = Paths(root: dir)
@@ -43,9 +45,10 @@ import Testing
                 audioProcesses: { processes },
                 calendarEvent: { _ in nil },
                 speakerSource: { bundleID, _ in
-                    guard bundleID == "us.zoom.xos", let speakers else { return nil }
+                    guard bundleID == speakerBundleID, let speakers else { return nil }
                     return (speakers, .zoomAX)
-                }))
+                },
+                speakerPID: speakerPID))
         return Harness(session: session, store: store, paths: paths, settings: settings)
     }
 
@@ -116,6 +119,21 @@ import Testing
         try await Task.sleep(for: .milliseconds(300))
         #expect(try await h.store.speakerEvents(meetingID: id).isEmpty)
         #expect(try await h.store.participants(meetingID: id).allSatisfy(\.isMe))
+    }
+
+    @Test func speakerAdapterReadsTheMainAppNotTheAudioHelper() async throws {
+        let speakers = ScriptedSpeakerSource([Self.priyaTalking])
+        let h = try harness(
+            processes: [],
+            speakers: speakers,
+            speakerPID: { bundleID, pid in bundleID == "company.thebrowser.Browser" && pid == 501 ? 500 : pid },
+            speakerBundleID: "company.thebrowser.Browser")
+        let helperSource = SessionSource(
+            appName: "Arc", bundleID: "company.thebrowser.Browser", pid: 501)
+        let id = try #require(try await h.session.startNewNote(source: helperSource, startedBy: .prompt))
+
+        try #require(await eventually { (try? await h.store.speakerEvents(meetingID: id).count) == 1 })
+        #expect(speakers.pids == [500])
     }
 }
 
