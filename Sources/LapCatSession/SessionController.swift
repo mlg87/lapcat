@@ -176,9 +176,10 @@ public final class SessionController {
         let elapsed: @Sendable () async -> Int = { [weak self] in
             await MainActor.run { Int((self?.elapsed() ?? 0) * 1000) }
         }
-        guard let bundleID = source?.bundleID, let pid = source?.pid,
+        guard let bundleID = source?.bundleID, let detectedPID = source?.pid,
             let (adapter, eventSource) = dependencies.speakerSource(bundleID, settings)
         else { return }
+        let pid = dependencies.speakerPID(bundleID, detectedPID)
         let recorder = SpeakerEventRecorder(store: store, meetingID: meetingID, source: eventSource, elapsedMs: elapsed)
         speakerRecorder = recorder
         Task { await recorder.start(adapter: adapter, pid: pid) }
