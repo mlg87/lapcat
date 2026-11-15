@@ -55,7 +55,7 @@ let package = Package(
         .testTarget(name: "LapCatSpeakersTests", dependencies: ["LapCatSpeakers"], resources: [.copy("Fixtures")]),
         .testTarget(
             name: "LapCatSessionTests",
-            dependencies: ["LapCatSession", "LapCatCore", "LapCatAudio", "LapCatSpeakers", "LapCatSpeech"]
+            dependencies: ["LapCatSession", "LapCatCore", "LapCatAudio", "LapCatSpeakers", "LapCatSpeech", "LapCatLLM"]
         ),
     ],
     swiftLanguageModes: [.v6]
