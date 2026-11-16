@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7](https://github.com/mlg87/lapcat/compare/v0.1.6...v0.1.7) (2026-11-15)
+
+
+### Bug fixes
+
+* **llm:** skip the quick note on the local model ([#72](https://github.com/mlg87/lapcat/issues/72)) ([74b88c8](https://github.com/mlg87/lapcat/commit/74b88c8cc2b7d1cb5d54f25cf879fe83b10f50af)), closes [#13](https://github.com/mlg87/lapcat/issues/13)
+* **speakers:** read meet speaker names from the browser's main process ([#70](https://github.com/mlg87/lapcat/issues/70)) ([08e7ed9](https://github.com/mlg87/lapcat/commit/08e7ed917e0e5b632b3898a20fda649e0addb6f1))
+
 ## [0.1.6](https://github.com/mlg87/lapcat/compare/v0.1.5...v0.1.6) (2026-10-13)
 
 
